@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 
 import io.ktor.http.*
-import io.ktor.http.content.*
 import io.ktor.serialization.*
 import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
@@ -14,21 +13,18 @@ class TimedContentConverter(private val base: ContentConverter) : ContentConvert
     private val deserializeTimer = Metrics.meterRegistry.timer("content.converter.receive")
     private val serializeTimer = Metrics.meterRegistry.timer("content.converter.send")
 
-    override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel): Any? {
-        return deserializeTimer.coRecord {
+    override suspend fun deserialize(charset: Charset, typeInfo: TypeInfo, content: ByteReadChannel) =
+        deserializeTimer.coRecord {
             base.deserialize(charset, typeInfo, content)
         }
-    }
 
     override suspend fun serialize(
         contentType: ContentType,
         charset: Charset,
         typeInfo: TypeInfo,
-        value: Any
-    ): OutgoingContent? {
-        return serializeTimer.coRecord {
-            base.serialize(contentType, charset, typeInfo, value)
-        }
+        value: Any?
+    ) = serializeTimer.coRecord {
+        base.serialize(contentType, charset, typeInfo, value)
     }
 
 }

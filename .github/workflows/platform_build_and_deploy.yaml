@@ -61,6 +61,7 @@ jobs:
           java-version: '21'
           distribution: temurin
           cache: maven
+          cache-dependency-path: app/pom.xml
 
       - run: mvn -B package
         working-directory: app

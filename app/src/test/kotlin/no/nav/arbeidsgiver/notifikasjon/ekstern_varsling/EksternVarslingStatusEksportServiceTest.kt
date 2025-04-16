@@ -1,36 +1,38 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.node.NullNode
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.test.runTest
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu.LØPENDE
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.EksterntVarselSendingsvindu.SPESIFISERT
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDateTime
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import org.apache.kafka.clients.producer.MockProducer
 import org.apache.kafka.common.serialization.StringSerializer
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
-class EksternVarslingStatusEksportServiceTest : DescribeSpec({
+class EksternVarslingStatusEksportServiceTest {
     val kafka = MockProducer(true, StringSerializer(), VarslingStatusDtoSerializer())
-    val hendelseMetadata = HendelseModel.HendelseMetadata(Instant.parse("2020-01-01T01:01:01.00Z"))
+    private val hendelseMetadata = HendelseModel.HendelseMetadata(Instant.parse("2020-01-01T01:01:01.00Z"))
 
 
-    describe("EksternVarslingStatusEksportService#prosesserHendelse") {
+    @Test
+    fun `når hendelse er EksterntVarselFeilet med feilkode`() = runTest {
         listOf(
             "30304",
             "30307",
             "30308",
         ).forEach { feilkode ->
-            val (database, service) = setupService(kafka)
-            context("når hendelse er EksterntVarselFeilet med feilkode = $feilkode") {
+            withTestDatabase(EksternVarsling.databaseConfig) { database ->
+                val service = setupService(database, kafka)
                 val varselTilstand = varselTilstand(uuid("314"), LØPENDE)
                 database.insertVarselTilstand(varselTilstand)
 
@@ -38,23 +40,30 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                 val event = eksterntVarselFeilet(feilkode, uuid("314"))
                 service.testProsesserHendelse(event, hendelseMetadata)
 
-                it("sender en VarslingStatusDto med status MANGLER_KOFUVI") {
-                    kafka.history().size shouldBe 1
-                    kafka.history().first().value().let {
-                        it.status shouldBe Status.MANGLER_KOFUVI
+                // sender en VarslingStatusDto med status MANGLER_KOFUVI
+                assertEquals(1, kafka.history().size)
+                kafka.history().first().value().let {
+                    assertEquals(Status.MANGLER_KOFUVI, it.status)
 
-                        it.virksomhetsnummer shouldBe event.virksomhetsnummer
-                        it.varselId shouldBe event.varselId
-                        it.varselTimestamp shouldBe varselTilstand.kalkuertSendetidspunkt(ÅpningstiderImpl, hendelseMetadata.timestamp.asOsloLocalDateTime())
-                        it.kvittertEventTimestamp shouldBe hendelseMetadata.timestamp
-                    }
+                    assertEquals(event.virksomhetsnummer, it.virksomhetsnummer)
+                    assertEquals(event.varselId, it.varselId)
+                    assertEquals(
+                        varselTilstand.kalkuertSendetidspunkt(
+                            ÅpningstiderImpl,
+                            hendelseMetadata.timestamp.asOsloLocalDateTime()
+                        ), it.varselTimestamp
+                    )
+                    assertEquals(hendelseMetadata.timestamp, it.kvittertEventTimestamp)
                 }
             }
         }
+    }
 
 
-        context("når hendelse er EksterntVarselFeilet med feilkode = 42") {
-            val (database, service) = setupService(kafka)
+    @Test
+    fun `når hendelse er EksterntVarselFeilet med feilkode = 42`() =
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val service = setupService(database, kafka)
             val varselTilstand = varselTilstand(
                 uuid("314"),
                 SPESIFISERT,
@@ -66,21 +75,22 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
             val event = eksterntVarselFeilet("42", uuid("314"))
             service.testProsesserHendelse(event, hendelseMetadata)
 
-            it("sender en VarslingStatusDto med status MANGLER_KOFUVI") {
-                kafka.history().size shouldBe 1
-                kafka.history().first().value().let {
-                    it.status shouldBe Status.ANNEN_FEIL
+            // sender en VarslingStatusDto med status MANGLER_KOFUVI
+            assertEquals(1, kafka.history().size)
+            kafka.history().first().value().let {
+                assertEquals(Status.ANNEN_FEIL, it.status)
 
-                    it.virksomhetsnummer shouldBe event.virksomhetsnummer
-                    it.varselId shouldBe event.varselId
-                    it.varselTimestamp shouldBe varselTilstand.data.eksternVarsel.sendeTidspunkt
-                    it.kvittertEventTimestamp shouldBe hendelseMetadata.timestamp
-                }
+                assertEquals(event.virksomhetsnummer, it.virksomhetsnummer)
+                assertEquals(event.varselId, it.varselId)
+                assertEquals(varselTilstand.data.eksternVarsel.sendeTidspunkt, it.varselTimestamp)
+                assertEquals(hendelseMetadata.timestamp, it.kvittertEventTimestamp)
             }
         }
 
-        context("når hendelse er EksterntVarselFeilet men varsel er harddeleted") {
-            val (_, service) = setupService(kafka)
+    @Test
+    fun `når hendelse er EksterntVarselFeilet men varsel er harddeleted`() =
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val service = setupService(database, kafka)
             kafka.clear()
 
             service.testProsesserHendelse(
@@ -88,13 +98,14 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                 hendelseMetadata
             )
 
-            it("sender ikke VarslingStatusDto") {
-                kafka.history().size shouldBe 0
-            }
+            // sender ikke VarslingStatusDto
+            assertEquals(0, kafka.history().size)
         }
 
-        context("når hendelse er EksterntVarselVellykket men varsel er harddeleted") {
-            val (_, service) = setupService(kafka)
+    @Test
+    fun `når hendelse er EksterntVarselVellykket men varsel er harddeleted`() =
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val service = setupService(database, kafka)
             kafka.clear()
 
             service.testProsesserHendelse(
@@ -102,44 +113,44 @@ class EksternVarslingStatusEksportServiceTest : DescribeSpec({
                 hendelseMetadata
             )
 
-            it("sender ikke VarslingStatusDto") {
-                kafka.history().size shouldBe 0
-            }
+            // sender ikke VarslingStatusDto
+            assertEquals(0, kafka.history().size)
         }
 
-        context("når hendelse er EksterntVarselVellykket") {
-            val (database, service) = setupService(kafka)
-            val varselTilstand = varselTilstand(
-                uuid("314"),
-                SPESIFISERT,
-                LocalDateTime.parse("2021-01-01T01:01:01")
-            )
-            database.insertVarselTilstand(varselTilstand)
+    @Test
+    fun `når hendelse er EksterntVarselVellykket`() = withTestDatabase(EksternVarsling.databaseConfig) { database ->
+        val service = setupService(database, kafka)
+        val varselTilstand = varselTilstand(
+            uuid("314"),
+            SPESIFISERT,
+            LocalDateTime.parse("2021-01-01T01:01:01")
+        )
+        database.insertVarselTilstand(varselTilstand)
 
-            kafka.clear()
-            val event = eksterntVarselVellykket(uuid("314"))
-            service.prosesserHendelse(
-                event = event,
-                meta = hendelseMetadata,
-            )
+        kafka.clear()
+        val event = eksterntVarselVellykket(uuid("314"))
+        service.prosesserHendelse(
+            event = event,
+            meta = hendelseMetadata,
+        )
 
-            it("sender en VarslingStatusDto med status OK") {
-                kafka.history().size shouldBe 1
-                kafka.history().first().value().let {
-                    it.status shouldBe Status.OK
+        // sender en VarslingStatusDto med status OK
+        assertEquals(1, kafka.history().size)
+        kafka.history().first().value().let {
+            assertEquals(Status.OK, it.status)
 
-                    it.virksomhetsnummer shouldBe event.virksomhetsnummer
-                    it.varselId shouldBe event.varselId
-                    it.varselTimestamp shouldBe varselTilstand.data.eksternVarsel.sendeTidspunkt
-                    it.kvittertEventTimestamp shouldBe hendelseMetadata.timestamp
-                }
-            }
+            assertEquals(event.virksomhetsnummer, it.virksomhetsnummer)
+            assertEquals(event.varselId, it.varselId)
+            assertEquals(varselTilstand.data.eksternVarsel.sendeTidspunkt, it.varselTimestamp)
+            assertEquals(hendelseMetadata.timestamp, it.kvittertEventTimestamp)
         }
     }
-})
+}
 
-private fun DescribeSpec.setupService(kafka: MockProducer<String, VarslingStatusDto>): Pair<Database, EksternVarslingStatusEksportService> {
-    val database = testDatabase(EksternVarsling.databaseConfig)
+private fun setupService(
+    database: Database,
+    kafka: MockProducer<String, VarslingStatusDto>
+): EksternVarslingStatusEksportService {
     val repository = EksternVarslingRepository(database)
     val service = EksternVarslingStatusEksportService(
         eventSource = object : Hendelsesstrøm {
@@ -152,7 +163,7 @@ private fun DescribeSpec.setupService(kafka: MockProducer<String, VarslingStatus
         repo = repository,
         kafka = kafka,
     )
-    return Pair(database, service)
+    return service
 }
 
 private suspend fun EksternVarslingStatusEksportService.testProsesserHendelse(

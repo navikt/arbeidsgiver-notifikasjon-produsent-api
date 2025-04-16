@@ -1,11 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -117,7 +115,7 @@ data class TestSmsRequestBody(
     val tekst: String,
 )
 
-suspend fun PipelineContext<Unit, ApplicationCall>.testSms(altinnVarselKlient: Altinn2VarselKlient) {
+suspend fun RoutingContext.testSms(altinnVarselKlient: Altinn2VarselKlient) {
     val varselRequest = call.receive<TestSmsRequestBody>()
     testSend(altinnVarselKlient) {
         sendSms(
@@ -135,7 +133,7 @@ data class TestEpostRequestBody(
     val body: String,
 )
 
-suspend fun PipelineContext<Unit, ApplicationCall>.testEpost(altinnVarselKlient: Altinn2VarselKlient) {
+suspend fun RoutingContext.testEpost(altinnVarselKlient: Altinn2VarselKlient) {
     val varselRequest = call.receive<TestEpostRequestBody>()
     this.testSend(altinnVarselKlient) {
         sendEpost(
@@ -147,7 +145,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.testEpost(altinnVarselKlient:
     }
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.testSend(
+private suspend fun RoutingContext.testSend(
     client: Altinn2VarselKlient,
     action: suspend Altinn2VarselKlientImpl.() -> AltinnVarselKlientResponseOrException
 ) {
@@ -177,7 +175,7 @@ data class UpdateEmergencyBrakeRequestBody(
     val newState: Boolean
 )
 
-suspend fun PipelineContext<Unit, ApplicationCall>.updateEmergencyBrake(
+suspend fun RoutingContext.updateEmergencyBrake(
     eksternVarslingRepository: EksternVarslingRepository
 ) {
     val newState = call.receive<UpdateEmergencyBrakeRequestBody>().newState

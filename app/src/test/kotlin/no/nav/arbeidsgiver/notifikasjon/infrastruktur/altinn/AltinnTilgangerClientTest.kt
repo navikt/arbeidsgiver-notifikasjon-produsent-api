@@ -1,16 +1,17 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
-import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
+import kotlinx.coroutines.test.runTest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientStub
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TokenResponse
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
-class AltinnTilgangerClientTest : DescribeSpec({
-    describe("AltinnTilgangerClient") {
+class AltinnTilgangerClientTest {
+    @Test
+    fun `returns all tilganger`() = runTest {
         val authClientCapture = mutableMapOf<String, String>()
         val client = AltinnTilgangerClient(
             authClient = object : AuthClientStub() {
@@ -29,19 +30,17 @@ class AltinnTilgangerClientTest : DescribeSpec({
             }
         )
 
-        it("returns all tilganger") {
-            client.hentTilganger("fake tolkien").also {
-                it.harFeil shouldBe true
-                it.tilganger shouldContainExactlyInAnyOrder listOf(
-                    AltinnTilgang("910825496", "test-fager"),
-                    AltinnTilgang("910825496", "4936:1"),
-                )
-                authClientCapture[":fager:arbeidsgiver-altinn-tilganger"] shouldBe "fake tolkien"
-            }
+        client.hentTilganger("fake tolkien").also {
+            assertEquals(true, it.harFeil)
+            assertEquals(
+                listOf(AltinnTilgang("910825496", "test-fager"), AltinnTilgang("910825496", "4936:1")).sortedBy { t -> t.tilgang },
+                it.tilganger.sortedBy { t -> t.tilgang }
+            )
+            assertEquals("fake tolkien", authClientCapture[":fager:arbeidsgiver-altinn-tilganger"])
         }
     }
 
-})
+}
 
 //language=JSON
 private val altinnTilgangerResponse = """

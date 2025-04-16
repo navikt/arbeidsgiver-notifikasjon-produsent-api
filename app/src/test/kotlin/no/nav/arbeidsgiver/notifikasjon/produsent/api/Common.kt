@@ -1,31 +1,27 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import io.ktor.server.testing.*
+import io.ktor.client.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENTAPI_AZURETOKEN
+import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.post
 import org.intellij.lang.annotations.Language
 import java.time.Instant
 
-fun TestApplicationEngine.produsentApi(req: GraphQLRequest): TestApplicationResponse {
-    return post(
-        "/api/graphql",
-        host = PRODUSENT_HOST,
-        jsonBody = req,
-        accept = "application/json",
-        authorization = "Bearer $PRODUSENTAPI_AZURETOKEN"
-    )
-}
+suspend fun HttpClient.produsentApi(req: GraphQLRequest) = post(
+    "/api/graphql",
+    host = PRODUSENT_HOST,
+    jsonBody = req,
+    accept = "application/json",
+    authorization = "Bearer $PRODUSENTAPI_AZURETOKEN"
+)
 
-fun TestApplicationEngine.produsentApi(
+suspend fun HttpClient.produsentApi(
     @Language("GraphQL") req: String,
-): TestApplicationResponse {
-    return produsentApi(GraphQLRequest(req))
-}
+) = produsentApi(GraphQLRequest(req))
 
 val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
     override fun finn(appName: String): Produsent {

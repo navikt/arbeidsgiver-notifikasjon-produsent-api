@@ -3,8 +3,8 @@ package no.nav.arbeidsgiver.notifikasjon.util
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jayway.jsonpath.JsonPath
+import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.server.testing.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
@@ -15,18 +15,17 @@ data class GraphQLError(
     val extensions: Map<String, Any>?
 )
 
-fun TestApplicationResponse.validateStatusOK() {
-    val status = this.status()
+suspend fun HttpResponse.validateStatusOK() {
     check(status == HttpStatusCode.OK) {
-        throw Exception("Expected http status 200. Got $status. Content: '${this.content}'")
+        throw Exception("Expected http status 200. Got $status. Content: '${bodyAsText()}'")
     }
 }
 
-inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T {
+suspend inline fun <reified T> HttpResponse.getTypedContent(name: String): T {
     validateStatusOK()
     val errors = getGraphqlErrors()
     if (errors.isEmpty()) {
-        val tree = laxObjectMapper.readTree(this.content!!)
+        val tree = laxObjectMapper.readTree(this.bodyAsText())
         logger().error("content: $tree")
         val dataNode = tree.get("data")
 
@@ -45,12 +44,9 @@ inline fun <reified T> TestApplicationResponse.getTypedContent(name: String): T 
     }
 }
 
-fun TestApplicationResponse.getGraphqlErrors(): List<GraphQLError> {
+suspend fun HttpResponse.getGraphqlErrors(): List<GraphQLError> {
     validateStatusOK()
-    if (this.content == null) {
-        throw NullPointerException("content is null. status:${status()}")
-    }
-    val tree = laxObjectMapper.readTree(this.content!!)
+    val tree = laxObjectMapper.readTree(this.bodyAsText())
     logger().info("content: $tree")
     val errors = tree.get("errors")
     return if (errors == null) emptyList() else laxObjectMapper.convertValue(errors)

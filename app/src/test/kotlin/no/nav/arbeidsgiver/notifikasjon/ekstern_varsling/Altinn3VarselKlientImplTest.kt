@@ -1,13 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import io.kotest.assertions.json.shouldEqualJson
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.types.beOfType
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -16,28 +8,35 @@ import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.serialization.jackson.*
 import io.ktor.utils.io.*
+import kotlinx.coroutines.test.runTest
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.assertThrows
+import org.skyscreamer.jsonassert.JSONAssert
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-class Altinn3VarselKlientImplTest : DescribeSpec({
+class Altinn3VarselKlientImplTest {
 
-    describe("DTO mapping") {
-        it("EksternVarsel.Sms -> NotificationDTO.Sms") {
-            EksternVarsel.Sms(
-                fnrEllerOrgnr = "99999999901",
-                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null,
-                mobilnummer = "99999999",
-                tekst = "Hei, dette er en test",
-                ordreId = "123"
-            ).let { dto ->
-                val json = Altinn3VarselKlient.OrderRequest.from(dto)
-                laxObjectMapper.writeValueAsString(json) shouldEqualJson //language=json
-                        """
+    @Test
+    fun `DTO mapping EksternVarsel Sms - NotificationDTO Sms`() {
+        EksternVarsel.Sms(
+            fnrEllerOrgnr = "99999999901",
+            sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+            sendeTidspunkt = null,
+            mobilnummer = "99999999",
+            tekst = "Hei, dette er en test",
+            ordreId = "123"
+        ).let { dto ->
+            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            JSONAssert.assertEquals(
+                //language=json
+                """
                         {
                           "notificationChannel" : "Sms",
                           "recipients" : [ {
@@ -47,36 +46,41 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                             "body" : "Hei, dette er en test"
                           }
                         }
-                      """
-            }
+                      """,
+                laxObjectMapper.writeValueAsString(json),
+                true,
+            )
         }
+    }
 
-        context("NotificationDTO.Sms fikser mobilnummer til gyldig format") {
-            withData(
-                "40000000" to "+4740000000",
-                "004740000000" to "004740000000",
-                "+4740000000" to "+4740000000",
-                "49999999" to "+4749999999",
-                "004749999999" to "004749999999",
-                "+4749999999" to "+4749999999",
-                "90000000" to "+4790000000",
-                "004790000000" to "004790000000",
-                "+4790000000" to "+4790000000",
-                "99999999" to "+4799999999",
-                "004799999999" to "004799999999",
-                "+4799999999" to "+4799999999",
-            ) { (input, output) ->
-                val dto = EksternVarsel.Sms(
-                    fnrEllerOrgnr = "99999999901",
-                    sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-                    sendeTidspunkt = null,
-                    mobilnummer = input,
-                    tekst = "Hei, dette er en test",
-                    ordreId = "123"
-                )
-                val json = Altinn3VarselKlient.OrderRequest.from(dto)
-                laxObjectMapper.writeValueAsString(json) shouldEqualJson //language=json
-                        """
+    @Test
+    fun `DTO mapping NotificationDTO Sms fikser mobilnummer til gyldig format`() {
+        mapOf(
+            "40000000" to "+4740000000",
+            "004740000000" to "004740000000",
+            "+4740000000" to "+4740000000",
+            "49999999" to "+4749999999",
+            "004749999999" to "004749999999",
+            "+4749999999" to "+4749999999",
+            "90000000" to "+4790000000",
+            "004790000000" to "004790000000",
+            "+4790000000" to "+4790000000",
+            "99999999" to "+4799999999",
+            "004799999999" to "004799999999",
+            "+4799999999" to "+4799999999",
+        ).forEach { (input, output) ->
+            val dto = EksternVarsel.Sms(
+                fnrEllerOrgnr = "99999999901",
+                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+                sendeTidspunkt = null,
+                mobilnummer = input,
+                tekst = "Hei, dette er en test",
+                ordreId = "123"
+            )
+            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            JSONAssert.assertEquals(
+                //language=json
+                """
                             {
                               "notificationChannel" : "Sms",
                               "recipients" : [ {
@@ -86,24 +90,28 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                                 "body" : "Hei, dette er en test"
                               }
                             }
-                          """
-            }
+                          """,
+                laxObjectMapper.writeValueAsString(json),
+                true
+            )
         }
+    }
 
-        it("EksternVarsel.Epost -> NotificationDTO.Email") {
-            EksternVarsel.Epost(
-                fnrEllerOrgnr = "99999999901",
-                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null,
-                epostadresse = "foo@bar.baz",
-                tittel = "Test",
-                body = "Hei, dette er en test",
-                ordreId = "123"
-            ).let { dto ->
-                val json = Altinn3VarselKlient.OrderRequest.from(dto)
-                laxObjectMapper.writeValueAsString(json) shouldEqualJson
-                        //language=json
-                        """
+    @Test
+    fun `DTO mapping EksternVarsel Epost - NotificationDTO Email`() {
+        EksternVarsel.Epost(
+            fnrEllerOrgnr = "99999999901",
+            sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+            sendeTidspunkt = null,
+            epostadresse = "foo@bar.baz",
+            tittel = "Test",
+            body = "Hei, dette er en test",
+            ordreId = "123"
+        ).let { dto ->
+            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            JSONAssert.assertEquals(
+                //language=json
+                """
                         {
                           "notificationChannel" : "Email",
                           "recipients" : [ {
@@ -115,25 +123,29 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                             "contentType" : "Html"
                           }
                         }
-                        """
-            }
+                        """,
+                laxObjectMapper.writeValueAsString(json),
+                true
+            )
         }
+    }
 
-        it("EksternVarsel.Altinnressurs -> NotificationDTO.Resource") {
-            EksternVarsel.Altinnressurs(
-                fnrEllerOrgnr = "42",
-                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null,
-                resourceId = "nav_foo-bar",
-                epostTittel = "Test",
-                epostInnhold = "Hei, epost",
-                smsInnhold = "Hei, sms",
-                ordreId = "123"
-            ).let { dto ->
-                val json = Altinn3VarselKlient.OrderRequest.from(dto)
-                laxObjectMapper.writeValueAsString(json) shouldEqualJson
-                        //language=json
-                        """
+    @Test
+    fun `DTO mapping EksternVarsel Altinnressurs - NotificationDTO Resource`() {
+        EksternVarsel.Altinnressurs(
+            fnrEllerOrgnr = "42",
+            sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+            sendeTidspunkt = null,
+            resourceId = "nav_foo-bar",
+            epostTittel = "Test",
+            epostInnhold = "Hei, epost",
+            smsInnhold = "Hei, sms",
+            ordreId = "123"
+        ).let { dto ->
+            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            JSONAssert.assertEquals(
+                //language=json
+                """
                         {
                           "notificationChannel" : "EmailPreferred",
                           "recipients" : [ {
@@ -149,42 +161,33 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                             "body" : "Hei, sms"
                           }
                         }
-                        """
-            }
-        }
-
-        it("EksternVarsel.Altinntjeneste -> UnsupportedOperationException") {
-            val eksternVarsel = EksternVarsel.Altinntjeneste(
-                fnrEllerOrgnr = "99999999901",
-                sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-                sendeTidspunkt = null,
-                serviceCode = "123",
-                serviceEdition = "456",
-                tittel = "Test",
-                innhold = "Hei, dette er en test",
+                        """,
+                laxObjectMapper.writeValueAsString(json),
+                true
             )
-
-            shouldThrow<UnsupportedOperationException> {
-                Altinn3VarselKlient.OrderRequest.from(eksternVarsel)
-            }
         }
     }
 
-    describe("Altinn3VarselKlientImpl#order") {
-        //language=json
-        val mockResponse = """
-            {
-              "orderId": "42",
-              "recipientLookup": {
-                "status": "Success",
-                "isReserved": [
-                  "string"
-                ],
-                "missingContact": [
-                  "string"
-                ]
-              }
-            }"""
+    @Test
+    fun `DTO mapping EksternVarsel Altinntjeneste - UnsupportedOperationException`() {
+        val eksternVarsel = EksternVarsel.Altinntjeneste(
+            fnrEllerOrgnr = "99999999901",
+            sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+            sendeTidspunkt = null,
+            serviceCode = "123",
+            serviceEdition = "456",
+            tittel = "Test",
+            innhold = "Hei, dette er en test",
+        )
+
+        assertThrows<UnsupportedOperationException> {
+            Altinn3VarselKlient.OrderRequest.from(eksternVarsel)
+
+        }
+    }
+
+    @Test
+    fun `Altinn3VarselKlientImpl#order success for sms returnerer order id`() = runTest {
         val mockEngine = MockEngine {
             respond(
                 content = mockResponse,
@@ -192,50 +195,30 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
-
-        val eksternVarselSms = EksternVarsel.Sms(
-            fnrEllerOrgnr = "99999999901",
-            sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-            sendeTidspunkt = null,
-            mobilnummer = "99999999",
-            tekst = "Hei, dette er en test",
-            ordreId = "123"
+        val client = Altinn3VarselKlientImpl(
+            altinnBaseUrl = "http://altinn",
+            httpClient = HttpClient(mockEngine) {
+                expectSuccess = true
+                install(ContentNegotiation) {
+                    jackson()
+                }
+            },
+            altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
+                override suspend fun token(scope: String) = "fake-token"
+            },
         )
-
-        val eksternVarselEpost = EksternVarsel.Epost(
-            fnrEllerOrgnr = "99999999901",
-            sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
-            sendeTidspunkt = null,
-            epostadresse = "adresse@epost.com",
-            tittel = "Hei, dette er en tittel",
-            body = "Hei, dette er en test",
-            ordreId = "123"
-        )
-
-        it("success for sms returnerer order id") {
-            val client = Altinn3VarselKlientImpl(
-                altinnBaseUrl = "http://altinn",
-                httpClient = HttpClient(mockEngine) {
-                    expectSuccess = true
-                    install(ContentNegotiation) {
-                        jackson()
-                    }
-                },
-                altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
-                    override suspend fun token(scope: String) = "fake-token"
-                },
-            )
-            client.order(eksternVarselSms).let {
-                it as Altinn3VarselKlient.OrderResponse.Success
-                it.orderId shouldBe "42"
-            }
-            mockEngine.requestHistory.size shouldBe 1
-            mockEngine.requestHistory.first().let { req ->
-                req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders"
-                req.method shouldBe HttpMethod.Post
-                req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
-                req.bodyAsString() shouldEqualJson //language=json
-                        """
+        client.order(eksternVarselSms).let {
+            it as Altinn3VarselKlient.OrderResponse.Success
+            assertEquals("42", it.orderId)
+        }
+        assertEquals(1, mockEngine.requestHistory.size)
+        mockEngine.requestHistory.first().let { req ->
+            assertEquals("http://altinn/notifications/api/v1/orders", req.url.toString())
+            assertEquals(HttpMethod.Post, req.method)
+            assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
+            JSONAssert.assertEquals(
+                //language=json
+                """
                     {
                       "notificationChannel" : "Sms",
                       "recipients" : [ {
@@ -245,34 +228,46 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                         "body" : "Hei, dette er en test"
                       }
                     }
-                    """
-            }
-        }
-
-        it("success for email returnerer order id") {
-            val client = Altinn3VarselKlientImpl(
-                altinnBaseUrl = "http://altinn",
-                httpClient = HttpClient(mockEngine) {
-                    expectSuccess = true
-                    install(ContentNegotiation) {
-                        jackson()
-                    }
-                },
-                altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
-                    override suspend fun token(scope: String) = "fake-token"
-                },
+                    """,
+                req.bodyAsString(),
+                true
             )
-            client.order(eksternVarselEpost).let {
-                it as Altinn3VarselKlient.OrderResponse.Success
-                it.orderId shouldBe "42"
-            }
-//            mockEngine.requestHistory.size shouldBe 1
-            mockEngine.requestHistory.last().let { req ->
-                req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders"
-                req.method shouldBe HttpMethod.Post
-                req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
-                req.bodyAsString() shouldEqualJson //language=json
-                        """
+        }
+    }
+
+    @Test
+    fun `Altinn3VarselKlientImpl#order success for email returnerer order id`() = runTest {
+        val mockEngine = MockEngine {
+            respond(
+                content = mockResponse,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+        val client = Altinn3VarselKlientImpl(
+            altinnBaseUrl = "http://altinn",
+            httpClient = HttpClient(mockEngine) {
+                expectSuccess = true
+                install(ContentNegotiation) {
+                    jackson()
+                }
+            },
+            altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
+                override suspend fun token(scope: String) = "fake-token"
+            },
+        )
+        client.order(eksternVarselEpost).let {
+            it as Altinn3VarselKlient.OrderResponse.Success
+            assertEquals("42", it.orderId)
+        }
+        assertEquals(1, mockEngine.requestHistory.size)
+        mockEngine.requestHistory.last().let { req ->
+            assertEquals("http://altinn/notifications/api/v1/orders", req.url.toString())
+            assertEquals(HttpMethod.Post, req.method)
+            assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
+            JSONAssert.assertEquals(
+                //language=json
+                """
                     {
                       "notificationChannel": "Email",
                       "emailTemplate": {
@@ -286,38 +281,51 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                         }
                       ]
                     }
-                    """
-            }
-        }
-
-        it("returns error when platform token fails") {
-            val client = Altinn3VarselKlientImpl(
-                altinnBaseUrl = "http://altinn",
-                httpClient = HttpClient(mockEngine) {
-                    expectSuccess = true
-                    install(ContentNegotiation) {
-                        jackson()
-                    }
-                },
-                altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
-                    override suspend fun token(scope: String) = throw RuntimeException("Failed to get token")
-                },
+                    """,
+                req.bodyAsString(),
+                true
             )
-
-            client.order(eksternVarselSms).let {
-                it as Altinn3VarselKlient.ErrorResponse
-                it.code shouldBe "RuntimeException"
-                it.message shouldBe "Failed to get token"
-            }
         }
+    }
 
-        it("returns error when http call fails") {
-            val client = Altinn3VarselKlientImpl(
-                altinnBaseUrl = "http://altinn",
-                httpClient = HttpClient(MockEngine {
-                    respondError(
-                        status = HttpStatusCode.BadRequest,
-                        content = """
+    @Test
+    fun `Altinn3VarselKlientImpl#order returns error when platform token fails`() = runTest {
+        val mockEngine = MockEngine {
+            respond(
+                content = mockResponse,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+        val client = Altinn3VarselKlientImpl(
+            altinnBaseUrl = "http://altinn",
+            httpClient = HttpClient(mockEngine) {
+                expectSuccess = true
+                install(ContentNegotiation) {
+                    jackson()
+                }
+            },
+            altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
+                override suspend fun token(scope: String) = throw RuntimeException("Failed to get token")
+            },
+        )
+
+        client.order(eksternVarselSms).let {
+            it as Altinn3VarselKlient.ErrorResponse
+            assertEquals("RuntimeException", it.code)
+            assertEquals("Failed to get token", it.message)
+        }
+    }
+
+    @Test
+    fun `Altinn3VarselKlientImpl#order returns error when http call fails`() = runTest {
+        // returns error when http call fails
+        val client = Altinn3VarselKlientImpl(
+            altinnBaseUrl = "http://altinn",
+            httpClient = HttpClient(MockEngine {
+                respondError(
+                    status = HttpStatusCode.BadRequest,
+                    content = """
                                                 {
                                                   "type": "string",
                                                   "title": "string",
@@ -340,27 +348,27 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                                                   "additionalProp3": "string"
                                                 }
                                             """.trimIndent(),
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-                }) {
-                    expectSuccess = true
-                    install(ContentNegotiation) {
-                        jackson()
-                    }
-                },
-                altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
-                    override suspend fun token(scope: String) = "fake-token"
-                },
-            )
-            client.order(eksternVarselSms).let {
-                it as Altinn3VarselKlient.ErrorResponse
-                it.code shouldBe "400"
-                it.message shouldContain "Bad Request"
-            }
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }) {
+                expectSuccess = true
+                install(ContentNegotiation) {
+                    jackson()
+                }
+            },
+            altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
+                override suspend fun token(scope: String) = "fake-token"
+            },
+        )
+        client.order(eksternVarselSms).let {
+            it as Altinn3VarselKlient.ErrorResponse
+            assertEquals("400", it.code)
+            assertTrue(it.message.contains("Bad Request"))
         }
     }
 
-    describe("Altinn3VarselKlientImpl#notifications") {
+    @Test
+    fun `Altinn3VarselKlientImpl#notifications`() = runTest {
         val orderId = "42"
         //language=json
         val mockSmsResponse = """
@@ -407,16 +415,17 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                 ]
             }"""
 
-        it("gets sms and email notifications for a given order id") {
-            val client = newClient(orderId, mockSmsResponse, mockEmailResponse)
-            val result = client.notifications(orderId)
-            result as Success
-            result.orderId shouldBe orderId
-            result.sendersReference shouldBe null
-            result.generated shouldBe 2
-            result.succeeded shouldBe 2
-            result.notifications.size shouldBe 2
-            result.notifications shouldBe listOf(
+        // gets sms and email notifications for a given order id
+        val client = newClient(orderId, mockSmsResponse, mockEmailResponse)
+        val result = client.notifications(orderId)
+        result as Success
+        assertEquals(orderId, result.orderId)
+        assertEquals(null, result.sendersReference)
+        assertEquals(2, result.generated)
+        assertEquals(2, result.succeeded)
+        assertEquals(2, result.notifications.size)
+        assertEquals(
+            listOf(
                 Notification(
                     id = "4321",
                     succeeded = false,
@@ -441,33 +450,35 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                         lastUpdate = "2023-11-14T16:06:02.877361Z"
                     )
                 ),
-            )
-            (client.httpClient.engine as MockEngine).requestHistory.size shouldBe 2
-            (client.httpClient.engine as MockEngine).requestHistory.first().let { req ->
-                req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders/$orderId/notifications/sms"
-                req.method shouldBe HttpMethod.Get
-                req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
-            }
-            (client.httpClient.engine as MockEngine).requestHistory.last().let { req ->
-                req.url.toString() shouldBe "http://altinn/notifications/api/v1/orders/$orderId/notifications/email"
-                req.method shouldBe HttpMethod.Get
-                req.headers[HttpHeaders.Authorization] shouldBe "Bearer fake-token"
-            }
+            ),
+            result.notifications
+        )
+        assertEquals(2, (client.httpClient.engine as MockEngine).requestHistory.size)
+        (client.httpClient.engine as MockEngine).requestHistory.first().let { req ->
+            assertEquals("http://altinn/notifications/api/v1/orders/$orderId/notifications/sms", req.url.toString())
+            assertEquals(HttpMethod.Get, req.method)
+            assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
+        }
+        (client.httpClient.engine as MockEngine).requestHistory.last().let { req ->
+            assertEquals("http://altinn/notifications/api/v1/orders/$orderId/notifications/email", req.url.toString())
+            assertEquals(HttpMethod.Get, req.method)
+            assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
         }
     }
 
-    describe("Altinn3VarselKlientImpl#notifications no sms only email") {
-        it("gets sms and email notifications for a given order id") {
-            val client = newClient(
-                "43",
-                smsResponse = """
+    @Test
+    fun `Altinn3VarselKlientImpl#notifications no sms only email`() = runTest {
+        // gets sms and email notifications for a given order id
+        val client = newClient(
+            "43",
+            smsResponse = """
                 {
                   "generated": 0,
                   "notifications": [],
                   "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
                   "succeeded": 0
                 }""",
-                emailResponse = """
+            emailResponse = """
                 {
                   "generated": 2,
                   "notifications": [
@@ -501,20 +512,51 @@ class Altinn3VarselKlientImplTest : DescribeSpec({
                   "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
                   "succeeded": 0
                 }"""
-            )
-            client.notifications("43").let {
-                it should beOfType<Success>()
-                it as Success
-                it.generated shouldBe 2
-                it.succeeded shouldBe 0
-                it.notifications.size shouldBe 2
-                it.notifications.any { notification ->
-                    notification.sendStatus.isProcessing
-                } shouldBe true
-            }
+        )
+        client.notifications("43").let {
+            it as Success
+            assertEquals(2, it.generated)
+            assertEquals(0, it.succeeded)
+            assertEquals(2, it.notifications.size)
+            assertTrue(it.notifications.any { notification -> notification.sendStatus.isProcessing })
         }
     }
-})
+}
+
+
+//language=json
+private const val mockResponse = """
+        {
+          "orderId": "42",
+          "recipientLookup": {
+            "status": "Success",
+            "isReserved": [
+              "string"
+            ],
+            "missingContact": [
+              "string"
+            ]
+          }
+        }"""
+
+private val eksternVarselSms = EksternVarsel.Sms(
+    fnrEllerOrgnr = "99999999901",
+    sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+    sendeTidspunkt = null,
+    mobilnummer = "99999999",
+    tekst = "Hei, dette er en test",
+    ordreId = "123"
+)
+
+private val eksternVarselEpost = EksternVarsel.Epost(
+    fnrEllerOrgnr = "99999999901",
+    sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
+    sendeTidspunkt = null,
+    epostadresse = "adresse@epost.com",
+    tittel = "Hei, dette er en tittel",
+    body = "Hei, dette er en test",
+    ordreId = "123"
+)
 
 /**
  * test helper for getting the body of a client request from mock engine history

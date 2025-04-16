@@ -1,8 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.kotest.core.listeners.TestListener
-import io.kotest.core.spec.Spec
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
@@ -30,66 +31,60 @@ import org.intellij.lang.annotations.Language
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-fun Spec.ktorBrukerTestServer(
+fun ktorBrukerTestServer(
     enhetsregisteret: Enhetsregisteret = EnhetsregisteretStub(),
     brukerRepository: BrukerRepository = BrukerRepositoryStub(),
     kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
     altinnTilgangerService: AltinnTilgangerService = AltinnTilgangerServiceStub(),
-    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
-): TestApplicationEngine {
-    val engine = TestApplicationEngine(
-        environment = ApplicationEngineEnvironmentBuilder().build(environment)
-    )
+    envBlock: ApplicationEnvironmentBuilder.() -> Unit = {},
+    testBlock: suspend ApplicationTestBuilder.() -> Unit
+) = testApplication {
     val brukerGraphQL = BrukerAPI.createBrukerGraphQL(
         brukerRepository = brukerRepository,
         hendelseProdusent = kafkaProducer,
         altinnTilgangerService = altinnTilgangerService,
         virksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
     )
-    listener(KtorTestListener(engine))
-    engine.start()
-    engine.application.apply {
+
+    environment {
+        envBlock()
+    }
+
+    application {
         graphqlSetup(
             authPluginConfig = FAKE_BRUKER_AUTHENTICATION,
             extractContext = extractBrukerContext,
             graphql = CompletableDeferred(brukerGraphQL),
         )
     }
-    return engine
+
+    testBlock()
 }
 
-fun Spec.ktorProdusentTestServer(
+fun ktorProdusentTestServer(
     produsentRegister: ProdusentRegister = stubProdusentRegister,
     kafkaProducer: HendelseProdusent = NoopHendelseProdusent,
     produsentRepository: ProdusentRepository = ProdusentRepositoryStub(),
-    environment: ApplicationEngineEnvironmentBuilder.() -> Unit = {}
-): TestApplicationEngine {
-    val engine = TestApplicationEngine(
-        environment = ApplicationEngineEnvironmentBuilder().build(environment)
-    )
+    envBlock: ApplicationEnvironmentBuilder.() -> Unit = {},
+    testBlock: suspend ApplicationTestBuilder.() -> Unit
+) = testApplication {
     val produsentGraphQL = ProdusentAPI.newGraphQL(kafkaProducer, produsentRepository)
-    listener(KtorTestListener(engine))
-    engine.start()
-    engine.application.apply {
+
+
+
+    environment {
+        envBlock()
+    }
+
+    application {
         graphqlSetup(
             authPluginConfig = FAKE_PRODUSENT_AUTHENTICATION,
             extractContext = extractProdusentContext(produsentRegister),
             graphql = CompletableDeferred(produsentGraphQL)
         )
     }
-    return engine
-}
 
-class KtorTestListener(
-    private val engine: TestApplicationEngine
-) : TestListener {
-
-    override suspend fun beforeSpec(spec: Spec) {
-    }
-
-    override suspend fun afterSpec(spec: Spec) {
-        engine.stop(0L, 0L)
-    }
+    testBlock()
 }
 
 const val PRODUSENT_HOST = "ag-notifikasjon-produsent-api.invalid"
@@ -156,37 +151,36 @@ object FakeIssuer {
 val BRUKERAPI_OBOTOKEN = FakeIssuer.issueBrukerToken()
 val PRODUSENTAPI_AZURETOKEN = FakeIssuer.issueProdusentToken()
 
-typealias RequestConfig = TestApplicationRequest.() -> Unit
-
-fun TestApplicationEngine.responseOf(
+suspend fun HttpClient.responseOf(
     method: HttpMethod,
     uri: String,
     host: String? = null,
     accept: String? = null,
     authorization: String? = null,
-    config: RequestConfig = {}
-): TestApplicationResponse =
-    handleRequest(method, uri) {
+    config: HttpRequestBuilder.() -> Unit = {}
+): HttpResponse =
+    request {
+        this.method = method
+        url(uri)
         if (host != null) {
-            addHeader(HttpHeaders.Host, host)
+            header(HttpHeaders.Host, host)
         }
         if (accept != null) {
-            addHeader(HttpHeaders.Accept, accept)
+            header(HttpHeaders.Accept, accept)
         }
         if (authorization != null) {
-            addHeader(HttpHeaders.Authorization, authorization)
+            header(HttpHeaders.Authorization, authorization)
         }
         config()
-    }.response
+    }
 
-fun TestApplicationEngine.get(
+suspend fun HttpClient.get(
     uri: String,
     host: String? = null,
     accept: String? = null,
     authorization: String? = null,
-    config: RequestConfig = {}
-): TestApplicationResponse =
-    responseOf(
+    config: HttpRequestBuilder.() -> Unit = {}
+) = responseOf(
         HttpMethod.Get,
         uri,
         host = host,
@@ -195,16 +189,15 @@ fun TestApplicationEngine.get(
         config = config
     )
 
-fun TestApplicationEngine.post(
+suspend fun HttpClient.post(
     uri: String,
     host: String? = null,
     body: String? = null,
     jsonBody: Any? = null,
     accept: String? = null,
     authorization: String? = null,
-    config: RequestConfig = {},
-): TestApplicationResponse =
-    responseOf(
+    config: HttpRequestBuilder.() -> Unit = {},
+) = responseOf(
         HttpMethod.Post,
         uri,
         host = host,
@@ -215,25 +208,22 @@ fun TestApplicationEngine.post(
                 setBody(body)
             }
             if (jsonBody != null) {
-                addHeader(HttpHeaders.ContentType, "application/json")
+                header(HttpHeaders.ContentType, "application/json")
                 setBody(laxObjectMapper.writeValueAsString(jsonBody))
             }
             config()
         }
     )
 
-fun TestApplicationEngine.brukerApi(req: GraphQLRequest): TestApplicationResponse {
-    return post(
+suspend fun HttpClient.brukerApi(
+    @Language("GraphQL") req: String
+) = brukerApi(GraphQLRequest(req))
+
+suspend fun HttpClient.brukerApi(req: GraphQLRequest) =
+    post(
         "/api/graphql",
         host = BRUKER_HOST,
         jsonBody = req,
         accept = "application/json",
         authorization = "Bearer $BRUKERAPI_OBOTOKEN"
     )
-}
-
-fun TestApplicationEngine.brukerApi(
-    @Language("GraphQL") req: String
-): TestApplicationResponse {
-    return brukerApi(GraphQLRequest(req))
-}

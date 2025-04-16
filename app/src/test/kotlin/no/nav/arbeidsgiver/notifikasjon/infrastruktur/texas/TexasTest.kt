@@ -1,27 +1,29 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.string.shouldNotContain
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.utils.io.*
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 
-class TexasTest : DescribeSpec({
-    describe("TokenResponse") {
-        it("secrets er ikke del av toString") {
-            val secret = "12355jkasdklajsflajflj"
-            val tokenEndpointResponse = TokenResponse.Success(accessToken = secret, expiresInSeconds = 33)
+class TexasTest {
+    @Test
+    fun TokenResponse() {
+        // secrets er ikke del av toString
+        val secret = "12355jkasdklajsflajflj"
+        val tokenEndpointResponse = TokenResponse.Success(accessToken = secret, expiresInSeconds = 33)
 
-            tokenEndpointResponse.toString() shouldNotContain secret
-        }
+        assertFalse(tokenEndpointResponse.toString().contains(secret))
     }
 
-    describe("TokenIntrospectionResponse") {
+    @Test
+    fun TokenIntrospectionResponse() = runTest {
         //language=json
         val mockTokenResponse = """
            {
@@ -43,7 +45,7 @@ class TexasTest : DescribeSpec({
             TexasAuthConfig("", "", ""),
             IdentityProvider.TOKEN_X,
             httpClient = HttpClient(
-                MockEngine { req ->
+                MockEngine { _ ->
                     respond(
                         content = ByteReadChannel(mockTokenResponse),
                         status = HttpStatusCode.OK,
@@ -57,20 +59,18 @@ class TexasTest : DescribeSpec({
             }
         )
 
-        it("har claims vi bryr oss om") {
-            authClient.introspect("token").let {
-                it.active shouldBe true
-                it.pid shouldBe "pid"
-                it.azp shouldBe "yolo"
-                it.acr shouldBe "idporten-loa-high"
-
-                // TODO: @JsonAnySetter broken i jackson 2.17.0-2.18.1
-                //it.other["jti"] shouldBe "jti"
-            }
+        // har claims vi bryr oss om
+        with(authClient.introspect("token")) {
+            assertEquals(true, active)
+            assertEquals("pid", pid)
+            assertEquals("yolo", azp)
+            assertEquals("idporten-loa-high", acr)
+            assertEquals("jti", other["jti"])
         }
     }
 
-    describe("AuthClient") {
+    @Test
+    fun AuthClient() = runTest {
         //example respones from https://github.com/nais/texas
         val responses = mapOf(
             "/token" to
@@ -133,48 +133,43 @@ class TexasTest : DescribeSpec({
             }
         )
 
-        it("token") {
-            authClient.token("") shouldNotBe null
-        }
+        // token
+        assertNotNull(authClient.token(""))
 
-        it("exchange") {
-            authClient.exchange("", "") shouldNotBe null
-        }
+        // exchange
+        assertNotNull(authClient.exchange("", ""))
 
-        it("introspect") {
-            authClient.introspect("") shouldNotBe null
-        }
+        // introspect
+        assertNotNull(authClient.introspect(""))
 
-        it ("error response") {
-            AuthClientImpl(
-                TexasAuthConfig("", "", ""),
-                IdentityProvider.TOKEN_X,
-                httpClient = HttpClient(
-                    MockEngine { _ ->
-                        respond(
-                            content = ByteReadChannel(
-                                //language=json
-                                """
+        // error response
+        AuthClientImpl(
+            TexasAuthConfig("", "", ""),
+            IdentityProvider.TOKEN_X,
+            httpClient = HttpClient(
+                MockEngine { _ ->
+                    respond(
+                        content = ByteReadChannel(
+                            //language=json
+                            """
                                 {
                                   "error": "invalid_token",
                                   "error_description": "womp womp, bc reasons.. lol"
                                 }
                                 """
-                            ),
-                            status = HttpStatusCode.BadRequest,
-                            headers = headersOf(HttpHeaders.ContentType, "application/json")
-                        )
-                    }
-                ) {
-                    install(ContentNegotiation) {
-                        jackson()
-                    }
+                        ),
+                        status = HttpStatusCode.BadRequest,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
                 }
-            ).let {
-                it.introspect("") shouldNotBe null
+            ) {
+                install(ContentNegotiation) {
+                    jackson()
+                }
             }
-
-
+        ).let {
+            assertNotNull(it.introspect(""))
         }
+
     }
-})
+}

@@ -1,71 +1,85 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
-class DatabaseConfigTest : DescribeSpec({
 
-    describe("JdbcUrl") {
-        it("from jdbcUrl yields correct database, username, password and url") {
-            val url = "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword"
-            val jdbcUrl = JdbcUrl(url)
+class DatabaseConfigTest {
 
-            jdbcUrl.database shouldBe "mydb"
-            jdbcUrl.username shouldBe "myuser"
-            jdbcUrl.password shouldBe "mypassword"
+    @Test
+    fun JdbcUrl() {
+        // from jdbcUrl yields correct database, username, password and url
+        with(JdbcUrl("jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword")) {
+            assertEquals("mydb", database)
+            assertEquals("myuser", username)
+            assertEquals("mypassword", password)
         }
 
-        it("supports additional options via map") {
-            val url = "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword"
-            val jdbcUrl = JdbcUrl(url, mapOf("foo" to "bar")).toString()
 
-            jdbcUrl shouldBe "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword&foo=bar"
+        // supports additional options via map
+        with(
+            JdbcUrl(
+                "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword",
+                mapOf("foo" to "bar")
+            ).toString()
+        ) {
+            assertEquals("jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword&foo=bar", this)
         }
 
-        it("can create a copy with another database name") {
-            val url = "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword"
-            val jdbcUrl = JdbcUrl(url)
 
-            jdbcUrl.withDatabase("anotherdb").toString() shouldBe "jdbc:postgresql://localhost:5432/anotherdb?user=myuser&password=mypassword"
-
+        // can create a copy with another database name
+        with(JdbcUrl("jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword")) {
+            assertEquals(
+                "jdbc:postgresql://localhost:5432/anotherdb?user=myuser&password=mypassword",
+                withDatabase("anotherdb").toString()
+            )
         }
+
+
     }
 
-    describe("Database.Config") {
-        it("from jdbcUrl yields correct database, username, password and url") {
-            val jdbcUrl = "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword"
+    @Test
+    fun `Database Config`() {
+        // from jdbcUrl yields correct database, username, password and url
+        with("jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword") {
             val config = Database.Config(
-                jdbcUrl = jdbcUrl,
+                jdbcUrl = this,
                 migrationLocations = "",
                 jdbcOpts = mapOf()
             )
 
-            config.database shouldBe "mydb"
-            config.username shouldBe "myuser"
-            config.password shouldBe "mypassword"
-            config.url.toString() shouldBe jdbcUrl
+            assertEquals("mydb", config.database)
+            assertEquals("myuser", config.username)
+            assertEquals("mypassword", config.password)
+            assertEquals(this, config.url.toString())
         }
 
-        it("supports additional options via map") {
-            val jdbcUrl = "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword"
+        // supports additional options via map
+        with("jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword") {
             val config = Database.Config(
-                jdbcUrl = jdbcUrl,
+                jdbcUrl = this,
                 migrationLocations = "",
                 jdbcOpts = mapOf("foo" to "bar")
             )
 
-            config.url.toString() shouldBe "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword&foo=bar"
+            assertEquals(
+                "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword&foo=bar",
+                config.url.toString()
+            )
         }
 
-        it("can create a copy with another database name") {
-            val jdbcUrl = "jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword"
+        // can create a copy with another database name
+        with("jdbc:postgresql://localhost:5432/mydb?user=myuser&password=mypassword") {
             val config = Database.Config(
-                jdbcUrl = jdbcUrl,
+                jdbcUrl = this,
                 migrationLocations = "",
                 jdbcOpts = mapOf()
             )
 
-            config.withDatabase("anotherdb").url.toString() shouldBe "jdbc:postgresql://localhost:5432/anotherdb?user=myuser&password=mypassword"
+            assertEquals(
+                "jdbc:postgresql://localhost:5432/anotherdb?user=myuser&password=mypassword",
+                config.withDatabase("anotherdb").url.toString()
+            )
         }
     }
-})
+}

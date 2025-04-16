@@ -1,13 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.module.kotlin.readValue
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
-import io.kotest.matchers.shouldBe
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import java.time.LocalDateTime
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
-class ISO8601PeriodTest : DescribeSpec({
+class ISO8601PeriodTest {
     val simpleExamples = listOf(
         "P",
         "P1D",
@@ -24,54 +23,52 @@ class ISO8601PeriodTest : DescribeSpec({
     )
     val examples = simpleExamples.map { it to it } + complexExamples
 
-    describe("ISO8601Period parse and print roundtrip") {
-        describe("::parse -> ::toString") {
-            withData(examples) { (input, expected) ->
-                ISO8601Period.parse(input).toString() shouldBe expected
-            }
-        }
-
-        describe("jackson serde") {
-            withData(examples) { (input, expected) ->
-                val obj = laxObjectMapper.readValue<ISO8601Period>("\"$input\"")
-                laxObjectMapper.writeValueAsString(obj) shouldBe "\"$expected\""
-            }
-        }
-
-        describe("toString+parse preserve equality") {
-            withData(examples) { (input, _) ->
-                ISO8601Period.parse(input) shouldBe ISO8601Period.parse(ISO8601Period.parse(input).toString())
-            }
+    @Test
+    fun `parse - toString`() {
+        examples.forEach { (input, expected) ->
+            assertEquals(expected, ISO8601Period.parse(input).toString())
         }
     }
 
-    describe("håndterer skuddår") {
-        it("fra 29. feb (skuddår) frem ett år") {
-            val start = LocalDateTime.parse("2020-02-29T12:00")
-            val step = ISO8601Period.parse("P1YT")
-            val expected = LocalDateTime.parse("2021-02-28T12:00")
-            start + step shouldBe expected
-        }
-
-        it("fra 20. feb (skuddår) frem 1 måned") {
-            val start = LocalDateTime.parse("2020-02-20T12:00")
-            val step = ISO8601Period.parse("P1MT")
-            val expected = LocalDateTime.parse("2020-03-20T12:00")
-            start + step shouldBe expected
-        }
-
-        it("fra 20. feb (skuddår) frem 1 år") {
-            val start = LocalDateTime.parse("2020-02-20T12:00")
-            val step = ISO8601Period.parse("P1YT")
-            val expected = LocalDateTime.parse("2021-02-20T12:00")
-            start + step shouldBe expected
-        }
-
-        it("fra 28. feb 23:00 (året før skuddår) frem 1 år og 2 timer") {
-            val start = LocalDateTime.parse("2019-02-28T23:00")
-            val step = ISO8601Period.parse("P1YT2H")
-            val expected = LocalDateTime.parse("2020-02-29T01:00")
-            start + step shouldBe expected
+    @Test
+    fun `jackson serde`() {
+        examples.forEach { (input, expected) ->
+            val obj = laxObjectMapper.readValue<ISO8601Period>("\"$input\"")
+            assertEquals("\"$expected\"", laxObjectMapper.writeValueAsString(obj))
         }
     }
-})
+
+    @Test
+    fun `toString+parse preserve equality`() {
+        examples.forEach { (input, _) ->
+            assertEquals(ISO8601Period.parse(ISO8601Period.parse(input).toString()), ISO8601Period.parse(input))
+        }
+    }
+
+    @Test
+    fun `håndterer skuddår`() {
+        // fra 29. feb (skuddår) frem ett år
+        var start = LocalDateTime.parse("2020-02-29T12:00")
+        var step = ISO8601Period.parse("P1YT")
+        var expected = LocalDateTime.parse("2021-02-28T12:00")
+        assertEquals(expected, start + step)
+
+        // fra 20. feb (skuddår) frem 1 måned
+        start = LocalDateTime.parse("2020-02-20T12:00")
+        step = ISO8601Period.parse("P1MT")
+        expected = LocalDateTime.parse("2020-03-20T12:00")
+        assertEquals(expected, start + step)
+
+        // fra 20. feb (skuddår) frem 1 år
+        start = LocalDateTime.parse("2020-02-20T12:00")
+        step = ISO8601Period.parse("P1YT")
+        expected = LocalDateTime.parse("2021-02-20T12:00")
+        assertEquals(expected, start + step)
+
+        // fra 28. feb 23:00 (året før skuddår) frem 1 år og 2 timer
+        start = LocalDateTime.parse("2019-02-28T23:00")
+        step = ISO8601Period.parse("P1YT2H")
+        expected = LocalDateTime.parse("2020-02-29T01:00")
+        assertEquals(expected, start + step)
+    }
+}

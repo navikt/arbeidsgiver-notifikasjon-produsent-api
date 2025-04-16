@@ -1,20 +1,19 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgang
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
-class BrukerRepositorySearchTest : DescribeSpec({
+class BrukerRepositorySearchTest {
 
-    describe("BrukerRepositoryImpl#hentSaker") {
-        val database = testDatabase(Bruker.databaseConfig)
+    @Test
+    fun `BrukerRepositoryImpl#hentSaker`() = withTestDatabase(Bruker.databaseConfig) { database ->
         val brukerRepository = BrukerRepositoryImpl(database)
         brukerRepository.insertSak("1", "Refusjon graviditet - Gerd - 112233")
         brukerRepository.insertSak("2", "Refusjon kronisk syk - Gerd - 112233")
@@ -25,7 +24,7 @@ class BrukerRepositorySearchTest : DescribeSpec({
         brukerRepository.insertSak("7", "Sykemelding - Pål - 111222")
         brukerRepository.insertSak("8", "Litt rare symboler // \\x % _")
 
-        withData(
+        mapOf(
             null to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
             "" to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
             " " to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
@@ -78,11 +77,12 @@ class BrukerRepositorySearchTest : DescribeSpec({
             "%" to listOf("8"),
             // Other test cases?
             // - turkish i where upper-lower round-trip is not identity function
-        ) { (query, result) ->
-            brukerRepository.search(query) shouldContainExactlyInAnyOrder result.map { uuid(it) }
+        ).forEach { (query, result) ->
+            val expected = result.map { uuid(it) }.sorted()
+            assertEquals(expected, brukerRepository.search(query).sorted())
         }
     }
-})
+}
 
 
 private suspend fun BrukerRepositoryImpl.search(query: String?): List<UUID> =
@@ -103,7 +103,7 @@ private suspend fun BrukerRepositoryImpl.search(query: String?): List<UUID> =
         offset = 0,
         limit = 1000_000,
         oppgaveTilstand = null,
-        oppgaveFilter = null ,
+        oppgaveFilter = null,
         sortering = BrukerAPI.SakSortering.NYESTE
     )
         .saker

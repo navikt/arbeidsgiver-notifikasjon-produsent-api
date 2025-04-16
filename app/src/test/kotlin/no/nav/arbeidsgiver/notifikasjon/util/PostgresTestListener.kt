@@ -1,12 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
-import io.kotest.core.TestConfiguration
-import io.kotest.core.listeners.TestListener
-import io.kotest.core.spec.Spec
-import io.kotest.core.test.TestCase
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.test.runTest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import java.sql.DriverManager
 import java.util.concurrent.ConcurrentHashMap
@@ -14,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 val templateDbs = ConcurrentHashMap<Database.Config, String>()
 val ids = generateSequence(0) { it + 1 }.iterator()
 val mutex = Mutex()
+
 private suspend fun createDbFromTemplate(config: Database.Config, dbName: String): Database.Config {
     val templateDb = templateDb(config)
     val database = mutex.withLock {
@@ -73,11 +71,14 @@ private fun templateDb(config: Database.Config): String {
     return templateDb
 }
 
-fun TestConfiguration.testDatabase(config: Database.Config, dbPrefix: String? = null): Database =
-    runBlocking {
+fun withTestDatabase(
+    config: Database.Config,
+    dbPrefix: String? = null,
+    testBlock: suspend (db: Database) -> Unit
+) = runTest {
         val testConfig =
             createDbFromTemplate(config, if (dbPrefix !== null) "${dbPrefix}_${config.database}" else config.database)
-        Database.openDatabase(
+        val db = Database.openDatabase(
             config = testConfig.copy(
                 // https://github.com/flyway/flyway/issues/2323#issuecomment-804495818
                 jdbcOpts = mapOf("preparedStatementCacheQueries" to "0"),
@@ -89,14 +90,9 @@ fun TestConfiguration.testDatabase(config: Database.Config, dbPrefix: String? = 
                 /* noop. created from template. */
             }
         )
-    }.also { listener(PostgresTestListener(it)) }
 
-class PostgresTestListener(private val database: Database) : TestListener {
+        testBlock(db)
 
-    override suspend fun beforeContainer(testCase: TestCase) {
+        db.close()
     }
 
-    override suspend fun afterSpec(spec: Spec) {
-        database.close()
-    }
-}
