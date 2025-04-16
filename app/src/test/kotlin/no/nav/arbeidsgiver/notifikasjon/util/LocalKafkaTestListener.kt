@@ -14,11 +14,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 fun localKafka() = LocalKafkaTestListener()
+private val topic = AtomicReference(NOTIFIKASJON_TOPIC)
+private val groupIdCounter = AtomicInteger(0)
 
 class LocalKafkaTestListener: BeforeAllCallback {
-    private val topic = AtomicReference(NOTIFIKASJON_TOPIC)
-    private val groupIdCounter = AtomicInteger(0)
-    private fun newId() = "test-" + groupIdCounter.getAndIncrement()
+    private fun newId() = "test-" + groupIdCounter.incrementAndGet()
 
     override fun beforeAll(context: ExtensionContext) = runBlocking {
         topic.set("${NOTIFIKASJON_TOPIC}-${UUID.randomUUID()}")
