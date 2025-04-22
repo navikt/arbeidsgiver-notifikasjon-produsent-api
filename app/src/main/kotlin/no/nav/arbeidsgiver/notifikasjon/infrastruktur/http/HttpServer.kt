@@ -10,14 +10,13 @@ import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
@@ -45,23 +44,23 @@ import java.util.*
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
-val extractBrukerContext = fun PipelineContext<Unit, ApplicationCall>.(): BrukerAPI.Context {
+val extractBrukerContext = fun RoutingContext.(): BrukerAPI.Context {
     val principal = call.principal<BrukerPrincipal>()!!
     val authHeader = call.request.authorization()!!.removePrefix("Bearer ")
     return BrukerAPI.Context(
         fnr = principal.fnr,
         authHeader,
-        coroutineScope = this
+        coroutineScope = this.call
     )
 }
 
 fun extractProdusentContext(produsentRegister: ProdusentRegister) =
-    fun PipelineContext<Unit, ApplicationCall>.(): ProdusentAPI.Context {
+    fun RoutingContext.(): ProdusentAPI.Context {
         val principal = call.principal<ProdusentPrincipal>()!!
         return ProdusentAPI.Context(
             appName = principal.appName,
             produsent = produsentRegister.finn(principal.appName),
-            coroutineScope = this
+            coroutineScope = this.call
         )
     }
 
@@ -89,7 +88,7 @@ fun CoroutineScope.launchHttpServer(
 fun <T : WithCoroutineScope> CoroutineScope.launchGraphqlServer(
     httpPort: Int,
     authPluginConfig: TexasAuthPluginConfiguration,
-    extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
+    extractContext: RoutingContext.() -> T,
     graphql: Deferred<TypedGraphQL<T>>,
 ) {
     launchHttpServer(httpPort) {
@@ -99,7 +98,7 @@ fun <T : WithCoroutineScope> CoroutineScope.launchGraphqlServer(
 
 fun <T : WithCoroutineScope> Application.graphqlSetup(
     authPluginConfig: TexasAuthPluginConfiguration,
-    extractContext: PipelineContext<Unit, ApplicationCall>.() -> T,
+    extractContext: RoutingContext.() -> T,
     graphql: Deferred<TypedGraphQL<T>>,
 ) {
     baseSetup {
@@ -111,7 +110,7 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
             }
 
             post("graphql") {
-                withContext(this.coroutineContext + graphQLDispatcher + MDCContext()) {
+                withContext(this.call.coroutineContext + graphQLDispatcher + MDCContext()) {
                     val context = extractContext()
                     val request = call.receive<GraphQLRequest>()
                     val result = graphql.await().timedExecute(request, context)

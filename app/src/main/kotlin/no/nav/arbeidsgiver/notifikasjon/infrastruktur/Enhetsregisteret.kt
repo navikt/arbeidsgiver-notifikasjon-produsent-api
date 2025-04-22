@@ -1,8 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -34,30 +34,26 @@ class EnhetsregisteretDevImpl : Enhetsregisteret {
 }
 
 class EnhetsregisteretImpl(
-    private val baseUrl: String? = null,
+    val httpClient: HttpClient = defaultHttpClient {
+        expectSuccess = false
+        install(HttpClientMetricsFeature) {
+            registry = Metrics.meterRegistry
+            staticPath = "/enhetsregisteret/api/underenheter/"
+        }
+    },
 ) : Enhetsregisteret {
     private val log = logger()
 
     private val timer = Metrics.meterRegistry.timer("brreg_hent_organisasjon")
 
-    private val httpClient = defaultHttpClient {
-        expectSuccess = false
-        defaultRequest {
-            url(baseUrl ?: basedOnEnv(
-                prod = { "https://ereg-services.prod-fss-pub.nais.io/" },
-                other = { "https://ereg-services-q1.dev-fss-pub.nais.io/" },
-            ))
-        }
-
-        install(HttpClientMetricsFeature) {
-            registry = Metrics.meterRegistry
-            staticPath = "/enhetsregisteret/api/underenheter/"
-        }
-    }
+    private val baseUrl: String = basedOnEnv(
+        prod = { "https://ereg-services.prod-fss-pub.nais.io" },
+        other = { "https://ereg-services-q1.dev-fss-pub.nais.io" },
+    )
 
     override suspend fun hentUnderenhet(orgnr: String) = timer.coRecord {
         val response: HttpResponse = try {
-            httpClient.get("/v1/organisasjon/$orgnr/noekkelinfo")
+            httpClient.get("$baseUrl/v1/organisasjon/$orgnr/noekkelinfo")
         } catch (e: RuntimeException) {
             log.warn("kall mot $baseUrl feilet", e)
             return@coRecord Enhetsregisteret.Underenhet(orgnr, "")

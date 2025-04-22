@@ -1,32 +1,29 @@
 package no.nav.arbeidsgiver.notifikasjon.hendelse_transformer
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.types.beInstanceOf
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
-class HendelseTransformerTest : DescribeSpec({
-    describe("Transform hendelse: Duration as seconds") {
+class HendelseTransformerTest {
+    @Test
+    fun `Transform hendelse Duration as seconds`() {
         val inputWithError = laxObjectMapper.readTree(inputWithErrorJson)
         val transformed = fiksNumberTilDurationStringISkedulertHardDelete(inputWithError)
-        it("should transfrom numbers to duration of seconds") {
-            transformed shouldNotBe null
-            transformed!! should beInstanceOf<SakOpprettet>()
-            transformed as SakOpprettet
-            transformed.hardDelete shouldNotBe null
-            transformed.hardDelete!!.omOrNull() shouldBe ISO8601Period.parse("PT63072000S")
-        }
+        // should transfrom numbers to duration of seconds
+        assertNotNull(transformed)
+        transformed as SakOpprettet
+        assertNotNull(transformed.hardDelete)
+        assertEquals(ISO8601Period.parse("PT63072000S"), transformed.hardDelete!!.omOrNull())
 
         val jsonNode2 = laxObjectMapper.readTree(inputOkJson)
-        it("no transformation needed") {
-            fiksNumberTilDurationStringISkedulertHardDelete(jsonNode2) shouldBe null
-        }
+        // no transformation needed
+        assertEquals(null, fiksNumberTilDurationStringISkedulertHardDelete(jsonNode2))
     }
-})
+}
+
 //language=JSON
 private const val inputWithErrorJson = """
     {
