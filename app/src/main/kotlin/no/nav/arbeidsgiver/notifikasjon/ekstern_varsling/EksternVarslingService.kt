@@ -159,7 +159,6 @@ class EksternVarslingService(
                     waitQueuePastSizeGauge.set(past)
                     waitQueueFutureSizeGauge.set(future)
                 }
-                log.info("gauge-oppdatering vellykket")
             }
 
             launchProcessingLoop(
