@@ -1,34 +1,27 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.core.test.TestScope
-import io.kotest.matchers.collections.beEmpty
-import io.kotest.matchers.collections.haveSize
-import io.kotest.matchers.nulls.beNull
-import io.kotest.matchers.nulls.shouldNotBeNull
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNot
-import io.kotest.matchers.types.instanceOf
-import io.ktor.server.testing.*
+import io.ktor.client.*
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.NY
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.Notifikasjon.Oppgave.Tilstand.UTFOERT
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.OppgaveTidslinjeElement
-import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI.TidslinjeElement
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.tid.atOslo
 import no.nav.arbeidsgiver.notifikasjon.util.AltinnTilgangerServiceStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorBrukerTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import java.time.OffsetDateTime
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
-class QuerySakerTidslinjeTest: DescribeSpec({
-    describe("tidslinje") {
-        val database = testDatabase(Bruker.databaseConfig)
+class QuerySakerTidslinjeTest {
+    @Test
+    fun tidslinje() = withTestDatabase(Bruker.databaseConfig) { database ->
         val brukerRepository = BrukerRepositoryImpl(database)
-        val engine = ktorBrukerTestServer(
+        ktorBrukerTestServer(
             brukerRepository = brukerRepository,
             altinnTilgangerService = AltinnTilgangerServiceStub { _, _ ->
                 AltinnTilganger(
@@ -36,159 +29,169 @@ class QuerySakerTidslinjeTest: DescribeSpec({
                     tilganger = listOf(TEST_TILGANG_1)
                 )
             }
-        )
-        val sak0 = brukerRepository.sakOpprettet()
-        val sak1 = brukerRepository.sakOpprettet(lenke = null)
+        ) {
+            val sak0 = brukerRepository.sakOpprettet()
+            val sak1 = brukerRepository.sakOpprettet(lenke = null)
 
-        it("tidslinje er tom til å starte med") {
-            val tidslinje0 = engine.fetchTidslinje(sak0)
-            tidslinje0 should beEmpty()
-
-            val tidslinje1 = engine.fetchTidslinje(sak1)
-            tidslinje1 should beEmpty()
-        }
-
-        // Legg til oppgave på en sak
-        val oppgave0 = brukerRepository.oppgaveOpprettet(
-            grupperingsid = sak0.grupperingsid,
-            merkelapp = sak0.merkelapp,
-            opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01:01+00"),
-            lenke = "https://foo.bar"
-        )
-        it("første oppgave vises på riktig sak") {
-            val tidslinje0 = engine.fetchTidslinje(sak0)
-            tidslinje0 should haveSize(1)
-            instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
-                it.tekst shouldBe oppgave0.tekst
-                it.tilstand shouldBe NY
-                it.id shouldNot beNull()
-                it.lenke shouldBe oppgave0.lenke
+            // tidslinje er tom til å starte med
+            with(client.fetchTidslinje(sak0)) {
+                assertTrue(isEmpty())
+            }
+            with(client.fetchTidslinje(sak1)) {
+                assertTrue(isEmpty())
             }
 
-            val tidslinje1 = engine.fetchTidslinje(sak1)
-            tidslinje1 should beEmpty()
-        }
+            // Legg til oppgave på en sak
+            val oppgave0 = brukerRepository.oppgaveOpprettet(
+                grupperingsid = sak0.grupperingsid,
+                merkelapp = sak0.merkelapp,
+                opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01:01+00"),
+                lenke = "https://foo.bar"
+            )
 
-        val beskjed1 = brukerRepository.beskjedOpprettet(
-            grupperingsid = sak0.grupperingsid,
-            merkelapp = sak0.merkelapp,
-            opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(1),
-            lenke = "https://foo.bar"
-        )
-        it("andre beskjed på samme sak kommer i riktig rekkefølge") {
-            val tidslinje0 = engine.fetchTidslinje(sak0)
-            tidslinje0 should haveSize(2)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
-                it.tekst shouldBe beskjed1.tekst
-                it.lenke shouldBe beskjed1.lenke
-            }
-            instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[1]) {
-                it.tekst shouldBe oppgave0.tekst
-                it.tilstand shouldBe NY
+            // første oppgave vises på riktig sak
+            with(client.fetchTidslinje(sak0)) {
+                assertEquals(1, size)
+                val e = first()
+                e as OppgaveTidslinjeElement
+                assertEquals(oppgave0.tekst, e.tekst)
+                assertEquals(NY, e.tilstand)
+                assertNotNull(e.id)
+                assertEquals(oppgave0.lenke, e.lenke)
             }
 
-            val tidslinje1 = engine.fetchTidslinje(sak1)
-            tidslinje1 should beEmpty()
-        }
-
-        val beskjed2 = brukerRepository.beskjedOpprettet(
-            grupperingsid = sak1.grupperingsid,
-            merkelapp = sak1.merkelapp,
-            opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(2),
-        )
-        it("ny beskjed på andre saken, vises kun der") {
-            val tidslinje0 = engine.fetchTidslinje(sak0)
-            tidslinje0 should haveSize(2)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
-                it.tekst shouldBe beskjed1.tekst
-            }
-            instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[1]) {
-                it.tekst shouldBe oppgave0.tekst
-                it.tilstand shouldBe NY
+            with(client.fetchTidslinje(sak1)) {
+                assertTrue(isEmpty())
             }
 
-            val tidslinje1 = engine.fetchTidslinje(sak1)
-            tidslinje1 should haveSize(1)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
-                it.tekst shouldBe beskjed2.tekst
-            }
-        }
+            val beskjed1 = brukerRepository.beskjedOpprettet(
+                grupperingsid = sak0.grupperingsid,
+                merkelapp = sak0.merkelapp,
+                opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(1),
+                lenke = "https://foo.bar"
+            )
 
+            // andre beskjed på samme sak kommer i riktig rekkefølge
+            with(client.fetchTidslinje(sak0)) {
+                assertEquals(2, size)
+                val e = first()
+                e as BrukerAPI.BeskjedTidslinjeElement
+                assertEquals(beskjed1.tekst, e.tekst)
+                assertEquals(beskjed1.lenke, e.lenke)
 
-        brukerRepository.oppgaveUtført(
-            oppgave = oppgave0,
-            utfoertTidspunkt = oppgave0.opprettetTidspunkt.plusHours(4),
-        )
-        it("endret oppgave-status reflekteres i tidslinja, men posisjonen er uendret") {
-            val tidslinje0 = engine.fetchTidslinje(sak0)
-            tidslinje0 should haveSize(2)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
-                it.tekst shouldBe beskjed1.tekst
-            }
-            instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[1]) {
-                it.tekst shouldBe oppgave0.tekst
-                it.tilstand shouldBe UTFOERT
+                val e2 = this[1]
+                e2 as OppgaveTidslinjeElement
+                assertEquals(oppgave0.tekst, e2.tekst)
+                assertEquals(NY, e2.tilstand)
             }
 
-            val tidslinje1 = engine.fetchTidslinje(sak1)
-            tidslinje1 should haveSize(1)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
-                it.tekst shouldBe beskjed2.tekst
-            }
-        }
-
-        val kalenderavtale = brukerRepository.kalenderavtaleOpprettet(
-            grupperingsid = sak1.grupperingsid,
-            merkelapp = sak1.merkelapp,
-            opprettetTidspunkt = beskjed2.opprettetTidspunkt.minusHours(1),
-            startTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(3),
-            sluttTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(4),
-            sakId = sak1.sakId,
-            lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),
-            lenke = "https://foo.bar"
-        )
-        it("kalenderavtale på andre saken, vises kun der") {
-            val tidslinje0 = engine.fetchTidslinje(sak0)
-            tidslinje0 should haveSize(2)
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje0[0]) {
-                it.tekst shouldBe beskjed1.tekst
-            }
-            instanceOf<OppgaveTidslinjeElement, TidslinjeElement>(tidslinje0[1]) {
-                it.tekst shouldBe oppgave0.tekst
+            with(client.fetchTidslinje(sak1)) {
+                assertTrue(isEmpty())
             }
 
-            val tidslinje1 = engine.fetchTidslinje(sak1)
-            tidslinje1 should haveSize(2)
-            instanceOf<BrukerAPI.KalenderavtaleTidslinjeElement, TidslinjeElement>(tidslinje1[0]) {
-                it.tekst shouldBe kalenderavtale.tekst
-                it.avtaletilstand shouldBe BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER
-                it.startTidspunkt.toInstant() shouldBe kalenderavtale.startTidspunkt.atOslo().toInstant()
-                it.sluttTidspunkt?.toInstant() shouldBe kalenderavtale.sluttTidspunkt?.atOslo()?.toInstant()
-                it.lokasjon.shouldNotBeNull()
-                it.lokasjon!!.adresse shouldBe kalenderavtale.lokasjon!!.adresse
-                it.lokasjon!!.poststed shouldBe kalenderavtale.lokasjon!!.poststed
-                it.lokasjon!!.postnummer shouldBe kalenderavtale.lokasjon!!.postnummer
-                it.digitalt shouldBe kalenderavtale.erDigitalt
-                it.lenke shouldBe kalenderavtale.lenke
+            val beskjed2 = brukerRepository.beskjedOpprettet(
+                grupperingsid = sak1.grupperingsid,
+                merkelapp = sak1.merkelapp,
+                opprettetTidspunkt = oppgave0.opprettetTidspunkt.plusHours(2),
+            )
+
+            // ny beskjed på andre saken, vises kun der
+            with(client.fetchTidslinje(sak0)) {
+                assertEquals(2, size)
+                val e = first()
+                e as BrukerAPI.BeskjedTidslinjeElement
+                assertEquals(beskjed1.tekst, e.tekst)
+
+                val e2 = this[1]
+                e2 as OppgaveTidslinjeElement
+                assertEquals(oppgave0.tekst, e2.tekst)
+                assertEquals(NY, e2.tilstand)
             }
-            instanceOf<BrukerAPI.BeskjedTidslinjeElement, TidslinjeElement>(tidslinje1[1]) {
-                it.tekst shouldBe beskjed2.tekst
+
+            with(client.fetchTidslinje(sak1)) {
+                assertEquals(1, size)
+                val e = first()
+                e as BrukerAPI.BeskjedTidslinjeElement
+                assertEquals(beskjed2.tekst, e.tekst)
+            }
+
+            brukerRepository.oppgaveUtført(
+                oppgave = oppgave0,
+                utfoertTidspunkt = oppgave0.opprettetTidspunkt.plusHours(4),
+            )
+
+            // endret oppgave-status reflekteres i tidslinja, men posisjonen er uendret
+            with(client.fetchTidslinje(sak0)) {
+                assertEquals(2, size)
+                val e = first()
+                e as BrukerAPI.BeskjedTidslinjeElement
+                assertEquals(beskjed1.tekst, e.tekst)
+
+                val e2 = this[1]
+                e2 as OppgaveTidslinjeElement
+                assertEquals(oppgave0.tekst, e2.tekst)
+                assertEquals(UTFOERT, e2.tilstand)
+            }
+
+            with(client.fetchTidslinje(sak1)) {
+                assertEquals(1, size)
+                val e = first()
+                e as BrukerAPI.BeskjedTidslinjeElement
+                assertEquals(beskjed2.tekst, e.tekst)
+            }
+
+            val kalenderavtale = brukerRepository.kalenderavtaleOpprettet(
+                grupperingsid = sak1.grupperingsid,
+                merkelapp = sak1.merkelapp,
+                opprettetTidspunkt = beskjed2.opprettetTidspunkt.minusHours(1),
+                startTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(3),
+                sluttTidspunkt = beskjed2.opprettetTidspunkt.toLocalDateTime().plusHours(4),
+                sakId = sak1.sakId,
+                lokasjon = HendelseModel.Lokasjon("foo", "bar", "baz"),
+                lenke = "https://foo.bar"
+            )
+
+            // kalenderavtale på andre saken, vises kun der
+            with(client.fetchTidslinje(sak0)) {
+                assertEquals(2, size)
+                val e = first()
+                e as BrukerAPI.BeskjedTidslinjeElement
+                assertEquals(beskjed1.tekst, e.tekst)
+
+                val e2 = this[1]
+                e2 as OppgaveTidslinjeElement
+                assertEquals(oppgave0.tekst, e2.tekst)
+            }
+
+            with(client.fetchTidslinje(sak1)) {
+                assertEquals(2, size)
+                val e = first()
+                e as BrukerAPI.KalenderavtaleTidslinjeElement
+                assertEquals(kalenderavtale.tekst, e.tekst)
+                assertEquals(
+                    BrukerAPI.Notifikasjon.Kalenderavtale.Tilstand.VENTER_SVAR_FRA_ARBEIDSGIVER,
+                    e.avtaletilstand
+                )
+                assertEquals(kalenderavtale.startTidspunkt.atOslo().toInstant(), e.startTidspunkt.toInstant())
+                assertEquals(kalenderavtale.sluttTidspunkt?.atOslo()?.toInstant(), e.sluttTidspunkt?.toInstant())
+
+                assertNotNull(e.lokasjon)
+                assertEquals(kalenderavtale.lokasjon!!.adresse, e.lokasjon!!.adresse)
+                assertEquals(kalenderavtale.lokasjon!!.poststed, e.lokasjon!!.poststed)
+                assertEquals(kalenderavtale.lokasjon!!.postnummer, e.lokasjon!!.postnummer)
+                assertEquals(kalenderavtale.erDigitalt, e.digitalt)
+                assertEquals(kalenderavtale.lenke, e.lenke)
+
+                val e2 = this[1]
+                e2 as BrukerAPI.BeskjedTidslinjeElement
+                assertEquals(beskjed2.tekst, e2.tekst)
             }
         }
     }
-})
+}
 
-private fun TestApplicationEngine.fetchTidslinje(sak: HendelseModel.SakOpprettet)
-        = querySakerJson()
+private suspend fun HttpClient.fetchTidslinje(sak: HendelseModel.SakOpprettet) = querySakerJson()
     .getTypedContent<BrukerAPI.SakerResultat>("$.saker")
     .saker
     .first { it.id == sak.sakId }
     .tidslinje
-
-suspend inline fun <reified SubClass: Class, Class: Any>TestScope.instanceOf(
-    subject: Class,
-    crossinline test: suspend TestScope.(it: SubClass) -> Unit
-)  {
-    subject shouldBe instanceOf<SubClass>()
-    test(subject as SubClass)
-}

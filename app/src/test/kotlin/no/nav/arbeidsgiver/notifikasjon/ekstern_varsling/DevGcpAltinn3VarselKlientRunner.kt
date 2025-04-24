@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import io.kotest.common.runBlocking
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl

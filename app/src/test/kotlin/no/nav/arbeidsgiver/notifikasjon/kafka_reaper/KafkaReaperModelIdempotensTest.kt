@@ -1,19 +1,19 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
-import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.datatest.withData
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import kotlinx.coroutines.test.runTest
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.util.EksempelHendelse
-import no.nav.arbeidsgiver.notifikasjon.util.testDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import no.nav.arbeidsgiver.notifikasjon.util.uuid
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
-class KafkaReaperModelIdempotensTest : DescribeSpec({
+class KafkaReaperModelIdempotensTest {
 
     val mottakere = listOf(
         HendelseModel.AltinnMottaker(
@@ -102,32 +102,34 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
         påminnelse = null,
     )
 
-    describe("Kafka Reaper Idempotent oppførsel") {
-        val database = testDatabase(KafkaReaper.databaseConfig)
+    @Test
+    fun `Kafka Reaper Idempotent oppførsel`() = withTestDatabase(KafkaReaper.databaseConfig) { database ->
         val model = KafkaReaperModelImpl(database)
-        withData(EksempelHendelse.Alle) { hendelse ->
+        EksempelHendelse.Alle.forEach { hendelse ->
             model.oppdaterModellEtterHendelse(hendelse)
             model.oppdaterModellEtterHendelse(hendelse)
         }
     }
 
-    describe("Håndterer partial replay hvor midt i hendelsesforløp etter harddelete") {
+    @Test
+    fun `Håndterer partial replay hvor midt i hendelsesforløp etter harddelete`() = runTest {
         EksempelHendelse.Alle.forEachIndexed { i, hendelse ->
-            context("$i - ${hendelse.typeNavn}") {
-                val database = testDatabase(KafkaReaper.databaseConfig)
+            withTestDatabase(KafkaReaper.databaseConfig) { database ->
                 val model = KafkaReaperModelImpl(database)
 
-                model.oppdaterModellEtterHendelse(EksempelHendelse.HardDelete.copy(
-                    virksomhetsnummer = hendelse.virksomhetsnummer,
-                    aggregateId = hendelse.aggregateId,
-                ))
+                model.oppdaterModellEtterHendelse(
+                    EksempelHendelse.HardDelete.copy(
+                        virksomhetsnummer = hendelse.virksomhetsnummer,
+                        aggregateId = hendelse.aggregateId,
+                    )
+                )
                 model.oppdaterModellEtterHendelse(hendelse)
             }
         }
     }
 
-    describe("Atomisk hard delete av Sak sletter kun tilhørende notifikasjoner") {
-        val database = testDatabase(KafkaReaper.databaseConfig)
+    @Test
+    fun `Atomisk hard delete av Sak sletter kun tilhørende notifikasjoner`() = withTestDatabase(KafkaReaper.databaseConfig) { database ->
         val model = KafkaReaperModelImpl(database)
         model.oppdaterModellEtterHendelse(sak)
         model.oppdaterModellEtterHendelse(oppgaveKnyttetTilSak)
@@ -152,9 +154,6 @@ class KafkaReaperModelIdempotensTest : DescribeSpec({
             transform = { getObject("notifikasjon_id", UUID::class.java) }
         )
 
-        notifikasjoner shouldContainExactlyInAnyOrder listOf(
-            sak.aggregateId,
-            oppgaveKnyttetTilSak.aggregateId
-        )
+        assertEquals(listOf(sak.aggregateId, oppgaveKnyttetTilSak.aggregateId), notifikasjoner)
     }
-})
+}
