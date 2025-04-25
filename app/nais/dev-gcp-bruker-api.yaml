@@ -21,12 +21,20 @@ spec:
     path: /internal/alive
   readiness:
     path: /internal/ready
-  replicas:
-    min: 1
-    max: 2
   prometheus:
     enabled: true
     path: /internal/metrics
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
+  replicas:
+    min: 1
+    max: 2
   tokenx:
     enabled: true
   kafka:

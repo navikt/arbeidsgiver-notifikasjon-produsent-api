@@ -17,13 +17,21 @@ spec:
     path: /internal/alive
   readiness:
     path: /internal/ready
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
   replicas:
     disableAutoScaling: true
     min: 1
     max: 1
-  prometheus:
-    enabled: true
-    path: /internal/metrics
   kafka:
     pool: nav-prod
   gcp:
