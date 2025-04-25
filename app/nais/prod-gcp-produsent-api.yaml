@@ -31,7 +31,6 @@ spec:
     logging:
       destinations:
         - id: loki
-        - id: elastic
   replicas:
     min: 2
     max: 8

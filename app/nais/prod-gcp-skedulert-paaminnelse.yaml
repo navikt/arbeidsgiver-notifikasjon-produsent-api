@@ -27,7 +27,6 @@ spec:
     logging:
       destinations:
         - id: loki
-        - id: elastic
   replicas:
     disableAutoScaling: true
     min: 1
