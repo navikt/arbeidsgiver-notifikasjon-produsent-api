@@ -73,8 +73,6 @@ jobs:
           tag: ${{ github.sha }}
           dockerfile: app/Dockerfile
           docker_context: app
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           byosbom: app/target/bom.json
 
   deploy:
@@ -111,8 +109,6 @@ jobs:
       - uses: nais/login@v0
         id: login
         with:
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           team: fager
 
       - uses: nais/deploy/actions/deploy@v2
