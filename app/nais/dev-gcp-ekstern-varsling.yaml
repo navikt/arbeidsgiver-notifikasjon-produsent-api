@@ -10,9 +10,6 @@ metadata:
 spec:
   image: {{image}}
   resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
     limits:
       memory: 512Mi
   liveness:
