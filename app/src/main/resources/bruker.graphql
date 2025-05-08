@@ -244,6 +244,7 @@ type Virksomhet {
 
 type Mutation {
     notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
+    notifikasjonPanelApnet(tidspunkt: ISO8601DateTime!): NotifikasjonKlikketPaaResultat!
 }
 
 union NotifikasjonKlikketPaaResultat = BrukerKlikk | UgyldigId
@@ -255,4 +256,8 @@ type BrukerKlikk {
 
 type UgyldigId {
     feilmelding: String!
+}
+
+type NotifikasjonPanelApnetResultat {
+    tidspunkt: ISO8601DateTime!
 }

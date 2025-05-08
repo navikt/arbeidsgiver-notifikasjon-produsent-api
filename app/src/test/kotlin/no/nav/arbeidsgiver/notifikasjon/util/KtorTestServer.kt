@@ -130,7 +130,7 @@ object FakeIssuer {
         """
         )
 
-    fun issueBrukerToken(sub: String = TEST_FNR_1) =
+    fun issueBrukerToken(sub: String) =
         encodeFake(
             """
             {
@@ -148,8 +148,8 @@ object FakeIssuer {
     fun decodeFake(str: String) = Base64.Default.decode(str)
 }
 
-val BRUKERAPI_OBOTOKEN = FakeIssuer.issueBrukerToken()
-val PRODUSENTAPI_AZURETOKEN = FakeIssuer.issueProdusentToken()
+fun fakeBrukerApiOboToken(sub: String = TEST_FNR_1) = FakeIssuer.issueBrukerToken(sub)
+fun fakeProdusentApiOboToken(sub: String = "someproducer") = FakeIssuer.issueProdusentToken(sub)
 
 suspend fun HttpClient.responseOf(
     method: HttpMethod,
@@ -216,14 +216,15 @@ suspend fun HttpClient.post(
     )
 
 suspend fun HttpClient.brukerApi(
-    @Language("GraphQL") req: String
-) = brukerApi(GraphQLRequest(req))
+    @Language("GraphQL") req: String,
+    fnr: String = TEST_FNR_1,
+) = brukerApi(GraphQLRequest(req), fnr)
 
-suspend fun HttpClient.brukerApi(req: GraphQLRequest) =
+suspend fun HttpClient.brukerApi(req: GraphQLRequest, fnr: String = TEST_FNR_1) =
     post(
         "/api/graphql",
         host = BRUKER_HOST,
         jsonBody = req,
         accept = "application/json",
-        authorization = "Bearer $BRUKERAPI_OBOTOKEN"
+        authorization = "Bearer ${fakeBrukerApiOboToken(fnr)}"
     )

@@ -272,6 +272,12 @@ object BrukerAPI {
         val lenke: String
     ) : TidslinjeElement()
 
+
+    @JsonTypeName("NotifikasjonsPanelApnetResultat")
+    data class NotifikasjonsPanelApnetResultat(
+        val tidspunkt: OffsetDateTime
+    )
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class NotifikasjonKlikketPaaResultat
 
@@ -361,9 +367,21 @@ object BrukerAPI {
 
             wire("Mutation") {
                 mutationBrukerKlikketPa(brukerRepository, hendelseProdusent)
+                mutationNotifikasjonsPanelÅpnet(brukerRepository)
             }
         }
     )
+
+    private fun TypeRuntimeWiring.Builder.mutationNotifikasjonsPanelÅpnet(brukerRepository: BrukerRepository) {
+        coDataFetcher("notifikasjonPanelApnet") { env ->
+            val context = env.notifikasjonContext<Context>()
+            val tidspunkt = env.getTypedArgument<OffsetDateTime>("tidspunkt")
+            brukerRepository.settNotifikasjonerSistLest(tidspunkt, context.fnr)
+            NotifikasjonsPanelApnetResultat(
+                tidspunkt = tidspunkt
+            )
+        }
+    }
 
     private fun TypeRuntimeWiring.Builder.querySakstyper(
         brukerRepository: BrukerRepository,
