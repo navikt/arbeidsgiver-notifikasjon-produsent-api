@@ -54,6 +54,10 @@ open class BrukerRepositoryStub : BrukerRepository {
         TODO("Not yet implemented")
     }
 
+    override suspend fun hentNotifikasjonerSistLest(fnr: String): OffsetDateTime? {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? = TODO("Not yet implemented")
     override suspend fun berikSaker(saker: List<BrukerModel.Sak>): Map<UUID, BrukerModel.Sakberikelse> =
         TODO("Not yet implemented")

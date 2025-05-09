@@ -275,7 +275,7 @@ object BrukerAPI {
 
     @JsonTypeName("NotifikasjonsPanelApnetResultat")
     data class NotifikasjonsPanelApnetResultat(
-        val tidspunkt: OffsetDateTime
+        val tidspunkt: OffsetDateTime?
     )
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
@@ -340,6 +340,8 @@ object BrukerAPI {
 
                 queryKommendeKalenderavtaler(brukerRepository, altinnTilgangerService)
 
+                queryNotifikasjonsPanelÅpnet(brukerRepository)
+
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
                         fetchVirksomhet<Oppgave>(virksomhetsinfoService, env)
@@ -377,6 +379,16 @@ object BrukerAPI {
             val context = env.notifikasjonContext<Context>()
             val tidspunkt = env.getTypedArgument<OffsetDateTime>("tidspunkt")
             brukerRepository.settNotifikasjonerSistLest(tidspunkt, context.fnr)
+            NotifikasjonsPanelApnetResultat(
+                tidspunkt = tidspunkt
+            )
+        }
+    }
+
+    private fun TypeRuntimeWiring.Builder.queryNotifikasjonsPanelÅpnet(brukerRepository: BrukerRepository) {
+        coDataFetcher("notifikasjonPanelApnet") { env ->
+            val context = env.notifikasjonContext<Context>()
+            val tidspunkt = brukerRepository.hentNotifikasjonerSistLest(context.fnr)
             NotifikasjonsPanelApnetResultat(
                 tidspunkt = tidspunkt
             )

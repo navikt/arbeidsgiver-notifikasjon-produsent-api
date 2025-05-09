@@ -111,7 +111,8 @@ interface BrukerRepository {
         altinnTilganger: AltinnTilganger
     ): List<BrukerModel.Kalenderavtale>
 
-    suspend fun settNotifikasjonerSistLest(tidspunkt: OffsetDateTime, fnr: String): Unit
+    suspend fun settNotifikasjonerSistLest(tidspunkt: OffsetDateTime, fnr: String)
+    suspend fun hentNotifikasjonerSistLest(fnr: String): OffsetDateTime?
 }
 
 class BrukerRepositoryImpl(
@@ -893,7 +894,7 @@ class BrukerRepositoryImpl(
     override suspend fun settNotifikasjonerSistLest(tidspunkt: OffsetDateTime, fnr: String) {
         database.nonTransactionalExecuteUpdate(
             """
-            insert into notifikasjoner_sist_lest (fnr, tidpsunkt) values (?, ?)
+            insert into notifikasjoner_sist_lest (fnr, tidspunkt) values (?, ?)
             on conflict (fnr) do update set tidspunkt = ?
         """.trimIndent(),
             {
@@ -901,6 +902,21 @@ class BrukerRepositoryImpl(
                 timestamp_with_timezone(tidspunkt)
                 timestamp_with_timezone(tidspunkt)
             })
+    }
+
+    override suspend fun hentNotifikasjonerSistLest(fnr: String): OffsetDateTime? {
+        val result = database.nonTransactionalExecuteQuery(
+            """
+                select tidspunkt from notifikasjoner_sist_lest
+                where fnr = ?
+            """.trimIndent(), {
+                text(fnr)
+            },
+            {
+                getObject("tidspunkt", OffsetDateTime::class.java)
+            }
+        )
+        return result.firstOrNull()
     }
 
     private suspend fun oppdaterModellEtterDelete(
