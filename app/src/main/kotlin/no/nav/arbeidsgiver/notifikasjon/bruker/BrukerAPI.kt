@@ -340,7 +340,7 @@ object BrukerAPI {
 
                 queryKommendeKalenderavtaler(brukerRepository, altinnTilgangerService)
 
-                queryNotifikasjonsPanelÅpnet(brukerRepository)
+                queryNotifikasjonerSistLest(brukerRepository)
 
                 wire("Oppgave") {
                     coDataFetcher("virksomhet") { env ->
@@ -369,13 +369,13 @@ object BrukerAPI {
 
             wire("Mutation") {
                 mutationBrukerKlikketPa(brukerRepository, hendelseProdusent)
-                mutationNotifikasjonsPanelÅpnet(brukerRepository)
+                mutationNotifikasjonerSistLest(brukerRepository)
             }
         }
     )
 
-    private fun TypeRuntimeWiring.Builder.mutationNotifikasjonsPanelÅpnet(brukerRepository: BrukerRepository) {
-        coDataFetcher("notifikasjonPanelApnet") { env ->
+    private fun TypeRuntimeWiring.Builder.mutationNotifikasjonerSistLest(brukerRepository: BrukerRepository) {
+        coDataFetcher("notifikasjonerSistLest") { env ->
             val context = env.notifikasjonContext<Context>()
             val tidspunkt = env.getTypedArgument<OffsetDateTime>("tidspunkt")
             brukerRepository.settNotifikasjonerSistLest(tidspunkt, context.fnr)
@@ -385,8 +385,8 @@ object BrukerAPI {
         }
     }
 
-    private fun TypeRuntimeWiring.Builder.queryNotifikasjonsPanelÅpnet(brukerRepository: BrukerRepository) {
-        coDataFetcher("notifikasjonPanelApnet") { env ->
+    private fun TypeRuntimeWiring.Builder.queryNotifikasjonerSistLest(brukerRepository: BrukerRepository) {
+        coDataFetcher("notifikasjonerSistLest") { env ->
             val context = env.notifikasjonContext<Context>()
             val tidspunkt = brukerRepository.hentNotifikasjonerSistLest(context.fnr)
             NotifikasjonsPanelApnetResultat(

@@ -57,7 +57,7 @@ class NotifikasjonPanelApnetTest {
         return brukerApi(
             """
                     query {
-                    notifikasjonPanelApnet {
+                    notifikasjonerSistLest {
                         __typename                    
                             ... on NotifikasjonPanelApnetResultat {
                                 tidspunkt
@@ -65,14 +65,14 @@ class NotifikasjonPanelApnetTest {
                     }
                 }
                 """.trimIndent(), fnr = fnr
-        ).getTypedContent<OffsetDateTime?>("notifikasjonPanelApnet/tidspunkt")
+        ).getTypedContent<OffsetDateTime?>("notifikasjonerSistLest/tidspunkt")
     }
 
     private suspend fun HttpClient.mutationNotifikasjonPanelÅpnet(fnr: String, tidspunkt: OffsetDateTime) {
         brukerApi(
             """
                 mutation {
-                    notifikasjonPanelApnet(
+                    notifikasjonerSistLest(
                         tidspunkt: "$tidspunkt"
                     ) {
                         __typename
