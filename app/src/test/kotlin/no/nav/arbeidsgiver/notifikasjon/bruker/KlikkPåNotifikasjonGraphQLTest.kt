@@ -52,7 +52,7 @@ class KlikkPåNotifikasjonGraphQLTest {
                     """.trimIndent()
             ),
             accept = "application/json",
-            authorization = "Bearer $BRUKERAPI_OBOTOKEN"
+            authorization = "Bearer ${fakeBrukerApiOboToken()}"
         )
 
         assertEquals(HttpStatusCode.OK, httpResponse.status)

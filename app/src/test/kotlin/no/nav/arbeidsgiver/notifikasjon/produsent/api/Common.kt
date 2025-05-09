@@ -5,7 +5,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENTAPI_AZURETOKEN
+import no.nav.arbeidsgiver.notifikasjon.util.fakeProdusentApiOboToken
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
 import no.nav.arbeidsgiver.notifikasjon.util.post
 import org.intellij.lang.annotations.Language
@@ -16,7 +16,7 @@ suspend fun HttpClient.produsentApi(req: GraphQLRequest) = post(
     host = PRODUSENT_HOST,
     jsonBody = req,
     accept = "application/json",
-    authorization = "Bearer $PRODUSENTAPI_AZURETOKEN"
+    authorization = "Bearer ${fakeProdusentApiOboToken()}"
 )
 
 suspend fun HttpClient.produsentApi(
