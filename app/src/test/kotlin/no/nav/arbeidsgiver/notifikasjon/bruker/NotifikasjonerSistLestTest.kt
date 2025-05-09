@@ -8,7 +8,7 @@ import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import java.time.OffsetDateTime
 import kotlin.test.Test
 
-class NotifikasjonPanelApnetTest {
+class NotifikasjonerSistLestTest {
     @Test
     fun `Setter notifikasjoner sist lest for bruker`() = withTestDatabase(Bruker.databaseConfig) { database ->
         val brukerRepository = BrukerRepositoryImpl(database)
@@ -59,7 +59,7 @@ class NotifikasjonPanelApnetTest {
                     query {
                     notifikasjonerSistLest {
                         __typename                    
-                            ... on NotifikasjonPanelApnetResultat {
+                            ... on NotifikasjonerSistLest {
                                 tidspunkt
                             }
                     }
@@ -76,7 +76,7 @@ class NotifikasjonPanelApnetTest {
                         tidspunkt: "$tidspunkt"
                     ) {
                         __typename
-                            ... on NotifikasjonPanelApnetResultat {
+                            ... on NotifikasjonerSistLest {
                                 tidspunkt
                             }
                     }

@@ -19,7 +19,7 @@ type Query {
     sakByGrupperingsid(merkelapp: String!, grupperingsid: String!): SakResultat!
     kommendeKalenderavtaler(virksomhetsnumre: [String!]!): KalenderavtalerResultat!
     whoami: String
-    notifikasjonerSistLest: NotifikasjonPanelApnetResultat!
+    notifikasjonerSistLest: NotifikasjonerSistLestResultat!
 }
 
 enum SakSortering {
@@ -245,7 +245,7 @@ type Virksomhet {
 
 type Mutation {
     notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
-    notifikasjonerSistLest(tidspunkt: ISO8601DateTime!): NotifikasjonPanelApnetResultat!
+    notifikasjonerSistLest(tidspunkt: ISO8601DateTime!): NotifikasjonerSistLest!
 }
 
 union NotifikasjonKlikketPaaResultat = BrukerKlikk | UgyldigId
@@ -259,6 +259,8 @@ type UgyldigId {
     feilmelding: String!
 }
 
-type NotifikasjonPanelApnetResultat {
+union NotifikasjonerSistLestResultat = NotifikasjonerSistLest
+
+type NotifikasjonerSistLest {
     tidspunkt: ISO8601DateTime!
 }

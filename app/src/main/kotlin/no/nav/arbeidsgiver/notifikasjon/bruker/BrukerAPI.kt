@@ -273,10 +273,13 @@ object BrukerAPI {
     ) : TidslinjeElement()
 
 
-    @JsonTypeName("NotifikasjonsPanelApnetResultat")
-    data class NotifikasjonsPanelApnetResultat(
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
+    sealed class NotifikasjonerSistLestResultat
+
+    @JsonTypeName("NotifikasjonerSistLest")
+    data class NotifikasjonerSistLest(
         val tidspunkt: OffsetDateTime?
-    )
+    ) : NotifikasjonerSistLestResultat()
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "__typename")
     sealed class NotifikasjonKlikketPaaResultat
@@ -285,6 +288,11 @@ object BrukerAPI {
     data class BrukerKlikk(
         val id: String,
         val klikketPaa: Boolean
+    ) : NotifikasjonKlikketPaaResultat()
+
+    @JsonTypeName("UgyldigId")
+    data class UgyldigId(
+        val feilmelding: String
     ) : NotifikasjonKlikketPaaResultat()
 
     @JsonTypeName("NotifikasjonerResultat")
@@ -301,10 +309,6 @@ object BrukerAPI {
         val feilDigiSyfo: Boolean
     )
 
-    @JsonTypeName("UgyldigId")
-    data class UgyldigId(
-        val feilmelding: String
-    ) : NotifikasjonKlikketPaaResultat()
 
     data class Virksomhet(
         val virksomhetsnummer: String,
@@ -323,6 +327,7 @@ object BrukerAPI {
 
             resolveSubtypes<Notifikasjon>()
             resolveSubtypes<NotifikasjonKlikketPaaResultat>()
+            resolveSubtypes<NotifikasjonerSistLestResultat>()
             resolveSubtypes<TidslinjeElement>()
 
             wire("Query") {
@@ -379,7 +384,7 @@ object BrukerAPI {
             val context = env.notifikasjonContext<Context>()
             val tidspunkt = env.getTypedArgument<OffsetDateTime>("tidspunkt")
             brukerRepository.settNotifikasjonerSistLest(tidspunkt, context.fnr)
-            NotifikasjonsPanelApnetResultat(
+            NotifikasjonerSistLest(
                 tidspunkt = tidspunkt
             )
         }
@@ -389,7 +394,7 @@ object BrukerAPI {
         coDataFetcher("notifikasjonerSistLest") { env ->
             val context = env.notifikasjonContext<Context>()
             val tidspunkt = brukerRepository.hentNotifikasjonerSistLest(context.fnr)
-            NotifikasjonsPanelApnetResultat(
+            NotifikasjonerSistLest(
                 tidspunkt = tidspunkt
             )
         }
