@@ -1,4 +1,3 @@
-
 const måndenavn = [
     'jan.', 'feb.', 'mars', 'apr.', 'mai', 'juni',
     'juli', 'aug.', 'sep.', 'okt.', 'nov.', 'des.'

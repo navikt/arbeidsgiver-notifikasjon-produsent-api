@@ -4,35 +4,14 @@ import NotifikasjonPanel from './NotifikasjonPanel/NotifikasjonPanel';
 import { ServerError, useQuery } from '@apollo/client';
 import { HENT_NOTIFIKASJONER } from '../api/graphql';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { Notifikasjon, OppgaveTilstand } from '../api/graphql-types';
-import { getLimitedUrl, useAmplitude } from '../utils/amplitude';
 import Dropdown from './NotifikasjonPanel/Dropdown';
-import { useUmami } from '../utils/umami';
-
-const uleste = (
-  sistLest: string | undefined,
-  notifikasjoner: Notifikasjon[],
-): Notifikasjon[] => {
-  if (sistLest === undefined) {
-    return notifikasjoner;
-  } else {
-    return notifikasjoner.filter((notifikasjon) => {
-      if (notifikasjon.__typename === 'Oppgave' && notifikasjon.tilstand !== OppgaveTilstand.Ny) {
-        return false;
-      }
-      return new Date(notifikasjon.sorteringTidspunkt).getTime() > new Date(sistLest).getTime();
-    });
-  }
-};
+import { filtrerUlesteNotifikasjoner } from '../utils/filtrerUlesteNotifikasjoner';
+import { useOnClickOutside } from '../hooks/useOnClickOutside';
+import { useAnalytics } from '../context/AnalyticsProvider';
+import { getLimitedUrl } from '../utils/utils';
 
 const NotifikasjonWidget = () => {
-    const { loggLukking, loggLasting, loggÅpning } = useAmplitude();
-    const umami = useUmami();
-
-    const [sistLest, _setSistLest] = useLocalStorage<string | undefined>(
-      'sist_lest',
-      undefined,
-    );
+    const logEvent = useAnalytics();
 
     const {
       previousData,
@@ -52,82 +31,76 @@ const NotifikasjonWidget = () => {
     );
 
     function trackLukking() {
-      umami?.track('panel-kollaps', {
+      logEvent('panel-kollaps', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
       });
-      loggLukking();
     }
 
     function trackLasting(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      umami?.track('last-komponent', {
+      logEvent('last-komponent', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,
         'antall-ulestenotifikasjoner': antallUlesteNotifikasjoner,
         'antall-lestenotifikasjoner': antallNotifikasjoner - antallUlesteNotifikasjoner,
       });
-      loggLasting(antallNotifikasjoner, antallUlesteNotifikasjoner);
     }
 
     function trackÅpning(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      umami?.track('panel-ekspander', {
+      logEvent('panel-ekspander', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,
         'antall-ulestenotifikasjoner': antallUlesteNotifikasjoner,
         'antall-lestenotifikasjoner': antallNotifikasjoner - antallUlesteNotifikasjoner,
       });
-      loggÅpning(antallNotifikasjoner, antallUlesteNotifikasjoner);
     }
 
     const notifikasjonerResultat = data?.notifikasjoner;
     const notifikasjoner = notifikasjonerResultat?.notifikasjoner;
+
+    const [lagretSistLest, setLagretSistLest] = useLocalStorage<string | undefined>(
+      'sist_lest',
+      undefined,
+    );
+    const [synligSistLest, setSynligSistLest] = useState(lagretSistLest);
+
     const setSistLest = useCallback(() => {
       if (notifikasjoner && notifikasjoner.length > 0) {
         // naiv impl forutsetter sortering
-        _setSistLest(notifikasjoner[0].sorteringTidspunkt);
+        setLagretSistLest(notifikasjoner[0].sorteringTidspunkt);
       }
     }, [notifikasjoner]);
 
-    const antallUleste = notifikasjoner && uleste(sistLest, notifikasjoner).length;
+    const antallUleste = notifikasjoner && filtrerUlesteNotifikasjoner(synligSistLest, notifikasjoner).length;
     const widgetRef = useRef<HTMLDivElement>(null);
     const bjelleRef = useRef<HTMLButtonElement>(null);
     const [erApen, setErApen] = useState(false);
+
     useEffect(() => {
       if (notifikasjoner !== undefined && antallUleste !== undefined) {
         trackLasting(notifikasjoner.length, antallUleste);
       }
     }, [notifikasjoner, antallUleste]);
+
     const lukkÅpentPanelMedLogging = () => {
       if (erApen) {
         trackLukking();
-        setSistLest();
+        notifikasjoner && setSynligSistLest(notifikasjoner[0].sorteringTidspunkt);
         setErApen(false);
       }
     };
+
     const åpnePanelMedLogging = (antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) => {
+      setSistLest();
       trackÅpning(antallNotifikasjoner, antallUlesteNotifikasjoner);
       setErApen(true);
     };
 
-    const handleFocusOutside: { (event: MouseEvent | KeyboardEvent): void } = (
-      e: MouseEvent | KeyboardEvent,
-    ) => {
-      const node = widgetRef.current;
-      // @ts-ignore
-      if (node && node !== e.target && node.contains(e.target as HTMLElement)) {
-        return;
-      }
+    useOnClickOutside(widgetRef, () => {
       lukkÅpentPanelMedLogging();
-    };
-
-    useEffect(() => {
-      document.addEventListener('click', handleFocusOutside);
-      return () => {
-        document.removeEventListener('click', handleFocusOutside);
-      };
-    }, [handleFocusOutside]);
+    });
 
     const style: CSSProperties = notifikasjoner === undefined || notifikasjoner.length === 0 ? { visibility: 'hidden' } : {};
 

@@ -20,7 +20,6 @@
     "graphql": "^16.9.0"
   },
   "devDependencies": {
-    "@amplitude/analytics-browser": "2.11.8",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/typescript": "^4.0.9",
     "@graphql-codegen/typescript-operations": "^4.2.3",
@@ -45,7 +44,7 @@
     "@navikt/ds-css": ">=4",
     "@navikt/ds-icons": ">=2",
     "@navikt/ds-react": ">=4",
-    "@navikt/nav-dekoratoren-moduler": ">=3.2",
+    "@navikt/nav-dekoratoren-moduler": ">=3.2.3",
     "react": "17 || 18",
     "react-dom": "17 || 18"
   }
