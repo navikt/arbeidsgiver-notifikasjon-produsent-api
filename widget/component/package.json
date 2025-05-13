@@ -11,41 +11,36 @@
   "types": "./lib/esm/index.d.ts",
   "scripts": {
     "gql:generate": "graphql-codegen",
-    "build": "rollup --config rollup.config.ts --configPlugin typescript",
-    "start": "rollup --config rollup.config.ts --configPlugin typescript --watch",
+    "build": "node build.js",
+    "start": "node build.js --watch",
     "test": "echo tests not implemented"
   },
   "dependencies": {
-    "@apollo/client": "^3.10.8",
-    "graphql": "^16.9.0"
+    "@apollo/client": "^3.13.8",
+    "graphql": "^16.11.0"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/typescript": "^4.0.9",
-    "@graphql-codegen/typescript-operations": "^4.2.3",
-    "@graphql-codegen/typescript-react-apollo": "^4.3.0",
-    "@rollup/plugin-commonjs": "^26.0.1",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^11.1.6",
-    "@rollup/plugin-url": "^8.0.2",
-    "@types/node": "^20.14.11",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "prettier": "3.4.2",
+    "@graphql-codegen/cli": "^5.0.6",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@graphql-codegen/typescript-react-apollo": "^4.3.2",
+    "@types/node": "^22.15.17",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.4",
+    "esbuild": "0.25.4",
+    "esbuild-style-plugin": "1.6.3",
+    "prettier": "3.5.3",
     "prop-types": "15.8.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "rollup": "^4.18.1",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "rollup-plugin-postcss": "^4.0.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "typescript": "^5.5.3"
   },
   "peerDependencies": {
-    "@navikt/ds-css": ">=4",
-    "@navikt/ds-icons": ">=2",
-    "@navikt/ds-react": ">=4",
+    "@navikt/aksel-icons": ">=7.21.1",
+    "@navikt/ds-css": ">=7.21.1",
+    "@navikt/ds-react": ">=7.21.1",
     "@navikt/nav-dekoratoren-moduler": ">=3.2.3",
-    "react": "17 || 18",
-    "react-dom": "17 || 18"
+    "react": "18 || 19",
+    "react-dom": "18 || 19"
   }
 }
