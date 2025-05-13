@@ -1,10 +1,10 @@
-import React, { createContext, PropsWithChildren, useContext } from 'react';
+import { createContext, PropsWithChildren, useContext } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import NotifikasjonWidgetComponent from './NotifikasjonWidget/NotifikasjonWidget';
 import { createClient } from './api/graphql';
 import { AnalyticsProvider } from './context/AnalyticsProvider';
 
-export type Props = {
+export type NotifikasjonWidgetProps = {
   apiUrl?: string,
   miljo?: Miljø
 }
@@ -13,7 +13,7 @@ export type Miljø = 'local' | 'labs' | 'dev' | 'prod'
 
 export * as GQL from './api/graphql-types';
 
-export const NotifikasjonWidget = (props: Props) => {
+export const NotifikasjonWidget = (props: NotifikasjonWidgetProps) => {
   const isProviderLoaded = useContext(NotifikasjonWidgetProviderLoadedContext);
 
   if (isProviderLoaded) {

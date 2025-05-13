@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, KeyboardEvent } from 'react';
-import { Alert, Heading, Link } from '@navikt/ds-react';
+import { useEffect, useRef, useState, KeyboardEvent } from 'react';
+import { Alert, BodyShort, Button, Dropdown, Link } from '@navikt/ds-react';
 import { NotifikasjonListeElement } from './NotifikasjonListeElement/NotifikasjonListeElement';
 import './NotifikasjonPanel.css';
 import { Notifikasjon, NotifikasjonerResultat } from '../../api/graphql-types';
@@ -12,7 +12,7 @@ import { getLimitedUrl } from '../../utils/utils';
 
 interface NotifikasjonsPanelProps {
   erApen: boolean;
-  onLukkPanel: () => void;
+  togglePanel: () => void;
   notifikasjoner: NotifikasjonerResultat;
 }
 
@@ -20,10 +20,10 @@ const NotifikasjonPanel = (
   {
     notifikasjoner: { notifikasjoner, feilAltinn, feilDigiSyfo },
     erApen,
-    onLukkPanel,
+    togglePanel,
   }: NotifikasjonsPanelProps,
 ) => {
-  if (notifikasjoner.length === 0) return null;
+  // if (notifikasjoner.length === 0) return null;
 
   const logEvent = useAnalytics();
 
@@ -45,7 +45,7 @@ const NotifikasjonPanel = (
 
   const lukkPanel = () => {
     setValgtNotifikasjonIndex(0);
-    onLukkPanel();
+    togglePanel();
   };
 
   const focusNotifikasjon = () => notifikasjonRefs.current[valgtNotifikasjonIndex]?.focus();
@@ -100,67 +100,60 @@ const NotifikasjonPanel = (
   };
 
   return (
-    <div
-      id="notifikasjon_panel"
-      className="notifikasjon_panel"
-      onKeyDown={handleNotifikasjonKeyDown}
-    >
-      <div
-        id="notifikasjon_panel-header"
-        className="notifikasjon_panel-header"
-      >
-        <div className="notifikasjon_panel-header-title-help">
-          <Link href={'https://arbeidsgiver.nav.no/min-side-arbeidsgiver/saksoversikt'}>
-            <Heading level="2" size="small">Søk og filtrer på alle saker</Heading><ExpandIcon width={24} height={24} />
-          </Link>
-        </div>
-        <button
-          id="notifikasjon_panel-header-xbtn"
-          className="notifikasjon_panel-header-xbtn"
-          onClick={lukkPanel}
-        >
-          <LukkIkon />
-        </button>
-      </div>
+    <Dropdown.Menu onKeyDown={handleNotifikasjonKeyDown} className='notifikasjon-panel-liste'>
+      <Dropdown.Menu.GroupedList>
+        <Dropdown.Menu.GroupedList.Heading>
+          <div className="dropdown-menu-heading-container">
+            <BodyShort as="span">
+              <Link href="https://arbeidsgiver.nav.no/min-side-arbeidsgiver/saksoversikt">
+                Søk og filtrer på alle saker<ExpandIcon width={24} height={24} />
+              </Link>
+            </BodyShort>
 
-      {(feilAltinn || feilDigiSyfo) && (
-        <div className="notifikasjon_panel-feilmelding">
-          {feilAltinn && (
-            <Alert variant="error">
-              Vi opplever ustabilitet med Altinn, så du ser kanskje ikke alle notifikasjoner. Prøv igjen senere.
-            </Alert>
-          )}
-          {feilDigiSyfo && (
-            <Alert variant="error">
-              Vi opplever feil og kan ikke hente eventuelle notifikasjoner for sykemeldte som du skal følge opp. Prøv
-              igjen senere.
-            </Alert>
-          )}
-        </div>
-      )}
+            <Button variant="tertiary" onClick={lukkPanel} icon={<LukkIkon />} />
+          </div>
+          {
+            (feilAltinn || feilDigiSyfo) && (
+              <>
+                {feilAltinn && (
+                  <Alert variant="error">
+                    Vi opplever ustabilitet med Altinn, så du ser kanskje ikke alle notifikasjoner. Prøv igjen senere.
+                  </Alert>
+                )}
+                {feilDigiSyfo && (
+                  <Alert variant="error">
+                    Vi opplever feil og kan ikke hente eventuelle notifikasjoner for sykemeldte som du skal følge opp.
+                    Prøv igjen senere.
+                  </Alert>
+                )}
+              </>
+            )
+          }
+        </Dropdown.Menu.GroupedList.Heading>
+        <Dropdown.Menu.Divider style={{ margin: 0 }} />
 
-      <ul
-        role="feed"
-        id="notifikasjon_panel-liste"
-        ref={notifikasjonPanelListeRef}
-        className="notifikasjon_panel-liste notifikasjon_panel-liste_shadows"
-      >
         {notifikasjoner.map((notifikasjon: Notifikasjon, index: number) => (
-          <li key={index} role="article">
+          <Dropdown.Menu.GroupedList.Item
+            key={index}
+            as={Link}
+            href={notifikasjon.lenke}
+            value={notifikasjon.tekst}
+            style={{ padding: 0, color: 'unset', textDecoration: 'none' }}
+            ref={(el: HTMLAnchorElement) => (notifikasjonRefs.current[index] = el)}
+            onClick={() => {
+              loggNotifikasjonKlikk(notifikasjon, index);
+              notifikasjonKlikketPaa({ variables: { id: notifikasjon.id } });
+              setValgtNotifikasjonIndex(index);
+            }}
+          >
             <NotifikasjonListeElement
-              ref={(el: HTMLAnchorElement) => (notifikasjonRefs.current[index] = el)}
               antall={notifikasjoner.length}
-              onKlikketPaaLenke={(klikketPaaNotifikasjon: Notifikasjon) => {
-                loggNotifikasjonKlikk(klikketPaaNotifikasjon, index);
-                notifikasjonKlikketPaa({ variables: { id: klikketPaaNotifikasjon.id } });
-                setValgtNotifikasjonIndex(index);
-              }}
               notifikasjon={notifikasjon}
             />
-          </li>
+          </Dropdown.Menu.GroupedList.Item>
         ))}
-      </ul>
-    </div>
+      </Dropdown.Menu.GroupedList>
+    </Dropdown.Menu>
   );
 };
 

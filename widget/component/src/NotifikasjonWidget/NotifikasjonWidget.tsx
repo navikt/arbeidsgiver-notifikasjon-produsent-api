@@ -1,34 +1,38 @@
-import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { NotifikasjonBjelle } from './NotifikasjonBjelle/NotifikasjonBjelle';
 import NotifikasjonPanel from './NotifikasjonPanel/NotifikasjonPanel';
 import { ServerError, useQuery } from '@apollo/client';
 import { HENT_NOTIFIKASJONER } from '../api/graphql';
 import useLocalStorage from '../hooks/useLocalStorage';
-import Dropdown from './NotifikasjonPanel/Dropdown';
 import { filtrerUlesteNotifikasjoner } from '../utils/filtrerUlesteNotifikasjoner';
 import { useOnClickOutside } from '../hooks/useOnClickOutside';
 import { useAnalytics } from '../context/AnalyticsProvider';
 import { getLimitedUrl } from '../utils/utils';
+import { Dropdown } from '@navikt/ds-react';
 
 const NotifikasjonWidget = () => {
     const logEvent = useAnalytics();
 
     const {
-      previousData,
-      data = previousData,
+      data,
+      error,
       stopPolling,
     } = useQuery(
       HENT_NOTIFIKASJONER,
       {
         pollInterval: 60_000,
-        onError(e) {
-          if ((e.networkError as ServerError)?.statusCode === 401) {
-            console.log('stopper poll pga 401 unauthorized');
-            stopPolling();
-          }
-        },
       },
     );
+
+    useEffect(() => {
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        if ((error.networkError as ServerError)?.statusCode === 401) {
+          console.log('stopper poll pga 401 unauthorized');
+          stopPolling();
+        }
+      }
+    }, [error]);
 
     function trackLukking() {
       logEvent('panel-kollaps', {
@@ -58,6 +62,7 @@ const NotifikasjonWidget = () => {
     }
 
     const notifikasjonerResultat = data?.notifikasjoner;
+
     const notifikasjoner = notifikasjonerResultat?.notifikasjoner;
 
     const [lagretSistLest, setLagretSistLest] = useLocalStorage<string | undefined>(
@@ -84,41 +89,36 @@ const NotifikasjonWidget = () => {
       }
     }, [notifikasjoner, antallUleste]);
 
-    const lukkÅpentPanelMedLogging = () => {
+    const togglePanel = () => {
       if (erApen) {
         trackLukking();
         notifikasjoner && setSynligSistLest(notifikasjoner[0].sorteringTidspunkt);
         setErApen(false);
+        bjelleRef.current?.focus();
+      } else {
+        if (!notifikasjoner || notifikasjoner?.length === 0) return;
+        setSistLest();
+        trackÅpning(notifikasjoner?.length ?? 0, antallUleste ?? 0);
+        setErApen(true);
       }
     };
 
-    const åpnePanelMedLogging = (antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) => {
-      setSistLest();
-      trackÅpning(antallNotifikasjoner, antallUlesteNotifikasjoner);
-      setErApen(true);
-    };
-
     useOnClickOutside(widgetRef, () => {
-      lukkÅpentPanelMedLogging();
+      erApen && togglePanel();
     });
 
     const style: CSSProperties = notifikasjoner === undefined || notifikasjoner.length === 0 ? { visibility: 'hidden' } : {};
 
     return <div ref={widgetRef} style={style}>
-      <NotifikasjonBjelle
-        antallUleste={antallUleste}
-        erApen={erApen}
-        focusableRef={bjelleRef}
-        onClick={() => {
-          if (notifikasjoner !== undefined && antallUleste !== undefined) { // er invisible hvis dette er false. se style
-            erApen ? lukkÅpentPanelMedLogging() : åpnePanelMedLogging(notifikasjoner.length, antallUleste);
-          }
-        }}
-      />
       <Dropdown
-        erApen={erApen}
-        ariaLabelledby="notifikasjon_panel-header"
+        open={erApen}
       >
+        <NotifikasjonBjelle
+          antallUleste={antallUleste}
+          erApen={erApen}
+          focusableRef={bjelleRef}
+          onClick={togglePanel}
+        />
         <NotifikasjonPanel
           notifikasjoner={notifikasjonerResultat ?? {
             notifikasjoner: [],
@@ -126,10 +126,7 @@ const NotifikasjonWidget = () => {
             feilDigiSyfo: false,
           }}
           erApen={erApen}
-          onLukkPanel={() => {
-            lukkÅpentPanelMedLogging();
-            bjelleRef.current?.focus();
-          }}
+          togglePanel={togglePanel}
         />
       </Dropdown>
     </div>;

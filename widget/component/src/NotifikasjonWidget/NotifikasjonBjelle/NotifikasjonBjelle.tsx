@@ -1,12 +1,12 @@
-import React, { Ref } from 'react';
+import { Ref } from 'react';
 import './NotifikasjonBjelle.css';
-import { BodyShort } from '@navikt/ds-react';
+import { Dropdown, BodyShort, Button } from '@navikt/ds-react';
 import { BellFillIcon } from '@navikt/aksel-icons';
 
 interface NotifikasjonBjelleProps {
   antallUleste?: number;
   erApen: boolean;
-  onClick?: () => void;
+  onClick: () => void;
   focusableRef: Ref<HTMLButtonElement>;
 }
 
@@ -19,34 +19,31 @@ export const NotifikasjonBjelle = ({
   const harUleste = antallUleste > 0;
 
   return (
-    <div className={`notifikasjon_bjelle ${harUleste ? 'uleste' : 'ingen_uleste'} ${erApen ? 'er_apen' : ''}`}>
-      <button
+      <Button
+        as={Dropdown.Toggle}
+        variant={harUleste ? 'primary' : 'secondary'}
         ref={focusableRef}
         onClick={onClick}
-        className={`notifikasjon_bjelle-knapp ${harUleste ? 'uleste' : 'ingen_uleste'}`}
         aria-label={
           harUleste
-            ? `Dine varsler, ${antallUleste} nye.`
-            : 'Dine varsler, ingen nye.'
+            ? `${antallUleste} nye varsler.`
+            : 'Ingen nye varsler.'
         }
-        aria-owns="notifikasjon_panel"
-        aria-haspopup="dialog"
-        aria-pressed={erApen}
+        aria-expanded={erApen}
+        aria-controls="notifikasjon-utvidet-innhold"
         aria-live="polite"
-        aria-atomic="true"
       >
-        <div className="notifikasjon_bjelle-ikon">
-          <BellFillIcon width="28px" height="28px" aria-hidden="true" />
+        <div className="notifikasjon-bjelle">
+          <BellFillIcon fontSize="2rem" aria-hidden />
           {harUleste && (
-            <div className="notifikasjon_bjelle-ikon__ulest-sirkel">
-              <BodyShort className="notifikasjon_bjelle-ikon__ulest-antall">
-                {antallUleste < 10 ? antallUleste : '9+'}
-              </BodyShort>
-            </div>
+            <span className="notifikasjon-badge" aria-hidden="true">
+                {antallUleste && antallUleste < 10 ? antallUleste : '9+'}
+              </span>
           )}
+          <BodyShort size="small" weight="semibold" style={{ marginTop: '0.25rem' }}>
+            Varsler
+          </BodyShort>
         </div>
-        <BodyShort size="small">Varsler</BodyShort>
-      </button>
-    </div>
+      </Button>
   );
 };

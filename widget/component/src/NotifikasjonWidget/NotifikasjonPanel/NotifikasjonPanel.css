@@ -1,108 +1,24 @@
-.notifikasjon_panel {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  color: var(--a-gray-900);
-  margin: 0;
-  padding: 0;
-  background-color: white;
-  outline: none;
-}
-.notifikasjon_panel li {
-  border: transparent 4px solid;
-}
-.notifikasjon_panel li:hover {
-  background-color: #F0F6FB;
-  border-left: var(--a-deepblue-500) 4px solid;
-}
-.notifikasjon_panel li:focus-within {
-  border: var(--a-deepblue-500) 4px solid;
-}
-.notifikasjon_panel li:not(:last-child):focus-within .notifikasjon_liste_element {
-  border-bottom: transparent 1px solid;
-}
-.notifikasjon_panel li:not(:last-child):not(:focus-within) .notifikasjon_liste_element {
-  border-bottom: var(--a-gray-400) 1px solid;
-}
-
-.notifikasjon_panel-feilmelding {
-  margin: 16px 16px 0 16px;
-  border-bottom: var(--a-gray-400) 1px solid;
-}
-.notifikasjon_panel-feilmelding > div {
-  margin: 16px 0;
-}
-.notifikasjon_panel-header {
-  margin: 16px 16px 0 16px;
-  padding-bottom: 16px;
-  border-bottom: var(--a-gray-600) 1px solid;
+.dropdown-menu-heading-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.notifikasjon_panel-header-title-help {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.notifikasjon-panel-liste {
+  width: 100vw;
+  max-width: 30rem;
+  border: solid 2px var(--a-deepblue-700);
+  border-radius: 0;
 }
 
-.notifikasjon_panel-header-xbtn {
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  border: none;
-  background-color: transparent;
-}
-
-.notifikasjon_panel-liste {
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  padding: 0;
-  margin: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  list-style: none;
-}
-
-.notifikasjon_panel-liste_shadows {
-  background:
-    /* Shadow covers */
-    linear-gradient(white 30%, rgba(255,255,255,0)),
-    linear-gradient(rgba(255,255,255,0), white 70%) 0 100%,
-
-      /* Shadows */
-    radial-gradient(50% 0, farthest-side, rgba(0,0,0,.2), rgba(0,0,0,0)),
-    radial-gradient(50% 100%,farthest-side, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
-  background:
-    /* Shadow covers */
-    linear-gradient(white 30%, rgba(255,255,255,0)),
-    linear-gradient(rgba(255,255,255,0), white 70%) 0 100%,
-
-      /* Shadows */
-    radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
-    radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
-  background-repeat: no-repeat;
-  background-color: white;
-  background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
-
-  background-attachment: local, local, scroll, scroll;
-}
-.notifikasjon_panel-liste::-webkit-scrollbar-track {
-  border-radius: 10px;
-  background-color: transparent;
-}
-.notifikasjon_panel-liste::-webkit-scrollbar {
-  width: 12px;
-  background-color: transparent;
-}
-.notifikasjon_panel-liste::-webkit-scrollbar-thumb {
-  border-radius: 6px;
-  background-color: var(--a-gray-700);
-}
 @media (max-width: 768px) {
-   .notifikasjon_panel-header {
-    height: 5vh; /* får 6 ekstra piksler fra et sted ¯\_(ツ)_/¯ */
+  .notifikasjon-panel-liste {
+    max-height: unset;
+    max-width: unset;
+    width: min(100vw, 768px);
+    transform: unset !important;
+    position: fixed !important;
+    top: var(--decorator-sticky-offset, 0px) !important;
+    height: calc(100vh - env(safe-area-inset-bottom) - var(--decorator-sticky-offset, 0px));
   }
 }
