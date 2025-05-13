@@ -30,13 +30,13 @@ export const NotifikasjonBjelle = ({
             : 'Ingen nye varsler.'
         }
         aria-expanded={erApen}
-        aria-controls="notifikasjon-utvidet-innhold"
+        aria-controls="notifikasjonwidget-panel-liste"
         aria-live="polite"
       >
-        <div className="notifikasjon-bjelle">
+        <div className="notifikasjonwidget-bjelle">
           <BellFillIcon fontSize="2rem" aria-hidden />
           {harUleste && (
-            <span className="notifikasjon-badge" aria-hidden="true">
+            <span className="notifikasjonwidget-badge" aria-hidden="true">
                 {antallUleste && antallUleste < 10 ? antallUleste : '9+'}
               </span>
           )}

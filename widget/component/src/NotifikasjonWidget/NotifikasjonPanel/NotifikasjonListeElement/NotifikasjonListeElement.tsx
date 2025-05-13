@@ -279,13 +279,13 @@ const NotifikasjonLenke = ({
   const { klikketPaa } = notifikasjon.brukerKlikk;
 
   return (
-    <div className="notifikasjon-element">
+    <div className="notifikasjonwidget-element">
       <div
-        className={`notifikasjon-element-left-border${erTodo ? ' gul' : ''}`}
+        className={`notifikasjonwidget-element-left-border${erTodo ? ' gul' : ''}`}
       />
       {klikketPaa && <BodyShort visuallyHidden>Ikke besøkt</BodyShort>}
       {<BodyShort visuallyHidden>{notifikasjon.__typename}</BodyShort>}
-      <div className="notifikasjon-element-innhold">
+      <div className="notifikasjonwidget-element-innhold">
         {/** VIRKSOMHET **/}
         <BodyShort size="small" spacing>
           {notifikasjon.virksomhet.navn.toUpperCase()}
@@ -310,7 +310,7 @@ const NotifikasjonLenke = ({
         )}
 
         {/** NOTIFIKASJON **/}
-        <div className="notifikasjon-element-melding">
+        <div className="notifikasjonwidget-element-melding">
           <div>{ikon}</div>
           <div>
             <div>
@@ -338,7 +338,7 @@ const NotifikasjonLenke = ({
         </div>
       </div>
 
-      <div className="notifikasjon-element-pil">
+      <div className="notifikasjonwidget-element-pil">
         <ChevronRightIcon fontSize="1.5rem" aria-hidden />
       </div>
     </div>

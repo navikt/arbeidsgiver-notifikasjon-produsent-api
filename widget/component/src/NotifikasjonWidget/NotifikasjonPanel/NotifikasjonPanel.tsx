@@ -10,7 +10,7 @@ import { ExpandIcon } from '@navikt/aksel-icons';
 import { useAnalytics } from '../../context/AnalyticsProvider';
 import { getLimitedUrl } from '../../utils/utils';
 
-interface NotifikasjonsPanelProps {
+interface NotifikasjonPanelProps {
   erApen: boolean;
   togglePanel: () => void;
   notifikasjoner: NotifikasjonerResultat;
@@ -21,10 +21,8 @@ const NotifikasjonPanel = (
     notifikasjoner: { notifikasjoner, feilAltinn, feilDigiSyfo },
     erApen,
     togglePanel,
-  }: NotifikasjonsPanelProps,
+  }: NotifikasjonPanelProps,
 ) => {
-  // if (notifikasjoner.length === 0) return null;
-
   const logEvent = useAnalytics();
 
   const notifikasjonRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -100,10 +98,14 @@ const NotifikasjonPanel = (
   };
 
   return (
-    <Dropdown.Menu onKeyDown={handleNotifikasjonKeyDown} className='notifikasjon-panel-liste'>
+    <Dropdown.Menu
+      id="notifikasjonwidget-panel-liste"
+      onKeyDown={handleNotifikasjonKeyDown}
+      className="notifikasjonwidget-panel-liste"
+    >
       <Dropdown.Menu.GroupedList>
         <Dropdown.Menu.GroupedList.Heading>
-          <div className="dropdown-menu-heading-container">
+          <div className="notifikasjonwidget-dropdown-menu-heading-container">
             <BodyShort as="span">
               <Link href="https://arbeidsgiver.nav.no/min-side-arbeidsgiver/saksoversikt">
                 Søk og filtrer på alle saker<ExpandIcon width={24} height={24} />

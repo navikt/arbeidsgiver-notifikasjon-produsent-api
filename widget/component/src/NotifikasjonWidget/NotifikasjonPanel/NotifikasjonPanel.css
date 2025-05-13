@@ -1,10 +1,10 @@
-.dropdown-menu-heading-container {
+.notifikasjonwidget-dropdown-menu-heading-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.notifikasjon-panel-liste {
+.notifikasjonwidget-panel-liste {
   width: 100vw;
   max-width: 30rem;
   border: solid 2px var(--a-deepblue-700);
@@ -12,7 +12,7 @@
 }
 
 @media (max-width: 768px) {
-  .notifikasjon-panel-liste {
+  .notifikasjonwidget-panel-liste {
     max-height: unset;
     max-width: unset;
     width: min(100vw, 768px);

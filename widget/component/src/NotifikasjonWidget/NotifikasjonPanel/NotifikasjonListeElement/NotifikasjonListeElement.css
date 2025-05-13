@@ -1,4 +1,4 @@
-.notifikasjon-element {
+.notifikasjonwidget-element {
   display: flex;
   border-bottom: 1px solid var(--a-gray-200);
   width: 100%;
@@ -6,37 +6,37 @@
   &:hover {
     background-color: var(--a-gray-50);
 
-    .notifikasjon-element-pil {
+    .notifikasjonwidget-element-pil {
       transform: translateX(25%);
     }
   }
 }
 
-.notifikasjon-element-left-border {
+.notifikasjonwidget-element-left-border {
   width: 8px;
   flex-shrink: 0;
 }
 
-.notifikasjon-element-left-border.gul {
+.notifikasjonwidget-element-left-border.gul {
   background-color: var(--a-orange-200);
 }
 
-.notifikasjon-element-left-border.blå {
+.notifikasjonwidget-element-left-border.blå {
   background-color: var(--a-lightblue-600);
 }
 
-.notifikasjon-element-innhold {
+.notifikasjonwidget-element-innhold {
   padding: 16px 24px;
   flex-grow: 1;
 }
 
-.notifikasjon-element-melding {
+.notifikasjonwidget-element-melding {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
 
-.notifikasjon-element-ikon {
+.notifikasjonwidget-element-ikon {
   margin-top: 2px;
   flex-shrink: 0;
 
@@ -47,15 +47,15 @@
   }
 }
 
-.notifikasjon-element-pil {
+.notifikasjonwidget-element-pil {
   display: flex;
   align-items: center;
   padding-right: 16px;
   transition: all 100ms linear;
 }
 
-.navds-dropdown__list-item a.navds-link:focus,
-.navds-dropdown__list-item a.navds-link:focus-visible {
+div.notifikasjonwidget-panel-liste dd.navds-dropdown__list-item a.navds-link:focus,
+div.notifikasjonwidget-panel-liste dd.navds-dropdown__list-item a.navds-link:focus-visible {
   background: var(--a-blue-100);
   outline: 2px solid black;
 }
