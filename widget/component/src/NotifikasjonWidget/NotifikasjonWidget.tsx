@@ -1,151 +1,122 @@
-import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { NotifikasjonBjelle } from './NotifikasjonBjelle/NotifikasjonBjelle';
 import NotifikasjonPanel from './NotifikasjonPanel/NotifikasjonPanel';
 import { ServerError, useQuery } from '@apollo/client';
 import { HENT_NOTIFIKASJONER } from '../api/graphql';
-import useLocalStorage from '../hooks/useLocalStorage';
-import { Notifikasjon, OppgaveTilstand } from '../api/graphql-types';
-import { getLimitedUrl, useAmplitude } from '../utils/amplitude';
-import Dropdown from './NotifikasjonPanel/Dropdown';
-import { useUmami } from '../utils/umami';
-
-const uleste = (
-  sistLest: string | undefined,
-  notifikasjoner: Notifikasjon[],
-): Notifikasjon[] => {
-  if (sistLest === undefined) {
-    return notifikasjoner;
-  } else {
-    return notifikasjoner.filter((notifikasjon) => {
-      if (notifikasjon.__typename === 'Oppgave' && notifikasjon.tilstand !== OppgaveTilstand.Ny) {
-        return false;
-      }
-      return new Date(notifikasjon.sorteringTidspunkt).getTime() > new Date(sistLest).getTime();
-    });
-  }
-};
+import { filtrerUlesteNotifikasjoner } from '../utils/filtrerUlesteNotifikasjoner';
+import { useOnClickOutside } from '../hooks/useOnClickOutside';
+import { useAnalytics } from '../context/AnalyticsProvider';
+import { getLimitedUrl } from '../utils/utils';
+import { Dropdown } from '@navikt/ds-react';
+import { useNotifikasjonerSistLest } from '../hooks/useNotifikasjonerSistLest';
 
 const NotifikasjonWidget = () => {
-    const { loggLukking, loggLasting, loggÅpning } = useAmplitude();
-    const umami = useUmami();
-
-    const [sistLest, _setSistLest] = useLocalStorage<string | undefined>(
-      'sist_lest',
-      undefined,
-    );
+    const logEvent = useAnalytics();
 
     const {
-      previousData,
-      data = previousData,
+      data,
+      error,
       stopPolling,
     } = useQuery(
       HENT_NOTIFIKASJONER,
       {
         pollInterval: 60_000,
-        onError(e) {
-          if ((e.networkError as ServerError)?.statusCode === 401) {
-            console.log('stopper poll pga 401 unauthorized');
-            stopPolling();
-          }
-        },
       },
     );
 
+    useEffect(() => {
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        if ((error.networkError as ServerError)?.statusCode === 401) {
+          console.log('stopper poll pga 401 unauthorized');
+          stopPolling();
+        }
+      }
+    }, [error]);
+
     function trackLukking() {
-      umami?.track('panel-kollaps', {
+      logEvent('panel-kollaps', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
       });
-      loggLukking();
     }
 
     function trackLasting(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      umami?.track('last-komponent', {
+      logEvent('last-komponent', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,
         'antall-ulestenotifikasjoner': antallUlesteNotifikasjoner,
         'antall-lestenotifikasjoner': antallNotifikasjoner - antallUlesteNotifikasjoner,
       });
-      loggLasting(antallNotifikasjoner, antallUlesteNotifikasjoner);
     }
 
     function trackÅpning(antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) {
-      umami?.track('panel-ekspander', {
+      logEvent('panel-ekspander', {
         tittel: 'arbeidsgiver notifikasjon panel',
         url: getLimitedUrl(),
         'antall-notifikasjoner': antallNotifikasjoner,
         'antall-ulestenotifikasjoner': antallUlesteNotifikasjoner,
         'antall-lestenotifikasjoner': antallNotifikasjoner - antallUlesteNotifikasjoner,
       });
-      loggÅpning(antallNotifikasjoner, antallUlesteNotifikasjoner);
     }
 
     const notifikasjonerResultat = data?.notifikasjoner;
+
     const notifikasjoner = notifikasjonerResultat?.notifikasjoner;
-    const setSistLest = useCallback(() => {
+
+    const { sistLest, setSistLest, mutationNotifikasjonerSistLest } = useNotifikasjonerSistLest();
+
+    const setRemoteSistLest = useCallback(() => {
       if (notifikasjoner && notifikasjoner.length > 0) {
         // naiv impl forutsetter sortering
-        _setSistLest(notifikasjoner[0].sorteringTidspunkt);
+        mutationNotifikasjonerSistLest({
+          variables: { tidspunkt: notifikasjoner[0].sorteringTidspunkt },
+        });
       }
     }, [notifikasjoner]);
 
-    const antallUleste = notifikasjoner && uleste(sistLest, notifikasjoner).length;
+    const antallUleste = notifikasjoner && filtrerUlesteNotifikasjoner(sistLest, notifikasjoner).length;
     const widgetRef = useRef<HTMLDivElement>(null);
     const bjelleRef = useRef<HTMLButtonElement>(null);
     const [erApen, setErApen] = useState(false);
+
     useEffect(() => {
       if (notifikasjoner !== undefined && antallUleste !== undefined) {
         trackLasting(notifikasjoner.length, antallUleste);
       }
     }, [notifikasjoner, antallUleste]);
-    const lukkÅpentPanelMedLogging = () => {
+
+    const togglePanel = () => {
       if (erApen) {
         trackLukking();
-        setSistLest();
+        notifikasjoner && setSistLest(notifikasjoner[0].sorteringTidspunkt);
         setErApen(false);
+        bjelleRef.current?.focus();
+      } else {
+        if (!notifikasjoner || notifikasjoner?.length === 0) return;
+        setRemoteSistLest();
+        trackÅpning(notifikasjoner?.length ?? 0, antallUleste ?? 0);
+        setErApen(true);
       }
     };
-    const åpnePanelMedLogging = (antallNotifikasjoner: number, antallUlesteNotifikasjoner: number) => {
-      trackÅpning(antallNotifikasjoner, antallUlesteNotifikasjoner);
-      setErApen(true);
-    };
 
-    const handleFocusOutside: { (event: MouseEvent | KeyboardEvent): void } = (
-      e: MouseEvent | KeyboardEvent,
-    ) => {
-      const node = widgetRef.current;
-      // @ts-ignore
-      if (node && node !== e.target && node.contains(e.target as HTMLElement)) {
-        return;
-      }
-      lukkÅpentPanelMedLogging();
-    };
-
-    useEffect(() => {
-      document.addEventListener('click', handleFocusOutside);
-      return () => {
-        document.removeEventListener('click', handleFocusOutside);
-      };
-    }, [handleFocusOutside]);
+    useOnClickOutside(widgetRef, () => {
+      erApen && togglePanel();
+    });
 
     const style: CSSProperties = notifikasjoner === undefined || notifikasjoner.length === 0 ? { visibility: 'hidden' } : {};
 
     return <div ref={widgetRef} style={style}>
-      <NotifikasjonBjelle
-        antallUleste={antallUleste}
-        erApen={erApen}
-        focusableRef={bjelleRef}
-        onClick={() => {
-          if (notifikasjoner !== undefined && antallUleste !== undefined) { // er invisible hvis dette er false. se style
-            erApen ? lukkÅpentPanelMedLogging() : åpnePanelMedLogging(notifikasjoner.length, antallUleste);
-          }
-        }}
-      />
       <Dropdown
-        erApen={erApen}
-        ariaLabelledby="notifikasjon_panel-header"
+        open={erApen}
       >
+        <NotifikasjonBjelle
+          antallUleste={antallUleste}
+          erApen={erApen}
+          focusableRef={bjelleRef}
+          onClick={togglePanel}
+        />
         <NotifikasjonPanel
           notifikasjoner={notifikasjonerResultat ?? {
             notifikasjoner: [],
@@ -153,10 +124,7 @@ const NotifikasjonWidget = () => {
             feilDigiSyfo: false,
           }}
           erApen={erApen}
-          onLukkPanel={() => {
-            lukkÅpentPanelMedLogging();
-            bjelleRef.current?.focus();
-          }}
+          togglePanel={togglePanel}
         />
       </Dropdown>
     </div>;

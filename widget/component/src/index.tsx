@@ -1,12 +1,10 @@
-import React, { createContext, PropsWithChildren, useContext } from 'react';
+import { createContext, PropsWithChildren, useContext } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import NotifikasjonWidgetComponent from './NotifikasjonWidget/NotifikasjonWidget';
 import { createClient } from './api/graphql';
-import { AmplitudeProvider } from './utils/amplitude';
-import { ConsentProvider } from './hooks/ConsentContext';
-import { UmamiProvider } from './utils/umami';
+import { AnalyticsProvider } from './context/AnalyticsProvider';
 
-export type Props = {
+export type NotifikasjonWidgetProps = {
   apiUrl?: string,
   miljo?: Miljø
 }
@@ -15,8 +13,10 @@ export type Miljø = 'local' | 'labs' | 'dev' | 'prod'
 
 export * as GQL from './api/graphql-types';
 
-export const NotifikasjonWidget = (props: Props) => {
-  if (useContext(NotifikasjonWidgetProviderLoadedContext)) {
+export const NotifikasjonWidget = (props: NotifikasjonWidgetProps) => {
+  const isProviderLoaded = useContext(NotifikasjonWidgetProviderLoadedContext);
+
+  if (isProviderLoaded) {
     return <NotifikasjonWidgetComponent />;
   } else {
     if (props.apiUrl === undefined || props.miljo === undefined) {
@@ -47,15 +47,11 @@ export type ProviderProps = PropsWithChildren<{
 export const NotifikasjonWidgetProvider = ({ apiUrl, miljo, children }: ProviderProps) => {
   return (
     <NotifikasjonWidgetProviderLoadedContext.Provider value={true}>
-      <ConsentProvider>
-        <UmamiProvider miljo={miljo}>
-          <AmplitudeProvider miljo={miljo}>
-            <ApolloProvider client={createClient(apiUrl)}>
-              {children}
-            </ApolloProvider>
-          </AmplitudeProvider>
-        </UmamiProvider>
-      </ConsentProvider>
+      <ApolloProvider client={createClient(apiUrl)}>
+        <AnalyticsProvider origin="arbeidsgiver-notifikasjon-widget" miljø={miljo}>
+          {children}
+        </AnalyticsProvider>
+      </ApolloProvider>
     </NotifikasjonWidgetProviderLoadedContext.Provider>
   );
 };
