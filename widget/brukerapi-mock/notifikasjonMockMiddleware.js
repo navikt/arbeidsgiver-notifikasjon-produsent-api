@@ -294,7 +294,11 @@ const mocks = () => ({
       sakstyper: Object.keys
       (eksempler).map(navn => ({ navn, antall: casual.integer(0, 10) }))
     }),
-    sakstyper: Object.keys(eksempler).map(navn => ({ navn }))
+    sakstyper: Object.keys(eksempler).map(navn => ({ navn })),
+    notifikasjonerSistLest: {
+      __typename: 'NotifikasjonerSistLest',
+      tidspunkt: utgåttDate().toISOString() // utgåttDate brukes kun fordi det er en enkel måte å mocke en date som er tilbake i tid på
+    }
   }),
   Int: () => casual.integer(0, 1000),
   String: () => casual.string,

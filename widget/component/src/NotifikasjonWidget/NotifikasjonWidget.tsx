@@ -3,12 +3,12 @@ import { NotifikasjonBjelle } from './NotifikasjonBjelle/NotifikasjonBjelle';
 import NotifikasjonPanel from './NotifikasjonPanel/NotifikasjonPanel';
 import { ServerError, useQuery } from '@apollo/client';
 import { HENT_NOTIFIKASJONER } from '../api/graphql';
-import useLocalStorage from '../hooks/useLocalStorage';
 import { filtrerUlesteNotifikasjoner } from '../utils/filtrerUlesteNotifikasjoner';
 import { useOnClickOutside } from '../hooks/useOnClickOutside';
 import { useAnalytics } from '../context/AnalyticsProvider';
 import { getLimitedUrl } from '../utils/utils';
 import { Dropdown } from '@navikt/ds-react';
+import { useNotifikasjonerSistLest } from '../hooks/useNotifikasjonerSistLest';
 
 const NotifikasjonWidget = () => {
     const logEvent = useAnalytics();
@@ -65,20 +65,18 @@ const NotifikasjonWidget = () => {
 
     const notifikasjoner = notifikasjonerResultat?.notifikasjoner;
 
-    const [lagretSistLest, setLagretSistLest] = useLocalStorage<string | undefined>(
-      'sist_lest',
-      undefined,
-    );
-    const [synligSistLest, setSynligSistLest] = useState(lagretSistLest);
+    const { sistLest, setSistLest, mutationNotifikasjonerSistLest } = useNotifikasjonerSistLest();
 
-    const setSistLest = useCallback(() => {
+    const setRemoteSistLest = useCallback(() => {
       if (notifikasjoner && notifikasjoner.length > 0) {
         // naiv impl forutsetter sortering
-        setLagretSistLest(notifikasjoner[0].sorteringTidspunkt);
+        mutationNotifikasjonerSistLest({
+          variables: { tidspunkt: notifikasjoner[0].sorteringTidspunkt },
+        });
       }
     }, [notifikasjoner]);
 
-    const antallUleste = notifikasjoner && filtrerUlesteNotifikasjoner(synligSistLest, notifikasjoner).length;
+    const antallUleste = notifikasjoner && filtrerUlesteNotifikasjoner(sistLest, notifikasjoner).length;
     const widgetRef = useRef<HTMLDivElement>(null);
     const bjelleRef = useRef<HTMLButtonElement>(null);
     const [erApen, setErApen] = useState(false);
@@ -92,12 +90,12 @@ const NotifikasjonWidget = () => {
     const togglePanel = () => {
       if (erApen) {
         trackLukking();
-        notifikasjoner && setSynligSistLest(notifikasjoner[0].sorteringTidspunkt);
+        notifikasjoner && setSistLest(notifikasjoner[0].sorteringTidspunkt);
         setErApen(false);
         bjelleRef.current?.focus();
       } else {
         if (!notifikasjoner || notifikasjoner?.length === 0) return;
-        setSistLest();
+        setRemoteSistLest();
         trackÅpning(notifikasjoner?.length ?? 0, antallUleste ?? 0);
         setErApen(true);
       }

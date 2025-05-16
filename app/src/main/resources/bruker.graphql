@@ -262,5 +262,5 @@ type UgyldigId {
 union NotifikasjonerSistLestResultat = NotifikasjonerSistLest
 
 type NotifikasjonerSistLest {
-    tidspunkt: ISO8601DateTime!
+    tidspunkt: ISO8601DateTime
 }

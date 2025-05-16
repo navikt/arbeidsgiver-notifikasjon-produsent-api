@@ -105,9 +105,20 @@ export type MutationNotifikasjonKlikketPaaArgs = {
   id: Scalars['ID']['input'];
 };
 
+export type MutationNotifikasjonerSistLestArgs = {
+  tidspunkt: Scalars['ISO8601DateTime']['input'];
+};
+
+export type NotifikasjonerSistLest = {
+  __typename?: 'NotifikasjonerSistLest';
+  tidspunkt: Scalars['ISO8601DateTime']['output'];
+}
+
 export type Notifikasjon = Beskjed | Kalenderavtale | Oppgave;
 
 export type NotifikasjonKlikketPaaResultat = BrukerKlikk | UgyldigId;
+
+export type NotifikasjonerSistLestResultat = NotifikasjonerSistLest;
 
 export type NotifikasjonerResultat = {
   __typename?: 'NotifikasjonerResultat';
@@ -175,6 +186,7 @@ export type Query = {
   /** Alle sakstyper som finnes for brukeren. */
   sakstyper: Array<SakstypeOverordnet>;
   whoami?: Maybe<Scalars['String']['output']>;
+  notifikasjonerSistLest: NotifikasjonerSistLestResultat;
 };
 
 
