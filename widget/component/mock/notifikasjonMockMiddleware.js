@@ -3,6 +3,14 @@ import path from 'path'
 import { ApolloServer, gql } from 'apollo-server-express'
 import casual from 'casual'
 
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+const schemaPath = join(__dirname, './bruker.graphql')
+
 const roundDate = (millis) => {
   const date = new Date()
   return new Date(Math.floor(date.getTime() / millis) * millis)
@@ -360,7 +368,7 @@ const mocks = () => ({
 })
 
 export const createApolloServer = ({ mocks: apolloServerOptionsMocks, ...apolloServerOptions } = {}) => {
-  const data = fs.readFileSync(path.join(__dirname, 'bruker.graphql'))
+  const data = fs.readFileSync(schemaPath)
   return new ApolloServer({
     typeDefs: gql(data.toString()),
     mocks: { ...mocks(), ...apolloServerOptionsMocks },
