@@ -13,12 +13,16 @@ const config = async ({ command }) => {
     ? {
       name: 'vite-plugin-mock-graphql',
       configureServer: async (server: ViteDevServer) => {
-        const express = (await import('express')).default
-        const { applyNotifikasjonMockMiddleware } = await import('@navikt/arbeidsgiver-notifikasjoner-brukerapi-mock')
-        const app = express()
-        applyNotifikasjonMockMiddleware({ app, path: '/api/graphql' })
-        server.middlewares.use(app)
-      },
+        try {
+          const express = (await import('express')).default
+          const { applyNotifikasjonMockMiddleware } = await import('./mock/dist/notifikasjonMockMiddleware.js')
+          const app = express()
+          applyNotifikasjonMockMiddleware({ app, path: '/api/graphql' })
+          server.middlewares.use(app)
+        } catch (err) {
+          console.warn('Mock middleware not available, skipping setup.')
+        }
+      }
     }
     : undefined
 

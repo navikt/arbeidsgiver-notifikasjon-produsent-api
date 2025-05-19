@@ -62,7 +62,6 @@
     "typescript": "5.8.3",
     "vite": "6.3.5",
     "vite-plugin-dts": "4.5.4",
-    "vite-plugin-lib-inject-css": "2.2.2",
-    "@navikt/arbeidsgiver-notifikasjoner-brukerapi-mock": "file:./mock"
+    "vite-plugin-lib-inject-css": "2.2.2"
   }
 }
