@@ -37,7 +37,9 @@ const Banner: FunctionComponent<RouteComponentProps & OwnProps> = ({history, sid
 To run the demo app locally, you need to run the three following scripts.
 
 ```bash
-cd component
+cd component/mock
+npm i
+cd ..
 npm i
 npm run setup
 npm run dev:watch
