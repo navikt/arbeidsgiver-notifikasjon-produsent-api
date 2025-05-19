@@ -5,35 +5,29 @@
     "type": "git",
     "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
   },
-  "version": "8.0.0-rc.2",
-  "main": "./lib/cjs/index.js",
-  "module": "./lib/esm/index.js",
-  "types": "./lib/esm/index.d.ts",
+  "version": "8.0.0-rc.3",
+  "type": "module",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
-    "gql:generate": "graphql-codegen",
-    "build": "node build.js",
-    "start": "node build.js --watch",
-    "test": "echo tests not implemented"
+    "setup": "npm run setup:mock && npm run build",
+    "setup:mock": "cd mock && npm install && npm run setup",
+    "dev": "vite",
+    "build": "tsc --p ./tsconfig-build.json && vite build",
+    "lint": "eslint . --ext ts,tsx",
+    "preview": "vite preview",
+    "build:watch": "tsc -b ./tsconfig.json --watch",
+    "dev:watch": "run-p build:watch dev"
   },
   "dependencies": {
-    "@apollo/client": "^3.13.8",
-    "graphql": "^16.11.0"
-  },
-  "devDependencies": {
-    "@graphql-codegen/cli": "^5.0.6",
-    "@graphql-codegen/typescript": "^4.1.6",
-    "@graphql-codegen/typescript-operations": "^4.6.1",
-    "@graphql-codegen/typescript-react-apollo": "^4.3.2",
-    "@types/node": "^22.15.17",
-    "@types/react": "^19.1.4",
-    "@types/react-dom": "^19.1.4",
-    "esbuild": "0.25.4",
-    "esbuild-style-plugin": "1.6.3",
-    "prettier": "3.5.3",
-    "prop-types": "15.8.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "typescript": "^5.5.3"
+    "@apollo/client": "3.13.8",
+    "graphql": "16.11.0"
   },
   "peerDependencies": {
     "@navikt/aksel-icons": ">=7.21.1",
@@ -42,5 +36,34 @@
     "@navikt/nav-dekoratoren-moduler": ">=3.2.3",
     "react": "18 || 19",
     "react-dom": "18 || 19"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "5.0.6",
+    "@graphql-codegen/typescript": "4.1.6",
+    "@graphql-codegen/typescript-operations": "4.6.1",
+    "@graphql-codegen/typescript-react-apollo": "4.3.2",
+    "@navikt/bedriftsmeny": "8.0.3",
+    "@types/express": "4.17.1",
+    "@types/node": "22.15.19",
+    "@types/react": "19.1.4",
+    "@types/react-dom": "19.1.5",
+    "@typescript-eslint/eslint-plugin": "8.32.1",
+    "@typescript-eslint/parser": "8.32.1",
+    "@vitejs/plugin-react": "4.4.1",
+    "apollo-server-express": "3.13.0",
+    "casual": "1.6.2",
+    "eslint": "9.27.0",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.4.20",
+    "express": "4.17.1",
+    "glob": "11.0.2",
+    "npm-run-all": "4.1.5",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "typescript": "5.8.3",
+    "vite": "6.3.5",
+    "vite-plugin-dts": "4.5.4",
+    "vite-plugin-lib-inject-css": "2.2.2"
   }
 }

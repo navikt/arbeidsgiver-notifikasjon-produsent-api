@@ -1,6 +1,7 @@
-const fs = require('fs')
-const path = require('path')
-let casual
+import fs from 'fs'
+import path from 'path'
+import { ApolloServer, gql } from 'apollo-server-express'
+import casual from 'casual'
 
 const roundDate = (millis) => {
   const date = new Date()
@@ -358,10 +359,7 @@ const mocks = () => ({
   })
 })
 
-const createApolloServer = ({ mocks: apolloServerOptionsMocks, ...apolloServerOptions } = {}) => {
-  const { ApolloServer, gql } = require('apollo-server-express')
-  casual = require('casual')
-
+export const createApolloServer = ({ mocks: apolloServerOptionsMocks, ...apolloServerOptions } = {}) => {
   const data = fs.readFileSync(path.join(__dirname, 'bruker.graphql'))
   return new ApolloServer({
     typeDefs: gql(data.toString()),
@@ -370,7 +368,7 @@ const createApolloServer = ({ mocks: apolloServerOptionsMocks, ...apolloServerOp
   })
 }
 
-function applyNotifikasjonMockMiddleware(middlewareOptions, apolloServerOptions) {
+export function applyNotifikasjonMockMiddleware(middlewareOptions, apolloServerOptions) {
   const apolloServer = createApolloServer(apolloServerOptions)
   apolloServer.start()
     .then(() => {
@@ -379,9 +377,4 @@ function applyNotifikasjonMockMiddleware(middlewareOptions, apolloServerOptions)
     .catch(error =>
       console.log('error starting apollo server', { error })
     )
-}
-
-module.exports = {
-  createApolloServer,
-  applyNotifikasjonMockMiddleware
 }

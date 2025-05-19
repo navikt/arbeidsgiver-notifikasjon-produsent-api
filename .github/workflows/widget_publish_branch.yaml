@@ -61,12 +61,12 @@ jobs:
 
       - name: build
         run: |
-          cd widget/brukerapi-mock
+          cd widget/component/mock
           npm run build
 
       - name: publish on github
         run: |
-          cd widget/brukerapi-mock
+          cd widget/component/mock
           if jq --null-input --exit-status \
               --argjson local "$(jq .version package.json)" \
               --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjoner-brukerapi-mock versions)" \

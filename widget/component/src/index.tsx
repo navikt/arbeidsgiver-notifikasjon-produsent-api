@@ -1,57 +1,12 @@
-import { createContext, PropsWithChildren, useContext } from 'react';
-import { ApolloProvider } from '@apollo/client';
-import NotifikasjonWidgetComponent from './NotifikasjonWidget/NotifikasjonWidget';
-import { createClient } from './api/graphql';
-import { AnalyticsProvider } from './context/AnalyticsProvider';
 
-export type NotifikasjonWidgetProps = {
-  apiUrl?: string,
-  miljo?: Miljø
-}
+import '@navikt/ds-css'
+import App from './App'
 
-export type Miljø = 'local' | 'labs' | 'dev' | 'prod'
+import { injectDecoratorClientSide } from '@navikt/nav-dekoratoren-moduler'
+import { createRoot } from "react-dom/client";
 
-export * as GQL from './api/graphql-types';
+injectDecoratorClientSide({
+  env: "dev",
+}).catch((e: Error) => { console.error(e) });
 
-export const NotifikasjonWidget = (props: NotifikasjonWidgetProps) => {
-  const isProviderLoaded = useContext(NotifikasjonWidgetProviderLoadedContext);
-
-  if (isProviderLoaded) {
-    return <NotifikasjonWidgetComponent />;
-  } else {
-    if (props.apiUrl === undefined || props.miljo === undefined) {
-      console.error(`
-        Unable to load Notifikasjonwidget.
-        Both 'apiUrl' and 'miljo' are required.
-        NotifikasjonWidget is missing properties 'apiUrl' and/or 'miljo'.
-        It must be provided by NotifikasjonWidgetProvider or directly as a property.
-      `);
-      return null;
-    } else {
-      return (
-        <NotifikasjonWidgetProvider miljo={props.miljo} apiUrl={props.apiUrl}>
-          <NotifikasjonWidgetComponent />
-        </NotifikasjonWidgetProvider>
-      );
-    }
-  }
-};
-
-const NotifikasjonWidgetProviderLoadedContext = createContext<boolean>(false);
-
-export type ProviderProps = PropsWithChildren<{
-  apiUrl: string,
-  miljo: Miljø,
-}>
-
-export const NotifikasjonWidgetProvider = ({ apiUrl, miljo, children }: ProviderProps) => {
-  return (
-    <NotifikasjonWidgetProviderLoadedContext.Provider value={true}>
-      <ApolloProvider client={createClient(apiUrl)}>
-        <AnalyticsProvider origin="arbeidsgiver-notifikasjon-widget" miljø={miljo}>
-          {children}
-        </AnalyticsProvider>
-      </ApolloProvider>
-    </NotifikasjonWidgetProviderLoadedContext.Provider>
-  );
-};
+createRoot(document.getElementById('app')!).render(<App />);
