@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
   },
-  "version": "8.0.0-rc.4",
+  "version": "8.0.0-rc.5",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,14 +16,12 @@
     "**/*.css"
   ],
   "scripts": {
-    "setup": "npm run setup:mock && npm run build",
+    "setup": "npm run setup:mock",
     "setup:mock": "cd mock && npm install && npm run setup",
     "dev": "vite",
     "build": "tsc --p ./tsconfig-build.json && vite build",
     "lint": "eslint . --ext ts,tsx",
     "preview": "vite preview",
-    "build:watch": "tsc -b ./tsconfig.json --watch",
-    "dev:watch": "run-p build:watch dev",
     "test": "echo tests not implemented"
   },
   "dependencies": {
@@ -57,7 +55,6 @@
     "eslint-plugin-react-refresh": "0.4.20",
     "express": "4.17.1",
     "glob": "11.0.2",
-    "npm-run-all": "4.1.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "typescript": "5.8.3",

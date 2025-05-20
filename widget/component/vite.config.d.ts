@@ -1,2 +1,4 @@
-declare const _default: import("vite").UserConfig;
-export default _default;
+declare const config: ({ command }: {
+    command: any;
+}) => Promise<import("vite").UserConfig>;
+export default config;

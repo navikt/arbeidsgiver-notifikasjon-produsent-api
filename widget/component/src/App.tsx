@@ -1,6 +1,6 @@
 import Bedriftsmeny from '@navikt/bedriftsmeny';
 import '@navikt/bedriftsmeny/lib/bedriftsmeny.css';
-import { NotifikasjonWidget } from '../dist';
+import { NotifikasjonWidget } from '../lib';
 import { BrowserRouter } from 'react-router';
 import './App.css';
 import { MOCK_ORGANISASJONER } from './MockOrganisasjoner';

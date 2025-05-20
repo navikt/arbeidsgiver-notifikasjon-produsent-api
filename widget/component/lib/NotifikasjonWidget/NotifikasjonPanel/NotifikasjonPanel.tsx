@@ -102,7 +102,7 @@ const NotifikasjonPanel = (
       id="notifikasjonwidget-panel-liste"
       onKeyDown={handleNotifikasjonKeyDown}
       className="notifikasjonwidget-panel-liste"
-    >
+>
       <Dropdown.Menu.GroupedList>
         <Dropdown.Menu.GroupedList.Heading>
           <div className="notifikasjonwidget-dropdown-menu-heading-container">
