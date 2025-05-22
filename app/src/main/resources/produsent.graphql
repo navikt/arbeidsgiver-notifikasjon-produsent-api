@@ -1099,21 +1099,15 @@ type Mutation {
     ): OppdaterKalenderavtaleResultat!
 
     """
-    Markerer en notifikasjon som slettet (soft delete).
-
-    Notifikasjonen vil forsvinne helt for mottakeren: de vil ikke kunne se den på
-    noen som helst måte — som om notifikasjonen aldri eksisterte.
-
-    For dere (produsenter), så kan dere fortsatt se notifikasjonen i listen over deres notifikasjoner.
-
-    Eventuelle eksterne varsler (SMS, e-post) knyttet til notifikasjonen vil bli fortsatt bli sendt.
-
-    Advarsel: det er ikke mulig å angre på denne operasjonen.
+    Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
     """
     softDeleteNotifikasjon(id: ID!): SoftDeleteNotifikasjonResultat!
+    @deprecated(reason:
+    "All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hard delete i stedet."
+    )
 
     """
-    Se dokumentasjon for `softDeleteNotifikasjon(id)`.
+    Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
     """
     softDeleteNotifikasjonByEksternId(
         """
@@ -1131,7 +1125,7 @@ type Mutation {
     )
 
     """
-    Se dokumentasjon for `softDeleteNotifikasjon(id)`.
+    Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
     """
     softDeleteNotifikasjonByEksternId_V2(
         """
@@ -1144,6 +1138,9 @@ type Mutation {
         """
         eksternId: String!
     ): SoftDeleteNotifikasjonResultat!
+    @deprecated(reason:
+    "All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hard delete i stedet."
+    )
 
     """
     Sletter en notifikasjon og tilhørende data helt fra databasen og kafka.
@@ -1194,13 +1191,7 @@ type Mutation {
     ): HardDeleteNotifikasjonResultat!
 
     """
-    Markerer en sak som slettet (soft delete).
-
-    Sak vil forsvinne helt for mottakeren: de vil ikke kunne se den på
-    noen som helst måte — som om saken aldri eksisterte.
-
-    Advarsel: det er ikke mulig å angre på denne operasjonen.
-    Advarsel: ingen notifikasjoner blir slettet, selv om de har samme grupperingsid.
+    Se dokumentasjon for `hardDeleteSak(id)`.
     """
     softDeleteSak(
         """
@@ -1208,9 +1199,12 @@ type Mutation {
         """
         id: ID!
     ): SoftDeleteSakResultat!
+    @deprecated(reason:
+    "All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hard delete i stedet."
+    )
 
     """
-    Se dokumentasjon for `softDeleteSak(id)`.
+    Se dokumentasjon for `hardDeleteSak(id)`.
     """
     softDeleteSakByGrupperingsid(
         """
@@ -1223,6 +1217,9 @@ type Mutation {
         """
         grupperingsid: String!
     ): SoftDeleteSakResultat!
+    @deprecated(reason:
+    "All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hard delete i stedet."
+    )
 
     """
     Sletter en sak og tilhørende data helt fra databasen og kafka.
