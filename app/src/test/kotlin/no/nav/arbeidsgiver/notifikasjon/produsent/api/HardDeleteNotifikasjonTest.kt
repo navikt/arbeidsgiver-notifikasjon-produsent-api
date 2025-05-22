@@ -84,7 +84,7 @@ class HardDeleteNotifikasjonTest {
                 """.trimIndent()
             )) {
                 // returnerer tilbake id-en
-                val vellykket = getTypedContent<MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjon")
+                val vellykket = getTypedContent<MutationDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjon")
                 assertEquals(uuid, vellykket.id)
             }
 
@@ -272,7 +272,7 @@ class HardDeleteNotifikasjonTest {
                 """.trimIndent()
             )) {
                 // returnerer tilbake id-en
-                val vellykket = getTypedContent<MutationHardDeleteNotifikasjon.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjonByEksternId")
+                val vellykket = getTypedContent<MutationDelete.HardDeleteNotifikasjonVellykket>("hardDeleteNotifikasjonByEksternId")
                 assertEquals(uuid, vellykket.id)
             }
 

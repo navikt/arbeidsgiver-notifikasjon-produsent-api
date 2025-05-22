@@ -2,9 +2,9 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
@@ -135,13 +135,13 @@ class SoftDeleteSakTest {
             ) {
                 // returnerer tilbake id-en
                 val vellykket =
-                    getTypedContent<MutationSoftDeleteSak.SoftDeleteSakVellykket>("softDeleteSak")
+                    getTypedContent<MutationDelete.SoftDeleteSakVellykket>("softDeleteSak")
                 assertEquals(uuid, vellykket.id)
             }
 
             // har sendt melding til kafka
             kafkaProducer.hendelser.removeLast().also {
-                it as SoftDelete
+                it as HardDelete
             }
 
             // har blitt slettet i modellen
@@ -237,7 +237,7 @@ class SoftDeleteSakTest {
             )) {
                 // sak er slettet
                 val vellykket =
-                    getTypedContent<MutationSoftDeleteSak.SoftDeleteSakVellykket>("softDeleteSak")
+                    getTypedContent<MutationDelete.SoftDeleteSakVellykket>("softDeleteSak")
                 assertEquals(uuid, vellykket.id)
             }
 
@@ -284,13 +284,13 @@ class SoftDeleteSakTest {
             )) {
                 // returnerer tilbake id-en
                 val vellykket =
-                    getTypedContent<MutationSoftDeleteSak.SoftDeleteSakVellykket>("softDeleteSakByGrupperingsid")
+                    getTypedContent<MutationDelete.SoftDeleteSakVellykket>("softDeleteSakByGrupperingsid")
                 assertEquals(uuid, vellykket.id)
             }
 
             // har sendt melding til kafka
             kafkaProducer.hendelser.removeLast().also {
-                it as SoftDelete
+                it as HardDelete
             }
 
             // har blitt slettet i modellen

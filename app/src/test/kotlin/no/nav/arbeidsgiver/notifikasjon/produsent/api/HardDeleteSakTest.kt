@@ -105,7 +105,7 @@ class HardDeleteSakTest {
                 """.trimIndent()
             )) {
                 // returnerer tilbake id-en
-                val vellykket = getTypedContent<MutationHardDeleteSak.HardDeleteSakVellykket>("hardDeleteSak")
+                val vellykket = getTypedContent<MutationDelete.HardDeleteSakVellykket>("hardDeleteSak")
                 assertEquals(sakId, vellykket.id)
             }
 
@@ -208,7 +208,7 @@ class HardDeleteSakTest {
             ) {
                 // returnerer tilbake id-en
                 val vellykket =
-                    getTypedContent<MutationHardDeleteSak.HardDeleteSakVellykket>("hardDeleteSakByGrupperingsid")
+                    getTypedContent<MutationDelete.HardDeleteSakVellykket>("hardDeleteSakByGrupperingsid")
                 assertEquals(sakId, vellykket.id)
             }
 

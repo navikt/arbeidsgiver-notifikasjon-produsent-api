@@ -1,8 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HardDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
@@ -88,13 +88,13 @@ class SoftDeleteNotifikasjonTest {
             ) {
                 // returnerer tilbake id-en
                 val vellykket =
-                    getTypedContent<MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjon")
+                    getTypedContent<MutationDelete.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjon")
                 assertEquals(uuid, vellykket.id)
             }
 
             // har sendt melding til kafka
             kafkaProducer.hendelser.removeLast().also {
-                it as SoftDelete
+                it as HardDelete
             }
 
             // har blitt slettet i modellen
@@ -314,13 +314,13 @@ class SoftDeleteNotifikasjonTest {
             ) {
                 // returnerer tilbake id-en
                 val vellykket =
-                    getTypedContent<MutationSoftDeleteNotifikasjon.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjonByEksternId_V2")
+                    getTypedContent<MutationDelete.SoftDeleteNotifikasjonVellykket>("softDeleteNotifikasjonByEksternId_V2")
                 assertEquals(uuid, vellykket.id)
             }
 
             // har sendt melding til kafka
             kafkaProducer.hendelser.removeLast().also {
-                it as SoftDelete
+                it as HardDelete
             }
 
             // har blitt slettet i modellen
