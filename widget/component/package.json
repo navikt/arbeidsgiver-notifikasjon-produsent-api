@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
   },
-  "version": "8.0.0-rc.5",
+  "version": "8.0.0-rc.6",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

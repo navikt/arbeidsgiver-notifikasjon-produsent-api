@@ -6,12 +6,13 @@
     "type": "git",
     "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
   },
-  "version": "8.0.0-rc.3",
+  "version": "8.0.0-rc.6",
   "license": "MIT",
   "main": "dist/notifikasjonMockMiddleware.js",
   "files": [
     "dist/**/*"
   ],
+  "types": "dist/notifikasjonMockMiddleware.d.ts",
   "dependencies": {
     "apollo-server": "^3.10.2",
     "apollo-server-core": "^3.10.2",
@@ -20,7 +21,8 @@
     "graphql": "^16.6.0"
   },
   "scripts": {
-    "setup": "npm i && npm run build",
-    "build": "mkdir -p dist && cp ../../../app/src/main/resources/bruker.graphql notifikasjonMockMiddleware.js dist"
+    "setup": "npm install && npm run build",
+    "build": "npm run clean && tsc && cp ../../../app/src/main/resources/bruker.graphql dist/",
+    "clean": "rm -rf dist"
   }
 }
