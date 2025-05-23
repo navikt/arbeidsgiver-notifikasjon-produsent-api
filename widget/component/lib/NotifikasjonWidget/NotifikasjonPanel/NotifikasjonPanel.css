@@ -1,0 +1,24 @@
+.notifikasjonwidget-dropdown-menu-heading-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notifikasjonwidget-panel-liste {
+  width: 100vw;
+  max-width: 30rem;
+  border: solid 2px var(--a-deepblue-700);
+  border-radius: 0;
+}
+
+@media (max-width: 768px) {
+  .notifikasjonwidget-panel-liste {
+    max-height: unset;
+    max-width: unset;
+    width: min(100vw, 768px);
+    transform: unset !important;
+    position: fixed !important;
+    top: var(--decorator-sticky-offset, 0px) !important;
+    height: calc(100vh - env(safe-area-inset-bottom) - var(--decorator-sticky-offset, 0px));
+  }
+}

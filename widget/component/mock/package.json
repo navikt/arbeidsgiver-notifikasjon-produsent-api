@@ -1,0 +1,28 @@
+{
+  "name": "@navikt/arbeidsgiver-notifikasjoner-brukerapi-mock",
+  "description": "Mocker graphql-endepunkt for brukerapi. Nyttig for utvikling av @navikt/arbeidsgiver-notifikasjon-widget.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
+  },
+  "version": "8.0.0-rc.6",
+  "license": "MIT",
+  "main": "dist/notifikasjonMockMiddleware.js",
+  "files": [
+    "dist/**/*"
+  ],
+  "types": "dist/notifikasjonMockMiddleware.d.ts",
+  "dependencies": {
+    "apollo-server": "^3.10.2",
+    "apollo-server-core": "^3.10.2",
+    "apollo-server-express": "^3.10.2",
+    "casual": "^1.6.2",
+    "graphql": "^16.6.0"
+  },
+  "scripts": {
+    "setup": "npm install && npm run build",
+    "build": "npm run clean && tsc && cp ../../../app/src/main/resources/bruker.graphql dist/",
+    "clean": "rm -rf dist"
+  }
+}

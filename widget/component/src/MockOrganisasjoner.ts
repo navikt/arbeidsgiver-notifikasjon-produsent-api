@@ -1,0 +1,130 @@
+import { Organisasjon } from '@navikt/bedriftsmeny';
+
+export const MOCK_ORGANISASJONER: Organisasjon[] = [
+  {
+    Name: 'BALLSTAD OG EIDSLANDET',
+    OrganizationNumber: '811076422',
+    ParentOrganizationNumber: '811076112',
+    OrganizationForm: 'AAFY',
+  },
+  {
+    Name: 'BALLSTAD OG HAMARØY',
+    OrganizationNumber: '811076732',
+    ParentOrganizationNumber: '811076112',
+    OrganizationForm: 'BEDR',
+  },
+  {
+    Name: 'BALLSTAD OG HORTEN',
+    OrganizationNumber: '811076112',
+    ParentOrganizationNumber: '',
+    OrganizationForm: 'FLI',
+  },
+  {
+    Name: 'BALLSTAD OG SÆTERVIK',
+    OrganizationNumber: '811076902',
+    ParentOrganizationNumber: '811076112',
+    OrganizationForm: 'BEDR',
+  },
+  {
+    Name: 'BAREKSTAD OG YTTERVÅG REGNSKAP',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '810514442',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'BIRI OG VANNAREID REVISJON',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '910998250',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'EIDSNES OG AUSTRE ÅMØY',
+    OrganizationNumber: '910521551',
+    ParentOrganizationNumber: '910998250',
+    OrganizationForm: 'BEDR',
+  },
+  {
+    Name: 'FRØNNINGEN OG LAUVSTAD REVISJON',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '910223208',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'HARSTAD OG TYSSEDAL REVISJON',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '810989572',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'HAVNNES OG ÅGSKARDET',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '910646176',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'KJØLLEFJORD OG ØKSFJORD',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '910175777',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'KYSTBASEN ÅGOTNES OG ILSENG REGNSKAP',
+    OrganizationNumber: '910514318',
+    ParentOrganizationNumber: '910175777',
+    OrganizationForm: 'ASA',
+  },
+  {
+    Name: 'SANDVÆR OG HOV',
+    OrganizationNumber: '910793829',
+    OrganizationForm: 'BEDR',
+    ParentOrganizationNumber: '910720120',
+  },
+  {
+    Name: 'SKOTSELV OG HJELSET',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '910720120',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'STOL PÅ TORE',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '810771852',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'SØR-HIDLE OG STRAUMGJERDE OG SØNNER OG DØTRE',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '910167200',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'TROMVIK OG SPARBU REVISJON',
+    OrganizationNumber: '910989626',
+    ParentOrganizationNumber: '910167200',
+    OrganizationForm: 'BEDR',
+  },
+  {
+    Name: 'Tore sitt testselskap',
+    ParentOrganizationNumber: '',
+    OrganizationNumber: '910820834',
+    OrganizationForm: 'AS',
+  },
+  {
+    Name: 'UGGDAL OG STEINSDALEN',
+    OrganizationNumber: '910521616',
+    ParentOrganizationNumber: '910820834',
+    OrganizationForm: 'BEDR',
+  },
+  {
+    Name: 'VALESTRANDSFOSSEN OG SØRLI OG SØNN REVISJON',
+    OrganizationNumber: '810989602',
+    ParentOrganizationNumber: '910820834',
+    OrganizationForm: 'BEDR',
+  },
+  {
+    Name: 'VESTBY OG LOEN OG ALEKSANDERSEN REVISJON',
+    OrganizationNumber: '910989642',
+    ParentOrganizationNumber: '910820834',
+    OrganizationForm: 'BEDR',
+  },
+];

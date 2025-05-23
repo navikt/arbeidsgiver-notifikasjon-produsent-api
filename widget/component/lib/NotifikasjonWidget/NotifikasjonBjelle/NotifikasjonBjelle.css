@@ -1,0 +1,21 @@
+.notifikasjonwidget-bjelle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.notifikasjonwidget-badge {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  background-color: var(--a-red-500);
+  color: white;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
