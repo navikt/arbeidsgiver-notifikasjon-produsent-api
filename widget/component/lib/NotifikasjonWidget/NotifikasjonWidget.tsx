@@ -108,7 +108,7 @@ const NotifikasjonWidget = () => {
     const style: CSSProperties = notifikasjoner === undefined || notifikasjoner.length === 0 ? { visibility: 'hidden' } : {};
 
     return <div ref={widgetRef} style={style}>
-      <Dropdown>
+      <Dropdown open={erApen}>
         <NotifikasjonBjelle
           antallUleste={antallUleste}
           erApen={erApen}
