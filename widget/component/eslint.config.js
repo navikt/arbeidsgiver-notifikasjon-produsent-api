@@ -5,7 +5,7 @@ import parserTs from '@typescript-eslint/parser';
 
 export default [
   {
-    ignores: ['vite.config.ts', 'vite.config.d.ts', 'dist'],
+    ignores: ['vite.config.ts', 'vite.config.d.ts', 'dist', 'vitest.config.ts', 'mock/'],
   },
   {
     files: ['**/*.{ts,tsx}'],
