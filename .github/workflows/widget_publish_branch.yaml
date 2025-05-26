@@ -59,10 +59,10 @@ jobs:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: build
+      - name: setup
         run: |
           cd widget/component/mock
-          npm run build
+          npm run setup
 
       - name: publish on github
         run: |
