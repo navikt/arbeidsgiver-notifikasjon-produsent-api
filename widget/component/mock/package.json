@@ -16,12 +16,12 @@
   "dependencies": {
     "@apollo/server": "4.12.1",
     "@graphql-tools/mock": "9.0.23",
-    "casual": "^1.6.2",
-    "graphql": "^16.11.0"
+    "casual": "1.6.2",
+    "graphql": "16.11.0"
   },
   "scripts": {
     "setup": "npm install && npm run build",
-    "build": "npm run clean && tsc && cp ../../../app/src/main/resources/bruker.graphql dist/",
+    "build": "npm run clean && npm i && tsc && cp ../../../app/src/main/resources/bruker.graphql dist/",
     "clean": "rm -rf dist",
     "test": "vitest run"
   },

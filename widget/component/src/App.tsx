@@ -1,20 +1,21 @@
-import Bedriftsmeny from '@navikt/bedriftsmeny';
-import '@navikt/bedriftsmeny/lib/bedriftsmeny.css';
+import { Banner, Virksomhetsvelger } from '@navikt/virksomhetsvelger';
+import '@navikt/virksomhetsvelger/dist/assets/style.css';
+import '@navikt/ds-css';
 import { NotifikasjonWidget } from '../lib';
 import './App.css';
 import { MOCK_ORGANISASJONER } from './MockOrganisasjoner';
 import { useState } from 'react';
-import '@navikt/ds-css';
 
 const App = () => {
-  const [orgname, setOrgname] = useState('');
-  return <div className={'bakgrunnsside'}>
-    <Bedriftsmeny
-      sidetittel={orgname}
-      organisasjoner={MOCK_ORGANISASJONER}
-      onOrganisasjonChange={(org) => setOrgname(org.Name)}>
+  const [, setOrgname] = useState('');
+  return <div className="bakgrunnsside">
+    <Banner tittel='test'>
+      <Virksomhetsvelger
+        organisasjoner={MOCK_ORGANISASJONER}
+        onChange={(org) => setOrgname(org.navn)}
+      />
       <NotifikasjonWidget miljo="local" apiUrl="/api/graphql" />
-    </Bedriftsmeny>
+    </Banner>
   </div>;
 };
 

@@ -3,7 +3,6 @@ import App from './App';
 
 import { injectDecoratorClientSide } from '@navikt/nav-dekoratoren-moduler';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router';
 
 injectDecoratorClientSide({
   env: 'dev',
@@ -11,8 +10,4 @@ injectDecoratorClientSide({
   console.error(e);
 });
 
-createRoot(document.getElementById('app')!).render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>,
-);
+createRoot(document.getElementById('app')!).render(<App />);
