@@ -14,7 +14,8 @@ npm install --save @navikt/arbeidsgiver-notifikasjon-widget
 
 ```tsx
 import React, { Component } from 'react'
-
+import { Virksomhetsvelger, Banner } from '@navikt/virksomhetsvelger';
+import '@navikt/virksomhetsvelger/dist/assets/style.css';
 import { NotifikasjonWidget } from "@navikt/arbeidsgiver-notifikasjon-widget";
 
 const miljø = gittMiljo<"local" | "dev" | "labs" | "prod">({
@@ -24,17 +25,22 @@ const miljø = gittMiljo<"local" | "dev" | "labs" | "prod">({
     other: 'local',
 });
 
-const Banner: FunctionComponent<RouteComponentProps & OwnProps> = ({history, sidetittel}) => {
+const BannerMedVirksomhetsVelgerOgWidget: FunctionComponent<RouteComponentProps & OwnProps> = ({history, sidetittel}) => {
+    const [org, setOrgname] = useState('');
     return (
-        <Bedriftsmeny>
-           <NotifikasjonWidget miljo={miljø}/>
-        </Bedriftsmeny>
+      <Banner tittel={sideTittel}>
+        <Virksomhetsvelger
+          organisasjoner={..}
+          onChange={(org) => setOrgname(org.navn)}
+        />
+        <NotifikasjonWidget miljo={miljø} apiUrl={...} />
+      </Banner>
     );
 };
 ```
 
 ## Running Demo App for Widget-development
-To run the demo app locally, you need to run the three following scripts.
+To run the demo app locally, you need to run the following scripts.
 
 ```bash
 cd component/mock && npm i && cd ..
