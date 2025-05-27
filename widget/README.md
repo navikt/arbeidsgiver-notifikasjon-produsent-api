@@ -14,8 +14,9 @@ npm install --save @navikt/arbeidsgiver-notifikasjon-widget
 
 ```tsx
 import React, { Component } from 'react'
-
-import {NotifikasjonWidget} from "@navikt/arbeidsgiver-notifikasjon-widget";
+import { Virksomhetsvelger, Banner } from '@navikt/virksomhetsvelger';
+import '@navikt/virksomhetsvelger/dist/assets/style.css';
+import { NotifikasjonWidget } from "@navikt/arbeidsgiver-notifikasjon-widget";
 
 const miljø = gittMiljo<"local" | "dev" | "labs" | "prod">({
     prod: 'prod',
@@ -24,44 +25,28 @@ const miljø = gittMiljo<"local" | "dev" | "labs" | "prod">({
     other: 'local',
 });
 
-const Banner: FunctionComponent<RouteComponentProps & OwnProps> = ({history, sidetittel}) => {
+const BannerMedVirksomhetsVelgerOgWidget: FunctionComponent<RouteComponentProps & OwnProps> = ({history, sidetittel}) => {
+    const [org, setOrgname] = useState('');
     return (
-        <Bedriftsmeny>
-           <NotifikasjonWidget miljo={miljø}/>
-        </Bedriftsmeny>
+      <Banner tittel={sideTittel}>
+        <Virksomhetsvelger
+          organisasjoner={..}
+          onChange={(org) => setOrgname(org.navn)}
+        />
+        <NotifikasjonWidget miljo={miljø} apiUrl={...} />
+      </Banner>
     );
 };
 ```
 
-## CSS som egen fil
-
-Fra og med versjon 6.5.2 er css lagt ut i egen fil.
-Denne må importeres i prosjektet som bruker widgeten.
-
-F.eks:
-```tsx
-import '@navikt/arbeidsgiver-notifikasjon-widget/lib/esm/index.css';
-// eller
-import '@navikt/arbeidsgiver-notifikasjon-widget/lib/cjs/index.css';
-```
-
 ## Running Demo App for Widget-development
-To run the demo app locally you need to run the three following scripts.
+To run the demo app locally, you need to run the following scripts.
 
 ```bash
-cd brukerapi-mock
+cd component/mock && npm i && cd ..
 npm i
-npm run build
-```
-```bash
-cd component
-npm i
-npm start
-```
-```bash
-cd demo
-npm i
-npm start
+npm run setup
+npm run dev
 ```
 
 ## Oppdatere kode ved graphql-skjemaendring
@@ -69,9 +54,7 @@ npm start
 cd component
 npm run gql:cp_schema
 npm run gql:generate
-
-cd ../brukerapi-mock
-npm build
+npm run setup
 ````
 
 ## License

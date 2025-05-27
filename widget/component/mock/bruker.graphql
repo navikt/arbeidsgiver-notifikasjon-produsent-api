@@ -1,0 +1,266 @@
+type Query {
+    notifikasjoner: NotifikasjonerResultat!
+    """
+    Alle sakstyper som finnes for brukeren.
+    """
+    sakstyper: [SakstypeOverordnet!]!
+    saker(
+        virksomhetsnumre: [String!]
+        virksomhetsnummer: String
+        offset: Int
+        limit: Int
+        tekstsoek: String
+        sakstyper: [String!]
+        oppgaveTilstand: [OppgaveTilstand!]
+        oppgaveFilter: [OppgaveFilterType!]
+        sortering: SakSortering! = NYESTE
+    ): SakerResultat!
+    sakById(id: ID!): SakResultat!
+    sakByGrupperingsid(merkelapp: String!, grupperingsid: String!): SakResultat!
+    kommendeKalenderavtaler(virksomhetsnumre: [String!]!): KalenderavtalerResultat!
+    whoami: String
+    notifikasjonerSistLest: NotifikasjonerSistLestResultat!
+}
+
+enum SakSortering {
+    NYESTE,
+    ELDSTE
+}
+
+type SakstypeOverordnet {
+    navn: String!
+}
+
+type Sakstype {
+    navn: String!
+    antall: Int!
+}
+
+type SakerResultat {
+    saker: [Sak!]!
+
+    """
+    Antall saker for gitt filter, men uavhengig av offset/limit.
+    """
+    totaltAntallSaker: Int!
+
+    """
+    Hvilke sakstyper (med antall) som finnes for valgte virksomheter.
+    """
+    sakstyper: [Sakstype!]!
+
+    oppgaveTilstandInfo: [OppgaveTilstandInfo!]!
+
+    oppgaveFilterInfo: [OppgaveFilterInfo!]!
+
+    feilAltinn: Boolean!
+}
+
+type OppgaveTilstandInfo {
+    tilstand: OppgaveTilstand!
+    antall: Int!
+}
+
+type OppgaveFilterInfo {
+    filterType: OppgaveFilterType!
+    antall: Int!
+}
+
+type OppgaveMetadata {
+    tilstand: OppgaveTilstand!
+    frist: ISO8601Date
+    paaminnelseTidspunkt: ISO8601DateTime
+}
+
+type SakResultat {
+    sak: Sak
+    feilAltinn: Boolean!
+}
+
+type Sak {
+    id: ID!
+    virksomhet: Virksomhet!
+    tittel: String!
+    lenke: String
+    merkelapp: String!
+    sisteStatus: SakStatus!
+    """
+    frist fra oppgaver med status ny. null i array betyr oppgave uten frist
+    """
+    frister: [ISO8601Date]!
+    oppgaver: [OppgaveMetadata!]!
+    nesteSteg: String
+    tilleggsinformasjon: String
+    tidslinje: [TidslinjeElement!]!
+}
+
+type SakStatus {
+    type: SakStatusType!
+    tekst: String!
+    tidspunkt: ISO8601DateTime!
+}
+
+union TidslinjeElement =
+    | OppgaveTidslinjeElement
+    | BeskjedTidslinjeElement
+    | KalenderavtaleTidslinjeElement
+
+type OppgaveTidslinjeElement {
+    id: ID!
+    tekst: String!
+    opprettetTidspunkt: ISO8601DateTime!
+    tilstand: OppgaveTilstand!
+    paaminnelseTidspunkt: ISO8601DateTime
+    utgaattTidspunkt: ISO8601DateTime
+    utfoertTidspunkt: ISO8601DateTime
+    frist: ISO8601Date
+    lenke: String!
+}
+
+type BeskjedTidslinjeElement {
+    id: ID!
+    tekst: String!
+    opprettetTidspunkt: ISO8601DateTime!
+    lenke: String!
+}
+
+type KalenderavtaleTidslinjeElement {
+    id: ID!
+    tekst: String!
+    avtaletilstand: KalenderavtaleTilstand!
+    startTidspunkt: ISO8601DateTime!
+    sluttTidspunkt: ISO8601DateTime
+    lokasjon: Lokasjon
+    digitalt: Boolean
+    lenke: String!
+}
+
+enum SakStatusType {
+    MOTTATT
+    UNDER_BEHANDLING
+    FERDIG
+}
+
+type SakMetadata {
+    tittel: String!
+    tilleggsinformasjon: String
+}
+
+type NotifikasjonerResultat {
+    notifikasjoner: [Notifikasjon!]!
+    feilAltinn: Boolean!
+    feilDigiSyfo: Boolean!
+}
+
+type KalenderavtalerResultat {
+    avtaler: [Kalenderavtale!]!
+    feilAltinn: Boolean!
+    feilDigiSyfo: Boolean!
+}
+
+union Notifikasjon = Beskjed | Oppgave | Kalenderavtale
+
+scalar ISO8601DateTime
+scalar ISO8601Date
+
+type Oppgave {
+    brukerKlikk: BrukerKlikk!
+    tilstand: OppgaveTilstand
+    merkelapp: String!
+    tekst: String!
+    lenke: String!
+    opprettetTidspunkt: ISO8601DateTime!
+    sorteringTidspunkt: ISO8601DateTime!
+    paaminnelseTidspunkt: ISO8601DateTime
+    utgaattTidspunkt: ISO8601DateTime
+    utfoertTidspunkt: ISO8601DateTime
+    frist: ISO8601Date
+    id: ID!
+    virksomhet: Virksomhet!
+    sak: SakMetadata
+}
+
+enum OppgaveTilstand {
+    NY
+    UTFOERT
+    UTGAATT
+}
+
+enum OppgaveFilterType {
+    TILSTAND_NY
+    TILSTAND_UTFOERT
+    TILSTAND_UTGAATT
+    TILSTAND_NY_MED_PAAMINNELSE_UTLOEST
+}
+
+type Beskjed {
+    brukerKlikk: BrukerKlikk!
+    merkelapp: String!
+    tekst: String!
+    lenke: String!
+    opprettetTidspunkt: ISO8601DateTime!
+    sorteringTidspunkt: ISO8601DateTime!
+    id: ID!
+    virksomhet: Virksomhet!
+    sak: SakMetadata
+}
+
+type Kalenderavtale {
+    brukerKlikk: BrukerKlikk!
+    avtaletilstand: KalenderavtaleTilstand!
+    merkelapp: String!
+    tekst: String!
+    lenke: String!
+    startTidspunkt: ISO8601DateTime!
+    sluttTidspunkt: ISO8601DateTime
+    lokasjon: Lokasjon
+    digitalt: Boolean
+    opprettetTidspunkt: ISO8601DateTime!
+    sorteringTidspunkt: ISO8601DateTime!
+    paaminnelseTidspunkt: ISO8601DateTime
+    id: ID!
+    virksomhet: Virksomhet!
+    sak: SakMetadata
+}
+
+type Lokasjon {
+    adresse: String!
+    postnummer: String!
+    poststed: String!
+}
+
+enum KalenderavtaleTilstand {
+    VENTER_SVAR_FRA_ARBEIDSGIVER
+    ARBEIDSGIVER_VIL_AVLYSE
+    ARBEIDSGIVER_VIL_ENDRE_TID_ELLER_STED
+    ARBEIDSGIVER_HAR_GODTATT
+    AVLYST
+    AVHOLDT
+}
+
+type Virksomhet {
+    virksomhetsnummer: String!
+    navn: String!
+}
+
+type Mutation {
+    notifikasjonKlikketPaa(id: ID!): NotifikasjonKlikketPaaResultat!
+    notifikasjonerSistLest(tidspunkt: ISO8601DateTime!): NotifikasjonerSistLest!
+}
+
+union NotifikasjonKlikketPaaResultat = BrukerKlikk | UgyldigId
+
+type BrukerKlikk {
+    id: ID!
+    klikketPaa: Boolean!
+}
+
+type UgyldigId {
+    feilmelding: String!
+}
+
+union NotifikasjonerSistLestResultat = NotifikasjonerSistLest
+
+type NotifikasjonerSistLest {
+    tidspunkt: ISO8601DateTime
+}

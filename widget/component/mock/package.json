@@ -1,0 +1,40 @@
+{
+  "name": "@navikt/arbeidsgiver-notifikasjoner-brukerapi-mock",
+  "description": "Mocker graphql-endepunkt for brukerapi. Nyttig for utvikling av @navikt/arbeidsgiver-notifikasjon-widget.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
+  },
+  "version": "8.0.0-rc.7",
+  "license": "MIT",
+  "main": "dist/notifikasjonMockMiddleware.js",
+  "files": [
+    "dist/**/*"
+  ],
+  "types": "dist/notifikasjonMockMiddleware.d.ts",
+  "dependencies": {
+    "@apollo/server": "4.12.1",
+    "@graphql-tools/mock": "9.0.23",
+    "casual": "1.6.2",
+    "graphql": "16.11.0"
+  },
+  "scripts": {
+    "setup": "npm install && npm run build",
+    "build": "npm run clean && npm i && tsc && cp ../../../app/src/main/resources/bruker.graphql dist/",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@as-integrations/express5": "1.0.0",
+    "@types/express": "5.0.2",
+    "@types/graphql": "14.5.0",
+    "@types/node": "22.15.21",
+    "@types/supertest": "6.0.3",
+    "express": "5.1.0",
+    "graphql-tag": "2.12.6",
+    "supertest": "7.1.1",
+    "typescript": "5.8.3",
+    "vitest": "3.1.4"
+  }
+}
