@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilganger
 import no.nav.arbeidsgiver.notifikasjon.nærmeste_leder.NarmesteLederLeesah
+import java.time.OffsetDateTime
 import java.util.*
 
 open class BrukerRepositoryStub : BrukerRepository {
@@ -48,6 +49,14 @@ open class BrukerRepositoryStub : BrukerRepository {
         virksomhetsnumre: List<String>,
         altinnTilganger: AltinnTilganger
     ): List<BrukerModel.Kalenderavtale> = TODO("Not yet implemented")
+
+    override suspend fun settNotifikasjonerSistLest(tidspunkt: OffsetDateTime, fnr: String) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun hentNotifikasjonerSistLest(fnr: String): OffsetDateTime? {
+        TODO("Not yet implemented")
+    }
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? = TODO("Not yet implemented")
     override suspend fun berikSaker(saker: List<BrukerModel.Sak>): Map<UUID, BrukerModel.Sakberikelse> =

@@ -5,48 +5,70 @@
     "type": "git",
     "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
   },
-  "version": "7.3.0-rc",
-  "main": "./lib/cjs/index.js",
-  "module": "./lib/esm/index.js",
-  "types": "./lib/esm/index.d.ts",
+  "version": "8.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
-    "gql:generate": "graphql-codegen",
-    "build": "rollup --config rollup.config.ts --configPlugin typescript",
-    "start": "rollup --config rollup.config.ts --configPlugin typescript --watch",
-    "test": "echo tests not implemented"
+    "setup": "npm run setup:mock",
+    "setup:mock": "cd mock && npm install && npm run setup",
+    "dev": "vite",
+    "build": "tsc --p ./tsconfig-build.json && vite build",
+    "lint": "eslint . --ext ts,tsx",
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@apollo/client": "^3.10.8",
-    "graphql": "^16.9.0"
-  },
-  "devDependencies": {
-    "@amplitude/analytics-browser": "2.11.8",
-    "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/typescript": "^4.0.9",
-    "@graphql-codegen/typescript-operations": "^4.2.3",
-    "@graphql-codegen/typescript-react-apollo": "^4.3.0",
-    "@rollup/plugin-commonjs": "^26.0.1",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^11.1.6",
-    "@rollup/plugin-url": "^8.0.2",
-    "@types/node": "^20.14.11",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "prettier": "3.4.2",
-    "prop-types": "15.8.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "rollup": "^4.18.1",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "rollup-plugin-postcss": "^4.0.2",
-    "typescript": "^5.5.3"
+    "@apollo/client": "3.13.8",
+    "graphql": "16.11.0"
   },
   "peerDependencies": {
-    "@navikt/ds-css": ">=4",
-    "@navikt/ds-icons": ">=2",
-    "@navikt/ds-react": ">=4",
-    "@navikt/nav-dekoratoren-moduler": ">=3.2",
-    "react": "17 || 18",
-    "react-dom": "17 || 18"
+    "@navikt/aksel-icons": ">=7.21.1",
+    "@navikt/ds-css": ">=7.21.1",
+    "@navikt/ds-react": ">=7.21.1",
+    "@navikt/nav-dekoratoren-moduler": ">=3.2.3",
+    "react": "18 || 19",
+    "react-dom": "18 || 19"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "5.0.6",
+    "@graphql-codegen/typescript": "4.1.6",
+    "@graphql-codegen/typescript-operations": "4.6.1",
+    "@graphql-codegen/typescript-react-apollo": "4.3.2",
+    "@navikt/virksomhetsvelger": "1.0.3",
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.3.0",
+    "@types/express": "5.0.2",
+    "@types/node": "22.15.21",
+    "@types/react": "19.1.5",
+    "@types/react-dom": "19.1.5",
+    "@typescript-eslint/eslint-plugin": "8.32.1",
+    "@typescript-eslint/parser": "8.32.1",
+    "@vitejs/plugin-react": "4.5.0",
+    "eslint": "9.27.0",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.4.20",
+    "express": "5.1.0",
+    "glob": "11.0.2",
+    "jsdom": "26.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "typescript": "5.8.3",
+    "vite": "6.3.5",
+    "vite-plugin-dts": "4.5.4",
+    "vite-plugin-lib-inject-css": "2.2.2",
+    "vitest": "3.1.4"
+  },
+  "vitest": {
+    "test": {
+      "environment": "jsdom"
+    }
   }
 }

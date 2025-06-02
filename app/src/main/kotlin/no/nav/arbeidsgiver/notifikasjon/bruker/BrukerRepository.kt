@@ -110,6 +110,9 @@ interface BrukerRepository {
         virksomhetsnumre: List<String>,
         altinnTilganger: AltinnTilganger
     ): List<BrukerModel.Kalenderavtale>
+
+    suspend fun settNotifikasjonerSistLest(tidspunkt: OffsetDateTime, fnr: String)
+    suspend fun hentNotifikasjonerSistLest(fnr: String): OffsetDateTime?
 }
 
 class BrukerRepositoryImpl(
@@ -376,10 +379,12 @@ class BrukerRepositoryImpl(
                             select * 
                             from mine_saker_med_oppgaver
                             where coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
-                            ${if (harPåminnelse)
-                                //language=SQL
-                                "and oppgave_paaminnelse_tidspunkt is not null" 
-                            else ""}
+                            ${
+                    if (harPåminnelse)
+                    //language=SQL
+                        "and oppgave_paaminnelse_tidspunkt is not null"
+                    else ""
+                }
                         ),
                         mine_merkelapper as (
                             select 
@@ -425,10 +430,12 @@ class BrukerRepositoryImpl(
                             from mine_saker_med_oppgaver
                             where coalesce(merkelapp = any(?), true)
                             and coalesce(coalesce(oppgave_tilstand, 'IngenTilstand') = any(?), true)
-                            ${if (harPåminnelse)
-                            //language=SQL
-                                "and oppgave_paaminnelse_tidspunkt is not null"
-                            else ""}
+                            ${
+                    if (harPåminnelse)
+                    //language=SQL
+                        "and oppgave_paaminnelse_tidspunkt is not null"
+                    else ""
+                }
                         ),
                         mine_saker_aggregerte_oppgaver_uten_statuser as (
                            select 
@@ -882,6 +889,34 @@ class BrukerRepositoryImpl(
                     throw Exception("Uforventet notifikasjonstype '$type' for søk på kalenderavtale")
             }
         }
+    }
+
+    override suspend fun settNotifikasjonerSistLest(tidspunkt: OffsetDateTime, fnr: String) {
+        database.nonTransactionalExecuteUpdate(
+            """
+            insert into notifikasjoner_sist_lest (fnr, tidspunkt) values (?, ?)
+            on conflict (fnr) do update set tidspunkt = ?
+        """.trimIndent(),
+            {
+                text(fnr)
+                timestamp_with_timezone(tidspunkt)
+                timestamp_with_timezone(tidspunkt)
+            })
+    }
+
+    override suspend fun hentNotifikasjonerSistLest(fnr: String): OffsetDateTime? {
+        val result = database.nonTransactionalExecuteQuery(
+            """
+                select tidspunkt from notifikasjoner_sist_lest
+                where fnr = ?
+            """.trimIndent(), {
+                text(fnr)
+            },
+            {
+                getObject("tidspunkt", OffsetDateTime::class.java)
+            }
+        )
+        return result.firstOrNull()
     }
 
     private suspend fun oppdaterModellEtterDelete(
