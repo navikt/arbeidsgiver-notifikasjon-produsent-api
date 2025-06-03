@@ -1,0 +1,61 @@
+.notifikasjonwidget-element {
+  display: flex;
+  border-bottom: 1px solid var(--a-gray-200);
+  width: 100%;
+
+  &:hover {
+    background-color: var(--a-gray-50);
+
+    .notifikasjonwidget-element-pil {
+      transform: translateX(25%);
+    }
+  }
+}
+
+.notifikasjonwidget-element-left-border {
+  width: 8px;
+  flex-shrink: 0;
+}
+
+.notifikasjonwidget-element-left-border.gul {
+  background-color: var(--a-orange-200);
+}
+
+.notifikasjonwidget-element-left-border.blå {
+  background-color: var(--a-lightblue-600);
+}
+
+.notifikasjonwidget-element-innhold {
+  padding: 16px 24px;
+  flex-grow: 1;
+}
+
+.notifikasjonwidget-element-melding {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notifikasjonwidget-element-ikon {
+  margin-top: 2px;
+  flex-shrink: 0;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+.notifikasjonwidget-element-pil {
+  display: flex;
+  align-items: center;
+  padding-right: 16px;
+  transition: all 100ms linear;
+}
+
+div.notifikasjonwidget-panel-liste dd.navds-dropdown__list-item a.navds-link:focus,
+div.notifikasjonwidget-panel-liste dd.navds-dropdown__list-item a.navds-link:focus-visible {
+  background: var(--a-blue-100);
+  outline: 2px solid black;
+}
