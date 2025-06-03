@@ -1196,8 +1196,6 @@ type Mutation {
         """
         grupperingsid: String!
     ): HardDeleteSakResultat!
-
-
 }
 
 union SoftDeleteNotifikasjonResultat =
