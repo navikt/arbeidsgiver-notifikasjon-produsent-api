@@ -1,7 +1,9 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql
 
+import graphql.GraphQLContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.kafkaObjectMapper
 import java.time.OffsetDateTime
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,7 +21,7 @@ class ScalarsTest {
             "2024-03-31T02:59:00" to "2024-03-31T01:59:00Z", // 02:59 Oslo (var aldri på klokka)
             "2024-03-31T03:01:00" to "2024-03-31T01:01:00Z", // 03:01 Oslo (rett etter sommertid 0200)
         ).forEach { (ts, expected) ->
-            Scalars.ISO8601DateTime.coercing.parseValue(ts).let {
+            Scalars.ISO8601DateTime.coercing.parseValue(ts, GraphQLContext.getDefault(), Locale.getDefault()).let {
                 it as OffsetDateTime
                 assertEquals(OffsetDateTime.parse(expected), it)
                 assertEquals("\"$expected\"", kafkaObjectMapper.writeValueAsString(it))
