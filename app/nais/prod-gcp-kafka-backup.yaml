@@ -9,7 +9,7 @@ spec:
   image: {{image}}
   resources:
     requests:
-      cpu: 100m
+      cpu: 180m
       memory: 512Mi
     limits:
       memory: 1024Mi

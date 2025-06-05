@@ -11,10 +11,10 @@ spec:
   image: {{image}}
   resources:
     requests:
-      cpu: 300m
-      memory: 768Mi
-    limits:
+      cpu: 400m
       memory: 1024Mi
+    limits:
+      memory: 1200Mi
   replicas:
     max: 24
   ingresses:
