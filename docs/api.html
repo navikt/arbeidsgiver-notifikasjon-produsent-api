@@ -816,14 +816,6 @@
             </div>
             <div class="doc-row">
               <div class="doc-copy">
-                <div class="operation-description doc-copy-section">
-                  <h5>Description</h5>
-                  <p>Se dokumentasjon for <code>hardDeleteNotifikasjon(id)</code>.</p>
-                </div>
-              </div>
-            </div>
-            <div class="doc-row">
-              <div class="doc-copy">
                 <div class="operation-response doc-copy-section">
                   <h5>Response</h5>
                   <p> Returns a <a href="#definition-HardDeleteNotifikasjonResultat"><code>HardDeleteNotifikasjonResultat!</code></a>
@@ -843,13 +835,15 @@
                         <td>
                           <span class="property-name"><code>merkelapp</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
                         </td>
-                        <td> Merkelappen som dere ga oss da dere opprettet notifikasjonen. </td>
+                        <td>
+                        </td>
                       </tr>
                       <tr>
                         <td>
                           <span class="property-name"><code>eksternId</code></span> - <span class="property-type"><a href="#definition-ID"><code>ID!</code></a></span>
                         </td>
-                        <td> ID-en som dere ga oss da dere opprettet notifikasjonen. </td>
+                        <td>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -981,7 +975,7 @@
                 </div>
                 <div class="example-section example-section-is-code operation-variables-example">
                   <h5>Variables</h5>
-                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span><span class="hljs-attr">"merkelapp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Mentor"</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"eksternId"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"42c0ffee-1337-7331-babe-42c0ffeebabe"</span><span class="hljs-punctuation">}</span>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span><span class="hljs-attr">"merkelapp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Sommerjobb"</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"eksternId"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"42c0ffee-1337-7331-babe-42c0ffeebabe"</span><span class="hljs-punctuation">}</span>
 </code></pre>
                 </div>
                 <div class="example-section example-section-is-code operation-response-example">
@@ -3714,18 +3708,13 @@
             <div class="operation-group-name">
               <a href="#group-Operations-Mutations">Mutations</a>
             </div>
-            <h2 class="operation-heading ">
+            <h2 class="operation-heading operation-deprecated">
               <code>softDeleteNotifikasjon</code>
             </h2>
             <div class="doc-row">
               <div class="doc-copy">
-                <div class="operation-description doc-copy-section">
-                  <h5>Description</h5>
-                  <p>Markerer en notifikasjon som slettet (soft delete).</p>
-                  <p>Notifikasjonen vil forsvinne helt for mottakeren: de vil ikke kunne se den på noen som helst måte — som om notifikasjonen aldri eksisterte.</p>
-                  <p>For dere (produsenter), så kan dere fortsatt se notifikasjonen i listen over deres notifikasjoner.</p>
-                  <p>Eventuelle eksterne varsler (SMS, e-post) knyttet til notifikasjonen vil bli fortsatt bli sendt.</p>
-                  <p>Advarsel: det er ikke mulig å angre på denne operasjonen.</p>
+                <div class="doc-copy-section">
+                  <div class="deprecation-reason"> All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteNotifikasjon(id) i stedet. </div>
                 </div>
               </div>
             </div>
@@ -3808,15 +3797,7 @@
             <div class="doc-row">
               <div class="doc-copy">
                 <div class="doc-copy-section">
-                  <div class="deprecation-reason"> Using the type ID for <code>eksternId</code> can lead to unexpected behaviour. Use softDeleteNotifikasjonByEksternId_V2 instead. </div>
-                </div>
-              </div>
-            </div>
-            <div class="doc-row">
-              <div class="doc-copy">
-                <div class="operation-description doc-copy-section">
-                  <h5>Description</h5>
-                  <p>Se dokumentasjon for <code>softDeleteNotifikasjon(id)</code>.</p>
+                  <div class="deprecation-reason"> All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteNotifikasjonByEksternId_V2(merkelapp, eksternId) i stedet. </div>
                 </div>
               </div>
             </div>
@@ -3841,13 +3822,15 @@
                         <td>
                           <span class="property-name"><code>merkelapp</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
                         </td>
-                        <td> Merkelappen som dere ga oss da dere opprettet notifikasjonen. </td>
+                        <td>
+                        </td>
                       </tr>
                       <tr>
                         <td>
                           <span class="property-name"><code>eksternId</code></span> - <span class="property-type"><a href="#definition-ID"><code>ID!</code></a></span>
                         </td>
-                        <td> ID-en som dere ga oss da dere opprettet notifikasjonen. </td>
+                        <td>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -3902,14 +3885,13 @@
             <div class="operation-group-name">
               <a href="#group-Operations-Mutations">Mutations</a>
             </div>
-            <h2 class="operation-heading ">
+            <h2 class="operation-heading operation-deprecated">
               <code>softDeleteNotifikasjonByEksternId_V2</code>
             </h2>
             <div class="doc-row">
               <div class="doc-copy">
-                <div class="operation-description doc-copy-section">
-                  <h5>Description</h5>
-                  <p>Se dokumentasjon for <code>softDeleteNotifikasjon(id)</code>.</p>
+                <div class="doc-copy-section">
+                  <div class="deprecation-reason"> All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteNotifikasjonByEksternId_V2(merkelapp, eksternId) i stedet. </div>
                 </div>
               </div>
             </div>
@@ -3934,13 +3916,15 @@
                         <td>
                           <span class="property-name"><code>merkelapp</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
                         </td>
-                        <td> Merkelappen som dere ga oss da dere opprettet notifikasjonen. </td>
+                        <td>
+                        </td>
                       </tr>
                       <tr>
                         <td>
                           <span class="property-name"><code>eksternId</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
                         </td>
-                        <td> ID-en som dere ga oss da dere opprettet notifikasjonen. </td>
+                        <td>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -3995,16 +3979,13 @@
             <div class="operation-group-name">
               <a href="#group-Operations-Mutations">Mutations</a>
             </div>
-            <h2 class="operation-heading ">
+            <h2 class="operation-heading operation-deprecated">
               <code>softDeleteSak</code>
             </h2>
             <div class="doc-row">
               <div class="doc-copy">
-                <div class="operation-description doc-copy-section">
-                  <h5>Description</h5>
-                  <p>Markerer en sak som slettet (soft delete).</p>
-                  <p>Sak vil forsvinne helt for mottakeren: de vil ikke kunne se den på noen som helst måte — som om saken aldri eksisterte.</p>
-                  <p>Advarsel: det er ikke mulig å angre på denne operasjonen. Advarsel: ingen notifikasjoner blir slettet, selv om de har samme grupperingsid.</p>
+                <div class="doc-copy-section">
+                  <div class="deprecation-reason"> All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteSak(id) i stedet. </div>
                 </div>
               </div>
             </div>
@@ -4029,7 +4010,8 @@
                         <td>
                           <span class="property-name"><code>id</code></span> - <span class="property-type"><a href="#definition-ID"><code>ID!</code></a></span>
                         </td>
-                        <td> ID-en som notifikasjolnen har. Den du fikk da du opprettet notifikasjonen. </td>
+                        <td>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -4076,14 +4058,13 @@
             <div class="operation-group-name">
               <a href="#group-Operations-Mutations">Mutations</a>
             </div>
-            <h2 class="operation-heading ">
+            <h2 class="operation-heading operation-deprecated">
               <code>softDeleteSakByGrupperingsid</code>
             </h2>
             <div class="doc-row">
               <div class="doc-copy">
-                <div class="operation-description doc-copy-section">
-                  <h5>Description</h5>
-                  <p>Se dokumentasjon for <code>softDeleteSak(id)</code>.</p>
+                <div class="doc-copy-section">
+                  <div class="deprecation-reason"> All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteSakByGrupperingsid(merkelapp, grupperingsid) i stedet. </div>
                 </div>
               </div>
             </div>
@@ -4108,13 +4089,15 @@
                         <td>
                           <span class="property-name"><code>merkelapp</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
                         </td>
-                        <td> Merkelappen som dere ga oss da dere opprettet saken. </td>
+                        <td>
+                        </td>
                       </tr>
                       <tr>
                         <td>
                           <span class="property-name"><code>grupperingsid</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
                         </td>
-                        <td> ID-en som dere ga oss da dere opprettet saken. </td>
+                        <td>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -4150,10 +4133,7 @@
                 </div>
                 <div class="example-section example-section-is-code operation-variables-example">
                   <h5>Variables</h5>
-                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
-  <span class="hljs-attr">"merkelapp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Sommerjobb"</span><span class="hljs-punctuation">,</span>
-  <span class="hljs-attr">"grupperingsid"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"42c0ffee-1337-7331-babe-42c0ffeebabe"</span>
-<span class="hljs-punctuation">}</span>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span><span class="hljs-attr">"merkelapp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Mentor"</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">"grupperingsid"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"42c0ffee-1337-7331-babe-42c0ffeebabe"</span><span class="hljs-punctuation">}</span>
 </code></pre>
                 </div>
                 <div class="example-section example-section-is-code operation-response-example">
