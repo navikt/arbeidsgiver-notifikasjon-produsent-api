@@ -254,6 +254,7 @@ class EksternVarslingService(
                                 throw RuntimeException("Ordre er markert som sendt, men mangler orderId")
                             val (ordreStatus, altinnResponse) = hentVarselOrdreStatus(ordreId)
                             when (ordreStatus) {
+                                Altinn3VarselStatus.Prosessert,
                                 Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
 
                                 Altinn3VarselStatus.Kansellert,
@@ -294,6 +295,7 @@ class EksternVarslingService(
 
     enum class Altinn3VarselStatus {
         Prosesserer,
+        Prosessert,
         Kvittert,
         KvittertMedFeil,
         Kansellert
@@ -310,6 +312,7 @@ class EksternVarslingService(
         return when (ordreStatus.processingStatus.status) {
             ProcessingStatus.Registered,
             ProcessingStatus.Processing -> Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
+            ProcessingStatus.Processed -> Pair(Altinn3VarselStatus.Prosessert, ordreStatus.rå)
 
             ProcessingStatus.Cancelled -> Pair(Altinn3VarselStatus.Kansellert, ordreStatus.rå)
 

@@ -306,6 +306,7 @@ interface Altinn3VarselKlient {
              * enum class ProcessingStatusValue {
              *     Registered,
              *     Processing,
+             *     Processed,
              *     Completed,
              *     Cancelled
              * }
@@ -317,6 +318,7 @@ interface Altinn3VarselKlient {
         ) {
             companion object {
                 const val Processing = "Processing"
+                const val Processed = "Processed"
                 const val Registered = "Registered"
                 const val Completed = "Completed"
                 const val Cancelled = "Cancelled"
