@@ -306,6 +306,11 @@ class BrukerRepositoryImpl(
                 .map { it.replace("\\", "\\\\") }
                 .map { it.replace("_", "\\_") }
                 .map { it.replace("%", "\\%") }
+                .flatMap {
+                    if (it.matches(Regex("""\d{4,}"""))) {
+                        it.chunked(2)
+                    } else listOf(it)
+                }
                 .filter { it != "" }
 
             val truncateSearchTerms = 10

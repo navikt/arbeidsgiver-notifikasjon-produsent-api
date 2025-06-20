@@ -23,11 +23,16 @@ class BrukerRepositorySearchTest {
         brukerRepository.insertSak("6", "Sykemelding - Gerd - 123456")
         brukerRepository.insertSak("7", "Sykemelding - Pål - 111222")
         brukerRepository.insertSak("8", "Litt rare symboler // \\x % _")
+        brukerRepository.insertSak("9", "Inntektsmelding for Forstandig Avarisk (07.03.07)")
+        brukerRepository.insertSak("10", "Sykepenger for JOVIAL KJEDEKOLLISJON (f. 064294)")
+        brukerRepository.insertSak("11", "Inntektsmelding for Fredfull Jakke (01.04.95)")
+        brukerRepository.insertSak("12", "Sykepenger for Fredfull Jakke (f. 010495)")
+        brukerRepository.insertSak("13", "Inntektsmelding for Fredfull Jakke f. 010495")
 
         mapOf(
-            null to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
-            "" to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
-            " " to listOf("1", "2", "3", "4", "5", "6", "7", "8"),
+            null to listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"),
+            "" to listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"),
+            " " to listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"),
             "zzzzz" to listOf(),
             "gravid" to listOf("1"),
             "    gravid    " to listOf("1"),
@@ -57,8 +62,8 @@ class BrukerRepositorySearchTest {
             "112233 gerd" to listOf("1", "2"),
             "112233 kronisk" to listOf("2"),
             "kronisk 112233" to listOf("2"),
-            "1223 kronisk" to listOf("2"),
-            "kron 1223" to listOf("2"),
+            "1223 kronisk" to listOf("2", "4"),
+            "kron 1223" to listOf("2", "4"),
             "112233 gerd gravid" to listOf("1"),
             "gerd 112233 gravid" to listOf("1"),
             "gravid gerd 112233" to listOf("1"),
@@ -75,11 +80,17 @@ class BrukerRepositorySearchTest {
             "\\x" to listOf("8"),
             "_" to listOf("8"),
             "%" to listOf("8"),
+            "07.03.07" to listOf("9"),
+            "070307" to listOf("9"),
+            "064294" to listOf("10"),
+            "06.42.94" to listOf("10"),
+            "010495" to listOf("11", "12", "13"),
+            "01.04.95" to listOf("11", "12", "13")
             // Other test cases?
             // - turkish i where upper-lower round-trip is not identity function
         ).forEach { (query, result) ->
             val expected = result.map { uuid(it) }.sorted()
-            assertEquals(expected, brukerRepository.search(query).sorted())
+            assertEquals(expected, brukerRepository.search(query).sorted(), "Assert failed for $query")
         }
     }
 }
