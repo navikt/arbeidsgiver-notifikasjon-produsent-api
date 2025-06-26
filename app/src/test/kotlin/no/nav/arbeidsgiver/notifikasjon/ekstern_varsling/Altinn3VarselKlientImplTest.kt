@@ -480,7 +480,7 @@ class Altinn3VarselKlientImplTest {
                 }""",
             emailResponse = """
                 {
-                  "generated": 2,
+                  "generated": 4,
                   "notifications": [
                     {
                       "id": "042f1a8a-fe29-47c9-a992-433399563c12",
@@ -502,9 +502,35 @@ class Altinn3VarselKlientImplTest {
                         "organizationNumber": "211511052"
                       },
                       "sendStatus": {
-                        "description": "The email has been created, but has not been picked up for processing yet.",
+                        "description": "The email is being processed and will be sent shortly.",
                         "lastUpdate": "2025-03-31T16:21:04.126885Z",
-                        "status": "New"
+                        "status": "Sending"
+                      },
+                      "succeeded": false
+                    },
+                    {
+                      "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
+                      "recipient": {
+                        "mobileNumber": "+4799999999",
+                        "organizationNumber": "211511052"
+                      },
+                      "sendStatus": {
+                        "description": "The SMS has been accepted by the gateway service and will be sent soon.",
+                        "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                        "status": "Accepted"
+                      },
+                      "succeeded": false
+                    },
+                    {
+                      "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
+                      "recipient": {
+                        "emailAddress": "sss.sss@ssss.no",
+                        "organizationNumber": "211511052"
+                      },
+                      "sendStatus": {
+                        "description": "The email has been accepted by the third-party service and will be sent soon.",
+                        "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                        "status": "Succeeded"
                       },
                       "succeeded": false
                     }
@@ -515,10 +541,10 @@ class Altinn3VarselKlientImplTest {
         )
         client.notifications("43").let {
             it as Success
-            assertEquals(2, it.generated)
+            assertEquals(4, it.generated)
             assertEquals(0, it.succeeded)
-            assertEquals(2, it.notifications.size)
-            assertTrue(it.notifications.any { notification -> notification.sendStatus.isProcessing })
+            assertEquals(4, it.notifications.size)
+            assertTrue(it.notifications.all { notification -> notification.sendStatus.isProcessing })
         }
     }
 }
