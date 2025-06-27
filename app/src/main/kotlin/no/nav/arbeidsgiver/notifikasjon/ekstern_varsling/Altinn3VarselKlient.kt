@@ -416,18 +416,42 @@ interface Altinn3VarselKlient {
                     /**
                      * status should be enum but is string in api. prevent breakage by using string
                      * https://docs.altinn.studio/notifications/reference/api/endpoints/get-email-notifications/
+                     * https://docs.altinn.studio/notifications/reference/api/endpoints/get-sms-notifications/
                      *
                      * enum class Status {
-                     *     New, // The email has been created but has not yet been picked up for processing.
-                     *     Sending, //	The email is being processed and will be sent shortly.
-                     *     Succeeded, // The email has been accepted by the third-party service and will be sent soon.
-                     *     Delivered, // The email was successfully delivered to the recipient. No errors were reported, indicating successful delivery.
-                     *     Failed, // The email was not sent due to an unspecified failure.
-                     *     Failed_RecipientNotIdentified, // The email was not sent because the recipient’s email address could not be found.
-                     *     Failed_InvalidEmailFormat, // The email was not sent due to an invalid email address format.
-                     *     Failed_Bounced, // The email bounced due to issues like a non-existent email address or invalid domain.
-                     *     Failed_FilteredSpam, //	The email was identified as spam and rejected or blocked (not quarantined).
-                     *     Failed_Quarantined, // The email was quarantined due to being flagged as spam, bulk mail, or phishing.
+                     *     New,         // The email has been created but has not yet been picked up for processing.
+                     *     New,         // The SMS has been created but has not yet been picked up for processing.
+                     *
+                     *     Sending,     // The email is being processed and will be sent shortly.
+                     *     Sending,     // The SMS is being processed and will be sent shortly.
+                     *
+                     *     Accepted,    // The SMS has been accepted by the gateway service and will be sent soon.
+                     *
+                     *     Succeeded,   // The email has been accepted by the third-party service and will be sent soon.
+                     *
+                     *     Delivered,   // The email was successfully delivered to the recipient. No errors were reported, indicating successful delivery.
+                     *     Delivered,   // The SMS was successfully delivered to the recipient.
+                     *
+                     *     Failed,      // The email was not sent due to an unspecified failure.
+                     *     Failed,       // The SMS was not sent due to an unspecified failure.
+                     *
+                     *     Failed_RecipientNotIdentified,   // The email was not sent because the recipient’s email address could not be found.
+                     *     Failed_RecipientNotIdentified,   // The SMS was not sent because the recipient’s SMS address was not found.
+
+                     *     Failed_InvalidEmailFormat,       // The email was not sent due to an invalid email address format.
+                     *     Failed_InvalidRecipient,         // The SMS was not sent because the recipient mobile number was invalid.
+
+                     *     Failed_Bounced,                  // The email bounced due to issues like a non-existent email address or invalid domain.
+                     *     Failed_BarredReceiver,           // The SMS was not delivered because the recipient’s mobile number is barred, blocked or not in use.
+
+                     *     Failed_FilteredSpam,             // The email was identified as spam and rejected or blocked (not quarantined).
+                     *     Failed_Rejected,                 // The SMS was not delivered because it was rejected.
+
+                     *     Failed_Quarantined,              // The email was quarantined due to being flagged as spam, bulk mail, or phishing.
+                     *
+                     *     Failed_Deleted,                  // The SMS was not delivered because the message has been deleted.
+                     *     Failed_Expired,                  // The SMS was not delivered because it has been expired.
+                     *     Failed_Undelivered,              // The SMS was not delivered due to invalid mobile number or no available route to destination.
                      * }
                      */
 
@@ -439,12 +463,14 @@ interface Altinn3VarselKlient {
                         get() = status in listOf(
                             New,
                             Sending,
+                            Accepted,
                             Succeeded
                         )
 
                     companion object {
                         val New = "New"
                         val Sending = "Sending"
+                        val Accepted = "Accepted"
                         val Succeeded = "Succeeded"
                         val Delivered = "Delivered"
                         val Failed = "Failed"
@@ -453,6 +479,12 @@ interface Altinn3VarselKlient {
                         val Failed_Bounced = "Failed_Bounced"
                         val Failed_FilteredSpam = "Failed_FilteredSpam"
                         val Failed_Quarantined = "Failed_Quarantined"
+                        val Failed_BarredReceiver = "Failed_BarredReceiver"
+                        val Failed_Deleted = "Failed_Deleted"
+                        val Failed_Expired = "Failed_Expired"
+                        val Failed_InvalidRecipient = "Failed_InvalidRecipient"
+                        val Failed_Undelivered = "Failed_Undelivered"
+                        val Failed_Rejected = "Failed_Rejected"
                     }
                 }
             }
