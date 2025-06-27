@@ -24,9 +24,11 @@ object Bruker {
     fun main(
         enhetsregisteret: Enhetsregisteret = enhetsregisterFactory(),
         virksomhetsinfoService: VirksomhetsinfoService = VirksomhetsinfoService(enhetsregisteret),
-        altinnTilgangerService: AltinnTilgangerService = AltinnTilgangerServiceImpl(AltinnTilgangerClient(
-            observer = virksomhetsinfoService::cachePut,
-        )),
+        altinnTilgangerService: AltinnTilgangerService = AltinnTilgangerServiceImpl(
+            altinnTilgangerClient = AltinnTilgangerClient(
+                observer = virksomhetsinfoService::cachePut,
+            )
+        ),
         httpPort: Int = 8080
     ) {
         runBlocking(Dispatchers.Default) {

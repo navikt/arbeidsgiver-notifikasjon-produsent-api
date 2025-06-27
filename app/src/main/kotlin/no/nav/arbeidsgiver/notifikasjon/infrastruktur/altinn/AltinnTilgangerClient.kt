@@ -41,6 +41,9 @@ class AltinnTilgangerClient(
         install(HttpClientMetricsFeature) {
             registry = Metrics.meterRegistry
         }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 10_000
+        }
         install(HttpRequestRetry) {
             maxRetries = 3
             retryOnExceptionIf { _, cause ->
