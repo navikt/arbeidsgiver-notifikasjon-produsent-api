@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCPlugin
 import java.io.EOFException
+import java.net.SocketException
 import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLHandshakeException
 
@@ -39,6 +40,7 @@ fun defaultHttpClient(
         retryOnExceptionIf { _, cause ->
             when (cause) {
                 is SocketTimeoutException,
+                is SocketException,
                 is EOFException,
                 is SSLHandshakeException,
                 is ClosedReceiveChannelException,
