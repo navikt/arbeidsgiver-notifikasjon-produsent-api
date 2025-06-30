@@ -5,11 +5,29 @@ import graphql.GraphqlErrorException
 private typealias Validator<T> = (T) -> T
 
 object Validators {
-    fun NorwegianMobilePhoneNumber(path: String): Validator<String?> = { value ->
+    /**
+     * https://nkom.no/telefoni-og-telefonnummer/telefonnummer-og-den-norske-nummerplan/alle-nummerserier-for-norske-telefonnumre
+     */
+    fun NorwegianMobilePhoneNumber(path: String): Validator<String> = { value ->
         val regex = Regex("""(\+47|0047)?[49]\d{7}""")
-        if (value != null && !value.matches(regex)) {
+        if (!value.matches(regex)) {
             throw ValideringsFeil("$path: verdien er ikke et gyldig norsk mobilnummer.")
         }
+
+        // blocked series ref NKOM E164 https://stenonicprdnoea01.blob.core.windows.net/enonicpubliccontainer/numsys/nkom.no/E164.csv
+        val blockedSeries = listOf(
+            42_00_00_00..42_99_99_99,
+            43_00_00_00..43_99_99_99,
+            44_00_00_00..44_99_99_99,
+            45_36_00_00..45_36_99_99,
+            49_00_00_00..49_99_99_99,
+        )
+
+        val tlf = value.replace(Regex("""(\+47|0047)"""), "").toIntOrNull()
+        if (tlf in blockedSeries.flatten()) {
+            throw ValideringsFeil("$path: verdien er ikke et gyldig norsk mobilnummer. Nummerserien ${tlf.toString().take(4)}xxxx er blokkert. (se: NKOM E164).")
+        }
+
         value
     }
 
@@ -44,6 +62,21 @@ object Validators {
             0 -> throw ValideringsFeil("$path: nøyaktig ett felt skal være satt. (Ingen felt er satt)")
             else -> throw ValideringsFeil("$path: nøyaktig ett felt skal være satt. (${fieldsGiven.keys.joinToString(", ")} er gitt)")
         }
+    }
+
+    fun NotBlank(path: String): Validator<String> = { value ->
+        if (value.isBlank()) {
+            throw ValideringsFeil("$path: verdien kan ikke være blank.")
+        }
+        value
+    }
+
+    fun Email(path: String): Validator<String> = { value ->
+        val regex = Regex("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")
+        if (!value.matches(regex)) {
+            throw ValideringsFeil("$path: verdien er ikke en gyldig e-postadresse.")
+        }
+        value
     }
 
     fun <T> compose(
