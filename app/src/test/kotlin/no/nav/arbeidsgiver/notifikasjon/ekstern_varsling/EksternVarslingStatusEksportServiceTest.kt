@@ -277,9 +277,6 @@ suspend fun Database.insertVarselTilstand(varselTilstand: EksternVarselTilstand.
                 nullableText(null)
             }
 
-            else -> {
-                TODO("why does kotlin not know that this is exhaustive?")
-            }
         }
         uuid(varselTilstand.data.varselId)
     }
