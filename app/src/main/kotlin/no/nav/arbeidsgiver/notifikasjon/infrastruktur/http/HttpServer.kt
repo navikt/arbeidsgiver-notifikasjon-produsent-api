@@ -110,7 +110,7 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
             }
 
             post("graphql") {
-                withContext(this.call.coroutineContext + graphQLDispatcher + MDCContext()) {
+                withContext(graphQLDispatcher + MDCContext()) {
                     val context = extractContext()
                     val request = call.receive<GraphQLRequest>()
                     val result = graphql.await().timedExecute(request, context)
@@ -255,7 +255,7 @@ fun Application.baseSetup(
             }
 
             get("metrics") {
-                withContext(coroutineContext + metricsDispatcher) {
+                withContext(metricsDispatcher) {
                     call.respondText(Metrics.meterRegistry.scrape())
                 }
             }
