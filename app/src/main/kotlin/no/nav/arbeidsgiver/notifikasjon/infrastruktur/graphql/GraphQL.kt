@@ -25,6 +25,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.intellij.lang.annotations.Language
+import kotlin.coroutines.cancellation.CancellationException
 
 inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgument(name: String): T {
     val argument = this.getArgument<Any>(name) ?: throw RuntimeException("argument '$name' required, not provided")
@@ -75,6 +76,10 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
                 timer.coRecord {
                     fetcher(env)
                 }
+            } catch (e: CancellationException) {
+                // request was cancelled, log it and rethrow
+                GraphQLLogger.log.info("GraphQL fetcher was cancelled (field: $fieldName): ${e.message}")
+                throw e
             } catch (e: ValideringsFeil) {
                 handleValideringsFeil(e, env)
             } catch (e: GraphqlErrorException) {

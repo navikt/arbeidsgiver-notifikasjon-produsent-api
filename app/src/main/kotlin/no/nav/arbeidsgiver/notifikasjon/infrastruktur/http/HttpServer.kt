@@ -50,7 +50,7 @@ val extractBrukerContext = fun RoutingContext.(): BrukerAPI.Context {
     return BrukerAPI.Context(
         fnr = principal.fnr,
         authHeader,
-        coroutineScope = this.call
+        coroutineScope = CoroutineScope(call.coroutineContext + MDCContext())
     )
 }
 
@@ -60,7 +60,7 @@ fun extractProdusentContext(produsentRegister: ProdusentRegister) =
         return ProdusentAPI.Context(
             appName = principal.appName,
             produsent = produsentRegister.finn(principal.appName),
-            coroutineScope = this.call
+            coroutineScope = CoroutineScope(call.coroutineContext + MDCContext())
         )
     }
 
@@ -110,7 +110,7 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
             }
 
             post("graphql") {
-                withContext(this.call.coroutineContext + graphQLDispatcher + MDCContext()) {
+                withContext(call.coroutineContext + graphQLDispatcher + MDCContext()) {
                     val context = extractContext()
                     val request = call.receive<GraphQLRequest>()
                     val result = graphql.await().timedExecute(request, context)
