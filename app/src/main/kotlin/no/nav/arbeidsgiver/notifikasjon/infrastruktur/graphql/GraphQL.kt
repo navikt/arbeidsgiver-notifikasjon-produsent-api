@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation
 import graphql.*
 import graphql.GraphQL.newGraphQL
+import graphql.execution.AbortExecutionException
 import graphql.execution.DataFetcherResult
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
@@ -17,25 +18,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.slf4j.MDCContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.findCause
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getTimer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.intellij.lang.annotations.Language
+import kotlin.coroutines.cancellation.CancellationException
 
-inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgument(name: String): T {
+inline fun <reified T : Any?> DataFetchingEnvironment.getTypedArgument(name: String): T {
     val argument = this.getArgument<Any>(name) ?: throw RuntimeException("argument '$name' required, not provided")
     return laxObjectMapper.convertValue(argument)
 }
 
-inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgumentOrNull(name: String): T? {
+inline fun <reified T : Any?> DataFetchingEnvironment.getTypedArgumentOrNull(name: String): T? {
     val value = this.getArgument<Any>(name) ?: return null
     return laxObjectMapper.convertValue(value)
 }
-inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgumentOrDefault(name: String, default: () -> T) =
+
+inline fun <reified T : Any?> DataFetchingEnvironment.getTypedArgumentOrDefault(name: String, default: () -> T) =
     getTypedArgumentOrNull(name) ?: default()
 
 fun RuntimeWiring.Builder.wire(typeName: String, config: TypeRuntimeWiring.Builder.() -> Unit) {
@@ -53,7 +53,7 @@ interface WithCoroutineScope {
 class UnhandledGraphQLExceptionError(
     exception: Exception,
     fieldName: String,
-): GraphqlErrorException(
+) : GraphqlErrorException(
     newErrorException()
         .message(exception.message)
         .path(listOf(fieldName))
@@ -75,6 +75,8 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
                 timer.coRecord {
                     fetcher(env)
                 }
+            } catch (e: CancellationException) {
+                handleCancellationException(fieldName, e)
             } catch (e: ValideringsFeil) {
                 handleValideringsFeil(e, env)
             } catch (e: GraphqlErrorException) {
@@ -92,6 +94,25 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
 }
 
 /**
+ * Handles cancellation exceptions by logging the event and returning an appropriate error response.
+ * This is useful for gracefully handling cases where a GraphQL fetcher is cancelled, such as when
+ * the client disconnects or the request is aborted.
+ */
+fun handleCancellationException(
+    fieldName: String,
+    exception: CancellationException
+): DataFetcherResult<*> {
+    GraphQLLogger.log.info(
+        "GraphQL fetcher was cancelled (field: {}): {}",
+        fieldName,
+        exception.message
+    )
+    return DataFetcherResult.newResult<Nothing?>()
+        .error(AbortExecutionException("GraphQL fetcher was cancelled (field: $fieldName)", exception))
+        .build()
+}
+
+/**
  * The validation error needs to be connected to the field that caused it.
  * Otherwise we do not adhere to the GraphQL spec.
  */
@@ -102,13 +123,25 @@ private fun handleValideringsFeil(
 
 fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
     GraphQLLogger.log.error(
-        "unhandled exception while executing coDataFetcher: {}",
+        "unhandled exception while executing coDataFetcher: {}. returning error: {}",
         exception.javaClass.canonicalName,
+        error.javaClass.canonicalName,
         exception
     )
     return DataFetcherResult.newResult<Nothing?>()
         .error(error)
         .build()
+}
+
+/**
+ * Filters out errors that are caused by cancellation exceptions.
+ * This is useful to avoid logging errors that are expected due to request cancellations.
+ *
+ * The cancellation can show up in different forms, therefore this extension function
+ */
+private fun ExecutionResult.nonAbortErrors() = errors.filterNot<GraphQLError> { error ->
+    error is GraphQLException && error.isCausedBy<CancellationException>()
+            || error is ExceptionWhileDataFetching && error.exception is kotlinx.coroutines.CancellationException
 }
 
 object GraphQLLogger {
@@ -206,11 +239,7 @@ fun <T : WithCoroutineScope> TypedGraphQL<T>.timedExecute(
     context: T
 ): ExecutionResult = with(Timer.start(meterRegistry)) {
     execute(request, context).also { result ->
-        val nonAbortErrors = result.errors.filterNot { error ->
-            error is ExceptionWhileDataFetching && error.exception is kotlinx.coroutines.CancellationException
-        }
-
-        if (nonAbortErrors.isNotEmpty()) {
+        if (result.nonAbortErrors().isNotEmpty()) {
             GraphQLLogger.log.error("graphql request failed: {}", result.errors)
         }
         val tags = mutableSetOf(
