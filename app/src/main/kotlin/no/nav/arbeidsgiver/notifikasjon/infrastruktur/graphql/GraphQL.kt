@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation
 import graphql.*
 import graphql.GraphQL.newGraphQL
+import graphql.execution.AbortExecutionException
 import graphql.execution.DataFetcherResult
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
@@ -77,9 +78,7 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
                     fetcher(env)
                 }
             } catch (e: CancellationException) {
-                // request was cancelled, log it and rethrow
-                GraphQLLogger.log.info("GraphQL fetcher was cancelled (field: $fieldName): ${e.message}")
-                throw e
+                handleCancellationException(fieldName, e)
             } catch (e: ValideringsFeil) {
                 handleValideringsFeil(e, env)
             } catch (e: GraphqlErrorException) {
@@ -113,6 +112,22 @@ fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetche
     )
     return DataFetcherResult.newResult<Nothing?>()
         .error(error)
+        .build()
+}
+
+fun handleCancellationException(
+    fieldName: String,
+    exception: CancellationException
+): DataFetcherResult<*> {
+    GraphQLLogger.log.info(
+        "GraphQL fetcher was cancelled (field: {}): {}",
+        fieldName,
+        exception.message
+    )
+    return DataFetcherResult.newResult<Nothing?>()
+        .error(
+            AbortExecutionException("GraphQL fetcher was cancelled (field: $fieldName)")
+        )
         .build()
 }
 
@@ -211,7 +226,11 @@ fun <T : WithCoroutineScope> TypedGraphQL<T>.timedExecute(
     context: T
 ): ExecutionResult = with(Timer.start(meterRegistry)) {
     execute(request, context).also { result ->
-        if (result.errors.isNotEmpty()) {
+        val nonAbortErrors = result.errors.filterNot { error ->
+            error is AbortExecutionException
+        }
+
+        if (nonAbortErrors.isNotEmpty()) {
             GraphQLLogger.log.error("graphql request failed: {}", result.errors)
         }
         val tags = mutableSetOf(
