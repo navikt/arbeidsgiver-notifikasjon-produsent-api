@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation
 import graphql.*
 import graphql.GraphQL.newGraphQL
-import graphql.execution.AbortExecutionException
 import graphql.execution.DataFetcherResult
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
@@ -26,7 +25,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.intellij.lang.annotations.Language
-import kotlin.coroutines.cancellation.CancellationException
 
 inline fun <reified T: Any?> DataFetchingEnvironment.getTypedArgument(name: String): T {
     val argument = this.getArgument<Any>(name) ?: throw RuntimeException("argument '$name' required, not provided")
@@ -77,8 +75,6 @@ fun <T> TypeRuntimeWiring.Builder.coDataFetcher(
                 timer.coRecord {
                     fetcher(env)
                 }
-            } catch (e: CancellationException) {
-                handleCancellationException(fieldName, e)
             } catch (e: ValideringsFeil) {
                 handleValideringsFeil(e, env)
             } catch (e: GraphqlErrorException) {
@@ -112,22 +108,6 @@ fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetche
     )
     return DataFetcherResult.newResult<Nothing?>()
         .error(error)
-        .build()
-}
-
-fun handleCancellationException(
-    fieldName: String,
-    exception: CancellationException
-): DataFetcherResult<*> {
-    GraphQLLogger.log.info(
-        "GraphQL fetcher was cancelled (field: {}): {}",
-        fieldName,
-        exception.message
-    )
-    return DataFetcherResult.newResult<Nothing?>()
-        .error(
-            AbortExecutionException("GraphQL fetcher was cancelled (field: $fieldName)")
-        )
         .build()
 }
 
@@ -227,7 +207,7 @@ fun <T : WithCoroutineScope> TypedGraphQL<T>.timedExecute(
 ): ExecutionResult = with(Timer.start(meterRegistry)) {
     execute(request, context).also { result ->
         val nonAbortErrors = result.errors.filterNot { error ->
-            error is AbortExecutionException
+            error is ExceptionWhileDataFetching && error.exception is kotlinx.coroutines.CancellationException
         }
 
         if (nonAbortErrors.isNotEmpty()) {
