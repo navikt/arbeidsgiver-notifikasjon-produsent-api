@@ -89,7 +89,10 @@ internal data class EksterntVarselInput(
             val tlf: String,
         ) {
             init {
-                Validators.NorwegianMobilePhoneNumber("Kontaktinfo.tlf")(tlf)
+                Validators.compose(
+                    Validators.NotBlank("Kontaktinfo.tlf"),
+                    Validators.NorwegianMobilePhoneNumber("Kontaktinfo.tlf")
+                )(tlf)
             }
         }
     }
@@ -154,7 +157,14 @@ internal data class EksterntVarselInput(
         data class Kontaktinfo(
             val fnr: String?,
             val epostadresse: String,
-        )
+        ) {
+            init {
+                Validators.compose(
+                    Validators.NotBlank("Kontaktinfo.epostadresse"),
+                    Validators.Email("Kontaktinfo.epostadresse")
+                )(epostadresse)
+            }
+        }
     }
 
     data class Altinntjeneste(

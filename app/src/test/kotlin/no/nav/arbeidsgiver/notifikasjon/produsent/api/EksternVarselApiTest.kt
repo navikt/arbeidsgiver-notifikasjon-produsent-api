@@ -52,7 +52,7 @@ private val jsonVariabler = laxObjectMapper.readValue<Map<String, Any?>>(
         "mottaker": {
           "kontaktinfo": {
             "fnr": "0",
-            "epostadresse": "0"
+            "epostadresse": "foo@foo.com"
           }
         },
         "epostTittel": "En tittel til din epost",
