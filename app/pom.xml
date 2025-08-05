@@ -11,7 +11,7 @@
     <properties>
         <kotlin.version>2.1.20</kotlin.version>
         <kotlin.coroutines.version>1.10.2</kotlin.coroutines.version>
-        <ktor.version>3.2.0</ktor.version>
+        <ktor.version>3.2.3</ktor.version>
         <cxf.version>4.1.1</cxf.version>
         <jvm.version>21</jvm.version>
         <kotlin.compiler.jvmTarget>${jvm.version}</kotlin.compiler.jvmTarget>
