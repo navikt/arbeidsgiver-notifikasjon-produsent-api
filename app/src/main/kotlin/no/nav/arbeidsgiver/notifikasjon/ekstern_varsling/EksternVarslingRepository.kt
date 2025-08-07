@@ -285,7 +285,7 @@ class EksternVarslingRepository(
     suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate(
             """
-            refresh materialized view concurrently ekstern_varsel_kontaktinfo_to_delete;
+            refresh materialized view ekstern_varsel_kontaktinfo_to_delete;
             """
         )
         database.nonTransactionalExecuteUpdate(
