@@ -202,7 +202,6 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         "Varig tilrettelagt arbeid"
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
         ServicecodeDefinisjon(
             code = "5332",
             version = basedOnEnv(prod = { "2" }, other = { "1" }),
