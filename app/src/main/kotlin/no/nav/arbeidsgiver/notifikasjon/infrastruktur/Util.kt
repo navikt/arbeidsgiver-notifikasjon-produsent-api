@@ -4,6 +4,7 @@ import kotlinx.coroutines.delay
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.pow
 import kotlin.reflect.KProperty
 import kotlin.time.Duration
@@ -98,4 +99,8 @@ inline fun <reified T : Throwable> Throwable.findCause(): T? {
         level += 1
     }
     return null
+}
+
+fun Exception.rethrowIfCancellation() {
+    if (this is CancellationException) throw this
 }

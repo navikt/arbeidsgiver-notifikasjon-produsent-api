@@ -2,9 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Notifikasjontilstand.*
 import java.time.Instant
 import java.time.LocalDate
@@ -60,8 +58,20 @@ class SkedulertPåminnelseRepository(
                     instantAsText(now)
                 },
                 transform = {
+                    /**
+                     * aggregateId = getObject("aggregate_id", UUID::class.java),
+                     *             aggregateType = valueOf(getString("aggregate_type")),
+                     *             virksomhetsnummer = getString("virksomhetsnummer"),
+                     *             produsentid = getString("produsentid"),
+                     *             merkelapp = getString("merkelapp"),
+                     *             grupperingsid = getString("grupperingsid"),
+                     *             inputBase = getObject("input_base", OffsetDateTime::class.java),
+                     *             inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
+                     *             inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
+                     *             beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
+                     */
                     SkedulertPåminnelse(
-                        notifikasjonId = getUUID("notifikasjon_id"),
+                        notifikasjonId = getUuid("notifikasjon_id"),
                         hendelseOpprettetTidspunkt = getInstant("frist_opprettet_tidspunkt"),
                         frist = getLocalDateOrNull("frist"),
                         startTidspunkt = getLocalDateTimeOrNull("start_tidspunkt"),
@@ -69,7 +79,7 @@ class SkedulertPåminnelseRepository(
                         eksterneVarsler = getJson("eksterne_varsler_json"),
                         virksomhetsnummer = getString("virksomhetsnummer"),
                         produsentId = getString("produsent_id"),
-                        bestillingHendelseId = getUUID("bestilling_id"),
+                        bestillingHendelseId = getUuid("bestilling_id"),
                     )
                 }
             )
@@ -275,7 +285,7 @@ class SkedulertPåminnelseRepository(
                 uuid(notifikasjonId)
             },
             transform = {
-                getUUID("bestilling_id")
+                getUuid("bestilling_id")
             }
         )
 
