@@ -594,7 +594,7 @@ private val påminnelseVarsler = """
         "mottaker": {
           "kontaktinfo": {
             "fnr": "1337",
-            "tlf": "49999999"
+            "tlf": "48999999"
           }
         },
         "smsTekst": "En test SMS",
