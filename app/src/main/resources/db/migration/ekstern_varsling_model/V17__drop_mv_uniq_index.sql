@@ -1,0 +1,1 @@
+drop index idx_evk_to_delete_notifikasjon_id;

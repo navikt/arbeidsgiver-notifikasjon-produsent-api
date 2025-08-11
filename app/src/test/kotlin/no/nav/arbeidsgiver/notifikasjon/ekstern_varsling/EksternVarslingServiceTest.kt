@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.Not
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.NotificationStatusSummary
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
@@ -946,6 +947,119 @@ class EksternVarslingServiceTest {
             job.cancel()
         }
     }
+
+    @Test
+    fun `hard delete slettes først etter varsel er kvittert`() = runBlocking {
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent, meldingSendt) = setupService(database)
+
+            repository.oppdaterModellEtterHendelse(
+                OppgaveOpprettet(
+                    virksomhetsnummer = "1",
+                    notifikasjonId = uuid("1"),
+                    hendelseId = uuid("1"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    eksternId = "",
+                    mottakere = listOf(
+                        AltinnMottaker(
+                            virksomhetsnummer = "",
+                            serviceCode = "",
+                            serviceEdition = "",
+                        )
+                    ),
+                    tekst = "",
+                    grupperingsid = "",
+                    lenke = "",
+                    opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
+                    eksterneVarsler = listOf(
+                        SmsVarselKontaktinfo(
+                            varselId = uuid("2"),
+                            tlfnr = "",
+                            fnrEllerOrgnr = "",
+                            smsTekst = "",
+                            sendevindu = EksterntVarselSendingsvindu.LØPENDE,
+                            sendeTidspunkt = null,
+                        )
+                    ),
+                    hardDelete = null,
+                    frist = null,
+                    påminnelse = null,
+                    sakId = null,
+                )
+            )
+            repository.oppdaterModellEtterHendelse(
+                HendelseModel.HardDelete(
+                    virksomhetsnummer = "1",
+                    aggregateId = uuid("1"),
+                    hendelseId = uuid("2"),
+                    produsentId = "",
+                    kildeAppNavn = "",
+                    merkelapp = "",
+                    grupperingsid = "",
+                    deletedAt = OffsetDateTime.now(),
+                )
+            )
+
+            database.nonTransactionalExecuteUpdate(
+                """
+                update emergency_break set stop_processing = false where id = 0
+            """
+            )
+
+            // assert varsel exists
+            assertTrue(
+                database.nonTransactionalExecuteQuery(
+                    """
+                    select * from ekstern_varsel_kontaktinfo where notifikasjon_id = '${uuid("1")}'
+                    """
+                ) { asMap() }.isNotEmpty()
+            )
+
+            var serviceJob = service.start(this)
+
+            // sends message eventually
+            eventually(5.seconds) {
+                assertTrue(
+                    database.nonTransactionalExecuteQuery(
+                        """
+                    select * from ekstern_varsel_kontaktinfo where notifikasjon_id = '${uuid("1")}'
+                    """
+                    ) { asMap() }.isNotEmpty()
+                )
+                assertEquals(MeldingsType.Altinn3, meldingSendt.get())
+            }
+
+            eventually(20.seconds) {
+                val vellykedeVarsler = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                assertFalse(vellykedeVarsler.isEmpty())
+            }
+
+            // simulate processing of hendelser, this process runs outside the service
+            hendelseProdusent.hendelser.forEach {
+                repository.oppdaterModellEtterHendelse(it)
+            }
+
+            // simulate next processing loop by stopping and starting the service
+            serviceJob.cancel()
+            serviceJob = service.start(this)
+
+            // delete is performed after varsel is kvittert
+            eventually(5.seconds) {
+                assertTrue(
+                    database.nonTransactionalExecuteQuery(
+                        """
+                    select * from ekstern_varsel_kontaktinfo where notifikasjon_id = '${uuid("1")}'
+                    """
+                    ) { asMap() }.isEmpty(),
+                    "Varsel should be deleted after kvittering"
+                )
+            }
+
+            serviceJob.cancel()
+        }
+    }
 }
 
 private val oppgave = OppgaveOpprettet(
@@ -994,7 +1108,7 @@ suspend fun eventually(duration: kotlin.time.Duration, block: suspend () -> Unit
         try {
             block()
             return
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             // ignore
         }
         delay(50)
