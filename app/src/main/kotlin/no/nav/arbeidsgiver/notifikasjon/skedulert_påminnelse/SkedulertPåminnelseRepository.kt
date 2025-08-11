@@ -58,17 +58,6 @@ class SkedulertPåminnelseRepository(
                     instantAsText(now)
                 },
                 transform = {
-                    /**
-                     * aggregateId = getObject("aggregate_id", UUID::class.java),
-                     *             aggregateType = valueOf(getString("aggregate_type")),
-                     *             virksomhetsnummer = getString("virksomhetsnummer"),
-                     *             produsentid = getString("produsentid"),
-                     *             merkelapp = getString("merkelapp"),
-                     *             grupperingsid = getString("grupperingsid"),
-                     *             inputBase = getObject("input_base", OffsetDateTime::class.java),
-                     *             inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
-                     *             inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
-                     *             beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
                     SkedulertPåminnelse(
                         notifikasjonId = getUuid("notifikasjon_id"),
                         hendelseOpprettetTidspunkt = getInstant("frist_opprettet_tidspunkt"),
