@@ -69,7 +69,6 @@ class SkedulertPåminnelseRepository(
                      *             inputOm = getString("input_om")?.let { ISO8601Period.parse(it) },
                      *             inputDen = getString("input_den")?.let { LocalDateTime.parse(it) },
                      *             beregnetSlettetidspunkt = getObject("beregnet_slettetidspunkt", OffsetDateTime::class.java).toInstant(),
-                     */
                     SkedulertPåminnelse(
                         notifikasjonId = getUuid("notifikasjon_id"),
                         hendelseOpprettetTidspunkt = getInstant("frist_opprettet_tidspunkt"),
