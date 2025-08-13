@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.PåminnelseTidspunkt
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.getInstant
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getInstant
 import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
 import java.time.OffsetDateTime
 import java.util.*

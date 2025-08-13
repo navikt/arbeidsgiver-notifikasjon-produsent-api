@@ -73,6 +73,8 @@ class AltinnTilgangerClient(
                 bearerAuth(token.fold({ it.accessToken }, { throw Exception("Failed to exchange token: ${it.error}") }))
             }.body<AltinnTilgangerClientResponse>()
         } catch (e: Exception) {
+            e.rethrowIfCancellation()
+
             log.error("Failed to fetch tilganger", e)
             return AltinnTilganger(
                 harFeil = true,

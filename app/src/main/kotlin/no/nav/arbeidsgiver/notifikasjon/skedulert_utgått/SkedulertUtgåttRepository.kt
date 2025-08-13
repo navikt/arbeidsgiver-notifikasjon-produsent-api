@@ -3,12 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HardDeletedRepository
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.getLocalDate
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.getLocalDateTime
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.getUUID
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.tid.asOsloLocalDate
 import java.time.Instant
 import java.time.LocalDate
