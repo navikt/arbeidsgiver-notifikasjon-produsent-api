@@ -84,7 +84,7 @@ fun CoroutineScope.launchHttpServer(
                 host = "0.0.0.0"
                 port = httpPort
             })
-            this.shutdownGracePeriod = 5.seconds.inWholeMilliseconds
+            this.shutdownGracePeriod = 10.seconds.inWholeMilliseconds
         }) {
             application()
         }
