@@ -124,6 +124,7 @@ internal class MutationNyOppgave(
             nyOppgave.notifikasjon.merkelapp,
         ) { error -> return error }
 
+
         validerMottakereMotSak(sak, nyOppgave.metadata.virksomhetsnummer, nyOppgave.mottakere) { error ->
             return error
         }
