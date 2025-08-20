@@ -11,6 +11,7 @@ import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.toString
 
 class InputValideringTest {
     @Test
@@ -26,9 +27,9 @@ class InputValideringTest {
             "40000000",
             "004740000000",
             "+4740000000",
-            "49999999",
-            "004749999999",
-            "+4749999999",
+            "48999999",
+            "004748999999",
+            "+4748999999",
             "90000000",
             "004790000000",
             "+4790000000",
@@ -55,7 +56,8 @@ class InputValideringTest {
                             }
                         ]
                         """.trimIndent()
-                ).getGraphqlErrors().isEmpty()
+                ).getGraphqlErrors().isEmpty(),
+                "Forventet at $tlf er et gyldig norsk mobil"
             )
         }
 
@@ -83,6 +85,174 @@ class InputValideringTest {
                                                }
                                             },
                                             "smsTekst": "test",
+                                            "sendetidspunkt": {
+                                                "sendevindu": "LOEPENDE"
+                                            }
+                                        }
+                                    }
+                                ]
+                                """.trimIndent()
+                ).getGraphqlErrors()[0].message
+            )
+        }
+
+        listOf(
+            "",
+        ).forEach { tlf ->
+            assertEquals(
+                "Exception while fetching data (/nyBeskjed) : Kontaktinfo.tlf: verdien kan ikke være blank.",
+                client.nyBeskjed(
+                    eksterneVarsler = """
+                                [
+                                    {
+                                        "sms": {
+                                            "mottaker": {
+                                               "kontaktinfo": {
+                                                  "tlf": "$tlf"  
+                                               }
+                                            },
+                                            "smsTekst": "test",
+                                            "sendetidspunkt": {
+                                                "sendevindu": "LOEPENDE"
+                                            }
+                                        }
+                                    }
+                                ]
+                                """.trimIndent()
+                ).getGraphqlErrors()[0].message
+            )
+        }
+
+        // blokkerte serier iht nkom https://stenonicprdnoea01.blob.core.windows.net/enonicpubliccontainer/numsys/nkom.no/E164.csv
+        listOf(
+            "42000000",
+            "004742000000",
+            "+4742000000",
+            "42999999",
+            "004742999999",
+            "+4742999999",
+            "43000000",
+            "004743000000",
+            "+4743000000",
+            "43999999",
+            "004743999999",
+            "+4743999999",
+            "44000000",
+            "004744000000",
+            "+4744000000",
+            "44999999",
+            "004744999999",
+            "+4744999999",
+            "45360000",
+            "004745360000",
+            "+4745360000",
+            "45369999",
+            "004745369999",
+            "+4745369999",
+            "49000000",
+            "004749000000",
+            "+4749000000",
+            "49999999",
+            "004749999999",
+            "+4749999999",
+        ).forEach { tlf ->
+            assertEquals(
+                "Exception while fetching data (/nyBeskjed) : Kontaktinfo.tlf: verdien er ikke et gyldig norsk mobilnummer. Nummerserien ${tlf.replace(Regex("""(\+47|0047)"""), "").take(4)}xxxx er blokkert. (se: NKOM E164).",
+                client.nyBeskjed(
+                    eksterneVarsler = """
+                                [
+                                    {
+                                        "sms": {
+                                            "mottaker": {
+                                               "kontaktinfo": {
+                                                  "tlf": "$tlf"  
+                                               }
+                                            },
+                                            "smsTekst": "test",
+                                            "sendetidspunkt": {
+                                                "sendevindu": "LOEPENDE"
+                                            }
+                                        }
+                                    }
+                                ]
+                                """.trimIndent()
+                ).getGraphqlErrors()[0].message
+            )
+        }
+
+        listOf(
+            "donald@duck.co",
+        ).forEach { epost ->
+            assertTrue(
+                client.nyBeskjed(
+                    eksterneVarsler = """
+                                [
+                                    {
+                                        "epost": {
+                                            "mottaker": {
+                                               "kontaktinfo": {
+                                                  "epostadresse": "$epost"  
+                                               }
+                                            },
+                                            "epostTittel": "test",
+                                            "epostHtmlBody": "test",
+                                            "sendetidspunkt": {
+                                                "sendevindu": "LOEPENDE"
+                                            }
+                                        }
+                                    }
+                                ]
+                                """.trimIndent()
+                ).getGraphqlErrors().isEmpty()
+            )
+        }
+
+        listOf(
+            "",
+        ).forEach { epost ->
+            assertEquals(
+                "Exception while fetching data (/nyBeskjed) : Kontaktinfo.epostadresse: verdien kan ikke være blank.",
+                client.nyBeskjed(
+                    eksterneVarsler = """
+                                [
+                                    {
+                                        "epost": {
+                                            "mottaker": {
+                                               "kontaktinfo": {
+                                                  "epostadresse": "$epost"  
+                                               }
+                                            },
+                                            "epostTittel": "test",
+                                            "epostHtmlBody": "test",
+                                            "sendetidspunkt": {
+                                                "sendevindu": "LOEPENDE"
+                                            }
+                                        }
+                                    }
+                                ]
+                                """.trimIndent()
+                ).getGraphqlErrors()[0].message
+            )
+        }
+
+        listOf(
+            "foo",
+            "foo@foo",
+        ).forEach { epost ->
+            assertEquals(
+                "Exception while fetching data (/nyBeskjed) : Kontaktinfo.epostadresse: verdien er ikke en gyldig e-postadresse.",
+                client.nyBeskjed(
+                    eksterneVarsler = """
+                                [
+                                    {
+                                        "epost": {
+                                            "mottaker": {
+                                               "kontaktinfo": {
+                                                  "epostadresse": "$epost"  
+                                               }
+                                            },
+                                            "epostTittel": "test",
+                                            "epostHtmlBody": "test",
                                             "sendetidspunkt": {
                                                 "sendevindu": "LOEPENDE"
                                             }

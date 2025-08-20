@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.header.internals.RecordHeader
 import org.apache.kafka.common.header.internals.RecordHeaders
 import org.apache.kafka.common.record.TimestampType
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -135,11 +136,11 @@ fun record(
         offset,
         0L,
         TimestampType.NO_TIMESTAMP_TYPE,
-        0L,
         keyBytes.size,
         valueBytes?.size ?: 0,
         keyBytes,
         valueBytes,
         headers,
+        Optional.of(0)
     )
 }

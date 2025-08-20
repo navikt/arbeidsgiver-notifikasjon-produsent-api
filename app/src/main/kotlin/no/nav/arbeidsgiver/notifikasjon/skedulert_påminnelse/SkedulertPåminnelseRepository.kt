@@ -2,9 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleTilstand
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.local_database.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.Notifikasjontilstand.*
 import java.time.Instant
 import java.time.LocalDate
@@ -61,7 +59,7 @@ class SkedulertPåminnelseRepository(
                 },
                 transform = {
                     SkedulertPåminnelse(
-                        notifikasjonId = getUUID("notifikasjon_id"),
+                        notifikasjonId = getUuid("notifikasjon_id"),
                         hendelseOpprettetTidspunkt = getInstant("frist_opprettet_tidspunkt"),
                         frist = getLocalDateOrNull("frist"),
                         startTidspunkt = getLocalDateTimeOrNull("start_tidspunkt"),
@@ -69,7 +67,7 @@ class SkedulertPåminnelseRepository(
                         eksterneVarsler = getJson("eksterne_varsler_json"),
                         virksomhetsnummer = getString("virksomhetsnummer"),
                         produsentId = getString("produsent_id"),
-                        bestillingHendelseId = getUUID("bestilling_id"),
+                        bestillingHendelseId = getUuid("bestilling_id"),
                     )
                 }
             )
@@ -275,7 +273,7 @@ class SkedulertPåminnelseRepository(
                 uuid(notifikasjonId)
             },
             transform = {
-                getUUID("bestilling_id")
+                getUuid("bestilling_id")
             }
         )
 

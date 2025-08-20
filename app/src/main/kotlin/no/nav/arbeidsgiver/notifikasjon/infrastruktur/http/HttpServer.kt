@@ -43,6 +43,7 @@ import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 val extractBrukerContext = fun RoutingContext.(): BrukerAPI.Context {
     val principal = call.principal<BrukerPrincipal>()!!
@@ -78,7 +79,13 @@ fun CoroutineScope.launchHttpServer(
     application: Application.() -> Unit = { baseSetup(customRoute) }
 ) {
     launch {
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connectors.add(EngineConnectorBuilder().apply {
+                host = "0.0.0.0"
+                port = httpPort
+            })
+            this.shutdownGracePeriod = 10.seconds.inWholeMilliseconds
+        }) {
             application()
         }
             .start(wait = true)

@@ -20,6 +20,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformToke
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
 import java.time.OffsetDateTime
 import java.util.*
@@ -56,6 +57,8 @@ open class Altinn3VarselKlientImpl(
             rå = e.response.body()
         )
     } catch (e: Exception) {
+        e.rethrowIfCancellation()
+
         log.error("Unexpected error", e)
         ErrorResponse(
             message = e.message ?: "",
@@ -75,6 +78,8 @@ open class Altinn3VarselKlientImpl(
             rå = e.response.body()
         )
     } catch (e: Exception) {
+        e.rethrowIfCancellation()
+
         log.error("Unexpected error", e)
         ErrorResponse(
             message = e.message ?: "",
@@ -97,6 +102,8 @@ open class Altinn3VarselKlientImpl(
             rå = e.response.body()
         )
     } catch (e: Exception) {
+        e.rethrowIfCancellation()
+
         ErrorResponse(
             message = e.message ?: "",
             code = e::class.java.simpleName ?: "",

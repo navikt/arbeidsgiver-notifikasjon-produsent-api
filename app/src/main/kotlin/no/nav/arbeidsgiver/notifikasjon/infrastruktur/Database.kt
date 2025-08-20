@@ -1,5 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.*
@@ -355,6 +360,30 @@ class ParameterSetters(
 
 fun ResultSet.getUuid(column: String): UUID =
     getObject(column, UUID::class.java)
+
+fun ResultSet.getUUID(columnLabel: String): UUID = UUID.fromString(getString(columnLabel))
+fun ResultSet.getInstant(columnLabel: String): Instant = Instant.parse(getString(columnLabel))
+fun ResultSet.getLocalDate(columnLabel: String): LocalDate = LocalDate.parse(getString(columnLabel))
+fun ResultSet.getLocalDateOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDate::parse)
+fun ResultSet.getLocalDateTime(columnLabel: String) = LocalDateTime.parse(getString(columnLabel))
+fun ResultSet.getLocalDateTimeOrNull(columnLabel: String) = getString(columnLabel)?.let(LocalDateTime::parse)
+inline fun <reified E: Enum<E>> ResultSet.getEnum(columnLabel: String): E = enumValueOf(getString(columnLabel))
+inline fun <reified A> ResultSet.getJson(columnLabel: String) = databaseObjectMapper.readValue<A>(getString(columnLabel))
+
+fun <T> ResultSet.resultAsList(extractRow: ResultSet.() -> T): List<T> {
+    val result = mutableListOf<T>()
+    while (next()) {
+        result.add(extractRow())
+    }
+    return result
+}
+
+/* can't be private because it's inlined in `getJson` */
+val databaseObjectMapper = jacksonObjectMapper().apply {
+    registerModule(JavaTimeModule())
+    disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+    disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
+}
 
 fun <T> measureSql(
     sql: String,

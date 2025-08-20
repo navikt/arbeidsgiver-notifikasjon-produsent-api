@@ -285,10 +285,15 @@ class EksternVarslingRepository(
     suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate(
             """
-            delete from ekstern_varsel_kontaktinfo evk
-            using hard_delete hd
-            where evk.state = '${EksterntVarselTilstand.KVITTERT}'
-            and evk.notifikasjon_id = hd.notifikasjon_id;
+            refresh materialized view ekstern_varsel_kontaktinfo_to_delete;
+            """
+        )
+        database.nonTransactionalExecuteUpdate(
+            """
+            delete from ekstern_varsel_kontaktinfo
+            where notifikasjon_id in (
+              select notifikasjon_id from ekstern_varsel_kontaktinfo_to_delete
+            );
             """
         )
     }

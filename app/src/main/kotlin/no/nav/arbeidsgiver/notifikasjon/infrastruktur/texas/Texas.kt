@@ -17,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.withTimer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 
 /**
  * Lånt med modifikasjoner fra https://github.com/nais/wonderwalled
@@ -168,6 +169,8 @@ val TexasAuth = createRouteScopedPlugin(
             val introspectResponse = try {
                 client.introspect(token)
             } catch (e: Exception) {
+                e.rethrowIfCancellation()
+
                 challenge(call, AuthenticationFailedCause.Error(e.message ?: "introspect request failed"))
                 return@onCall
             }
