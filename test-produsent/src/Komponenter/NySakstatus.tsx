@@ -130,7 +130,7 @@ export const NySakstatus: React.FunctionComponent = () => {
                     <TextField label={"Merkelapp*"} ref={merkelappRef} defaultValue="fager"/>
                 </>
             }
-            <ToggleGroup defaultValue={nyStatus} onChange={() => setNyStatus} label="Ny status">
+            <ToggleGroup defaultValue={nyStatus} onChange={(s) => setNyStatus(s as SaksStatus)} label="Ny status">
                 {Object.values(SaksStatus).map((status) => <ToggleGroup.Item key={status}
                                                                              value={status}>{status}</ToggleGroup.Item>)}
             </ToggleGroup>
