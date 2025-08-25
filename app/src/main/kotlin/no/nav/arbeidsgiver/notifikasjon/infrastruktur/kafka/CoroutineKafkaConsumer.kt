@@ -10,10 +10,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
@@ -121,6 +118,7 @@ private constructor(
                     consumer.poll(Duration.ofMillis(1000))
                 } catch (e: Exception) {
                     log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
+                    Health.subsystemAlive[Subsystem.KAFKA] = false
                     throw e
                 }
 
