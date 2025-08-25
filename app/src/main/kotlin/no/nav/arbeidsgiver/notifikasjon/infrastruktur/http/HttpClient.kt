@@ -18,7 +18,8 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLHandshakeException
 
 fun defaultHttpClient(
-    configure: HttpClientConfig<CIOEngineConfig>.() -> Unit = {}
+    customizeMetrics: HttpClientMetricsFeature.Config.() -> Unit = {},
+    configure: HttpClientConfig<CIOEngineConfig>.() -> Unit = {},
 ) = HttpClient(CIO) {
     expectSuccess = true
 
@@ -28,6 +29,7 @@ fun defaultHttpClient(
 
     install(HttpClientMetricsFeature) {
         registry = Metrics.meterRegistry
+        customizeMetrics()
     }
 
     install(PropagateFromMDCPlugin) {
