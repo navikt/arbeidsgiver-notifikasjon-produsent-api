@@ -23,6 +23,7 @@ class HttpClientMetricsFeature internal constructor(
     private val registry: MeterRegistry,
     private val clientName: String,
     private val staticPath: String?,
+    private val canonicalizer: ((String) -> String)? = null,
 ) {
     /**
      * [HttpClientMetricsFeature] configuration that is used during installation
@@ -31,32 +32,32 @@ class HttpClientMetricsFeature internal constructor(
         var clientName: String = "ktor.http.client"
         lateinit var registry: MeterRegistry
         var staticPath: String? = null
+        var canonicalizer: ((String) -> String)? = null
 
         internal fun isRegistryInitialized() = this::registry.isInitialized
     }
 
     private fun before(context: HttpRequestBuilder) {
+        val rawPath = staticPath ?: context.url.encodedPath
+        val canonicalPath = canonicalizer?.invoke(rawPath) ?: rawPath
         context.attributes.put(
             measureKey,
-            ClientCallMeasure(
-                Timer.start(registry),
-                staticPath ?: context.url.encodedPath,
-            )
+            ClientCallMeasure(Timer.start(registry), canonicalPath)
         )
     }
 
     private fun after(call: HttpClientCall, context: HttpRequestBuilder) {
-        val clientCallMeasure = call.attributes.getOrNull(measureKey)
-        if (clientCallMeasure != null) {
-            val builder = Timer.builder(requestTimeTimerName).tags(
+        val measure = call.attributes.getOrNull(measureKey) ?: return
+
+        measure.timer.stop(
+            Timer.builder(requestTimeTimerName).tags(
                 listOf(
                     Tag.of("method", call.request.method.value),
-                    Tag.of("url", context.urlTagValue()),
+                    Tag.of("url", measure.path),
                     Tag.of("status", call.response.status.value.toString()),
                 )
-            )
-            clientCallMeasure.timer.stop(builder.register(registry))
-        }
+            ).register(registry)
+        )
     }
 
     /**
@@ -79,7 +80,7 @@ class HttpClientMetricsFeature internal constructor(
                         "Meter registry is missing. Please initialize the field 'registry'"
                     )
                 }
-                HttpClientMetricsFeature(it.registry, it.clientName, it.staticPath)
+                HttpClientMetricsFeature(it.registry, it.clientName, it.staticPath, it.canonicalizer)
             }
 
         override fun install(plugin: HttpClientMetricsFeature, scope: HttpClient) {
