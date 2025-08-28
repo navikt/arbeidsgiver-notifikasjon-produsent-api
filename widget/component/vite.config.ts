@@ -42,7 +42,12 @@ const config = async ({ command }) => {
         formats: ['es'],
       },
       rollupOptions: {
-        external: ['react', 'react/jsx-runtime'],
+        external: [
+          'react',
+          'react/jsx-runtime',
+          'react-dom',
+          'react-dom/client',
+        ],
         input: Object.fromEntries(
           glob.sync('lib/**/*.{ts,tsx}', {
             ignore: ['lib/**/*.d.ts'],
