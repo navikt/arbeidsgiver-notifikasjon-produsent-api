@@ -2,7 +2,7 @@
 version: '2'
 services:
   kafka:
-    image: docker.io/bitnami/kafka:3.4.1-debian-11-r55
+    image: docker.io/bitnamilegacy/kafka:3.4.1-debian-11-r55
     networks:
       - my-net
     ports:
