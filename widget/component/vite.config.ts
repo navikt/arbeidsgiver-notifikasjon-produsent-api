@@ -5,6 +5,7 @@ import { glob } from 'glob';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { libInjectCss } from 'vite-plugin-lib-inject-css';
+import pkg from './package.json' assert { type: 'json' };
 
 const config = async ({ command }) => {
   const isDev = command === 'serve';
@@ -42,7 +43,11 @@ const config = async ({ command }) => {
         formats: ['es'],
       },
       rollupOptions: {
-        external: ['react', 'react/jsx-runtime'],
+        external: [
+          ...Object.keys(pkg.peerDependencies ?? {}),
+          'react/jsx-runtime',
+          'react-dom/client',
+        ],
         input: Object.fromEntries(
           glob.sync('lib/**/*.{ts,tsx}', {
             ignore: ['lib/**/*.d.ts'],
