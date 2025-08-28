@@ -293,11 +293,12 @@ class Altinn2VarselKlientImpl(
  */
 fun Exception.erDriftsforstyrrelse(): Boolean {
     val isEofEx = isCausedBy<com.ctc.wstx.exc.WstxEOFException>()
+    val isConnectEx = isCausedBy<java.net.ConnectException>()
     val is50234Ex = findCause<HTTPException>()?.let {
         listOf(502, 503).contains(it.responseCode)
     } ?: false
 
-    return isEofEx || is50234Ex
+    return isEofEx || isConnectEx || is50234Ex
 }
 
 
