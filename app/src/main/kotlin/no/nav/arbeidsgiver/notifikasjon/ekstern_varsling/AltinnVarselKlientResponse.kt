@@ -2,9 +2,11 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import no.altinn.services.common.fault._2009._10.AltinnFault
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 
 sealed interface AltinnVarselKlientResponse {
     val rå: JsonNode
+
     data class Ok(
         override val rå: JsonNode
     ) : AltinnVarselKlientResponse, AltinnVarselKlientResponseOrException
@@ -14,7 +16,14 @@ sealed interface AltinnVarselKlientResponse {
         val altinnFault: AltinnFault,
     ) : AltinnVarselKlientResponse, AltinnVarselKlientResponseOrException {
         fun isRetryable() = retryableErrorIds.contains(altinnFault.errorID)
-        fun isSupressable() = supressableErrorIds.contains(altinnFault.errorID)
+        fun isSupressable() = basedOnEnv(
+            prod = { supressableErrorIds },
+            other = {
+                supressableErrorIds + listOf(
+                    60012, // Ugyldig avgiver. Altinn klarer ikke identifisere noen avgiver basert på angitt ReporteeNumber.
+                )
+            }
+        ).contains(altinnFault.errorID)
 
         val feilkode: String get() = altinnFault.errorID.toString()
         val feilmelding: String get() = altinnFault.altinnErrorMessage.value
