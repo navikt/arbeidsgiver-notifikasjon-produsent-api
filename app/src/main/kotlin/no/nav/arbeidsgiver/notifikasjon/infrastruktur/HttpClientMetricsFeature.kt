@@ -53,7 +53,7 @@ class HttpClientMetricsFeature internal constructor(
             Timer.builder(requestTimeTimerName).tags(
                 listOf(
                     Tag.of("method", call.request.method.value),
-                    Tag.of("url", measure.path),
+                    Tag.of("url", "${context.url.protocol.name}://${context.url.host}:${context.url.port}${measure.path}" ),
                     Tag.of("status", call.response.status.value.toString()),
                 )
             ).register(registry)
@@ -97,8 +97,6 @@ class HttpClientMetricsFeature internal constructor(
         }
     }
 
-    private fun HttpRequestBuilder.urlTagValue() =
-        "${url.let { "${it.protocol.name}://${it.host}:${it.port}" }}${attributes[measureKey].path}"
 }
 
 private data class ClientCallMeasure(
