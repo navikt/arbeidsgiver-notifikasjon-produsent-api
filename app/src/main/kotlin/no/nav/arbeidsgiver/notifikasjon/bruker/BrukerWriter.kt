@@ -1,12 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.bruker
 
-import kotlinx.coroutines.Dispatchers
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NærmesteLederKafkaListener
@@ -25,27 +25,27 @@ object BrukerWriter {
     fun main(
         httpPort: Int = 8080
     ) {
-        runBlocking(Dispatchers.Default) {
-            val database = openDatabaseAsync(databaseConfig)
-            val brukerRepositoryAsync = async {
-                BrukerRepositoryImpl(database.await())
+        embeddedServer(CIO, port = httpPort) {
+            val databaseDeferred = openDatabaseAsync(databaseConfig)
+            val brukerRepositoryDeferred = async {
+                BrukerRepositoryImpl(databaseDeferred.await())
             }
 
             launch {
-                val brukerRepository = brukerRepositoryAsync.await()
+                val brukerRepository = brukerRepositoryDeferred.await()
                 hendelsesstrøm.forEach { event, metadata ->
                     brukerRepository.oppdaterModellEtterHendelse(event, metadata)
                 }
             }
 
             launch {
-                val brukerRepository = brukerRepositoryAsync.await()
+                val brukerRepository = brukerRepositoryDeferred.await()
                 NærmesteLederKafkaListener().forEach { event ->
                     brukerRepository.oppdaterModellEtterNærmesteLederLeesah(event)
                 }
             }
 
-            launchHttpServer(httpPort = httpPort)
-        }
+            configureRouting { }
+        }.start(wait = true)
     }
 }

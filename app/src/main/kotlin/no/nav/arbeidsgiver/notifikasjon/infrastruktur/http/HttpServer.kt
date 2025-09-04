@@ -5,8 +5,6 @@ import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.cio.*
-import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
@@ -24,8 +22,11 @@ import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.slf4j.MDCContext
+import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
@@ -43,7 +44,6 @@ import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.seconds
 
 val extractBrukerContext = fun RoutingContext.(): BrukerAPI.Context {
     val principal = call.principal<BrukerPrincipal>()!!
@@ -73,44 +73,13 @@ private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1
     .produceMetrics("graphql-workers")
     .asCoroutineDispatcher()
 
-fun CoroutineScope.launchHttpServer(
-    httpPort: Int,
-    customRoute: Routing.() -> Unit = {},
-    application: Application.() -> Unit = { baseSetup(customRoute) }
-) {
-    launch {
-        embeddedServer(CIO, configure = {
-            connectors.add(EngineConnectorBuilder().apply {
-                host = "0.0.0.0"
-                port = httpPort
-            })
-            this.shutdownGracePeriod = 10.seconds.inWholeMilliseconds
-        }) {
-            application()
-        }
-            .start(wait = true)
-    }
-}
-
-fun <T : WithCoroutineScope> CoroutineScope.launchGraphqlServer(
-    httpPort: Int,
-    authPluginConfig: TexasAuthPluginConfiguration,
-    extractContext: RoutingContext.() -> T,
-    graphql: Deferred<TypedGraphQL<T>>,
-) {
-    launchHttpServer(httpPort) {
-        graphqlSetup(authPluginConfig, extractContext, graphql)
-    }
-}
-
 fun <T : WithCoroutineScope> Application.graphqlSetup(
     authPluginConfig: TexasAuthPluginConfiguration,
     extractContext: RoutingContext.() -> T,
     graphql: Deferred<TypedGraphQL<T>>,
 ) {
-    baseSetup {
+    configureRouting {
         route("api") {
-
             install(TexasAuth) {
                 client = authPluginConfig.client
                 validate = authPluginConfig.validate
@@ -128,11 +97,10 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
     }
 }
 
-fun Application.baseSetup(
-    customRoute: Routing.() -> Unit,
+fun Application.configureRouting(
+    routing: Routing.() -> Unit,
 ) {
     install(CORS) {
-        /* TODO: log when reject */
         allowNonSimpleContentTypes = true
         when (System.getenv("NAIS_CLUSTER_NAME")) {
             "prod-gcp" -> {
@@ -200,7 +168,7 @@ fun Application.baseSetup(
 
     install(StatusPages) {
         exception<BadRequestException> { call, ex ->
-            this@baseSetup.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            this@configureRouting.log.warn("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
@@ -211,7 +179,7 @@ fun Application.baseSetup(
         exception<JsonProcessingException> { call, ex ->
             ex.clearLocation()
 
-            this@baseSetup.log.error("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            this@configureRouting.log.error("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
@@ -220,7 +188,7 @@ fun Application.baseSetup(
         }
 
         exception<Throwable> { call, ex ->
-            this@baseSetup.log.error("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
+            this@configureRouting.log.error("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(
                     "error" to "unexpected error",
@@ -236,7 +204,7 @@ fun Application.baseSetup(
     routing {
         trace { application.log.trace(it.buildText()) }
 
-        customRoute()
+        routing()
 
         route("internal") {
             get("alive") {

@@ -1,13 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse
 
-import kotlinx.coroutines.Dispatchers
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
@@ -24,13 +22,11 @@ object SkedulertPåminnelse {
     }
 
     fun main(httpPort: Int = 8080) {
-        Health.subsystemReady[Subsystem.DATABASE] = true
-
-        runBlocking(Dispatchers.Default) {
-            val database = openDatabaseAsync(databaseConfig)
+        embeddedServer(CIO, port = httpPort) {
+            val databaseDeferred = openDatabaseAsync(databaseConfig)
             val service = SkedulertPåminnelseService(
                 hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-                database = database.await()
+                database = databaseDeferred.await()
             )
 
             launch {
@@ -46,7 +42,7 @@ object SkedulertPåminnelse {
                 service.sendAktuellePåminnelser()
             }
 
-            launchHttpServer(httpPort = httpPort)
-        }
+            configureRouting {  }
+        }.start(wait = true)
     }
 }

@@ -1,12 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.kafka_reaper
 
-import kotlinx.coroutines.Dispatchers
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
@@ -22,15 +22,15 @@ object KafkaReaper {
     }
 
     fun main(httpPort: Int = 8080) {
-        runBlocking(Dispatchers.Default) {
-            val database = openDatabaseAsync(databaseConfig)
-            val reaperModelAsync = async {
-                KafkaReaperModelImpl(database.await())
+        embeddedServer(CIO, port = httpPort) {
+            val databaseDeferred = openDatabaseAsync(databaseConfig)
+            val reaperModelDeferred = async {
+                KafkaReaperModelImpl(databaseDeferred.await())
             }
 
             launch {
                 val kafkaReaperService = KafkaReaperServiceImpl(
-                    reaperModelAsync.await(),
+                    reaperModelDeferred.await(),
                     lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
                 )
                 hendelsesstrøm.forEach { hendelse ->
@@ -38,7 +38,7 @@ object KafkaReaper {
                 }
             }
 
-            launchHttpServer(httpPort = httpPort)
-        }
+            configureRouting {  }
+        }.start(wait = true)
     }
 }

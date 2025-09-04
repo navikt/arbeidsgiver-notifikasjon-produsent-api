@@ -1,14 +1,12 @@
 package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 
-import kotlinx.coroutines.Dispatchers
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
@@ -26,22 +24,21 @@ object SkedulertUtgått {
     }
 
     fun main(httpPort: Int = 8080) {
-        runBlocking(Dispatchers.Default) {
-            Health.subsystemReady[Subsystem.DATABASE] = true
-            val database = openDatabaseAsync(databaseConfig)
-            val repoAsync = async {
-                SkedulertUtgåttRepository(database.await())
+        embeddedServer(CIO, port = httpPort) {
+            val databaseDeferred = openDatabaseAsync(databaseConfig)
+            val repositoryDeferred = async {
+                SkedulertUtgåttRepository(databaseDeferred.await())
             }
             launch {
-                val repo = repoAsync.await()
+                val repo = repositoryDeferred.await()
                 hendelsesstrøm.forEach { hendelse, _ ->
                     repo.oppdaterModellEtterHendelse(hendelse)
                 }
             }
 
-            val service = async {
+            val serviceDeferred = async {
                 SkedulertUtgåttService(
-                    repository = repoAsync.await(),
+                    repository = repositoryDeferred.await(),
                     hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
                 )
             }
@@ -49,16 +46,16 @@ object SkedulertUtgått {
                 "utgaatt-oppgaver-service",
                 pauseAfterEach = Duration.ofMinutes(1)
             ) {
-                service.await().settOppgaverUtgåttBasertPåFrist()
+                serviceDeferred.await().settOppgaverUtgåttBasertPåFrist()
             }
             launchProcessingLoop(
                 "avholdt-kalenderavtaler-service",
                 pauseAfterEach = Duration.ofMinutes(1)
             ) {
-                service.await().settKalenderavtalerAvholdtBasertPåTidspunkt()
+                serviceDeferred.await().settKalenderavtalerAvholdtBasertPåTidspunkt()
             }
 
-            launchHttpServer(httpPort = httpPort)
-        }
+            configureRouting {  }
+        }.start(wait = true)
     }
 }

@@ -3,13 +3,13 @@ package no.nav.arbeidsgiver.notifikasjon.hendelse_transformer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.convertValue
-import kotlinx.coroutines.Dispatchers
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.mapAt
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonNodeKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
@@ -21,7 +21,7 @@ object HendelseTransformer {
     private val producer by lazy { lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC) }
 
     fun main(httpPort: Int = 8080) {
-        runBlocking(Dispatchers.Default) {
+        embeddedServer(CIO, port = httpPort) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
@@ -33,8 +33,8 @@ object HendelseTransformer {
                 }
             }
 
-            launchHttpServer(httpPort = httpPort)
-        }
+            configureRouting { }
+        }.start(wait = true)
     }
 }
 
