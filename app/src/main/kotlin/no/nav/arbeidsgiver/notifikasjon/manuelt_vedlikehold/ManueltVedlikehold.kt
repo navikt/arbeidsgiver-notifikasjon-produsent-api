@@ -1,11 +1,11 @@
 package no.nav.arbeidsgiver.notifikasjon.manuelt_vedlikehold
 
-import kotlinx.coroutines.Dispatchers
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.launchHttpServer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionAwareHendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 
@@ -20,14 +20,14 @@ object ManueltVedlikehold {
         )
     }
     fun main(httpPort: Int = 8080) {
-        Health.subsystemReady[Subsystem.DATABASE] = true
-
-        runBlocking(Dispatchers.Default) {
-            launchHttpServer(httpPort = httpPort)
+        embeddedServer(CIO, port = httpPort) {
+            Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
                 hendelsesstrøm.start()
             }
-        }
+
+            configureRouting {  }
+        }.start(wait = true)
     }
 }
