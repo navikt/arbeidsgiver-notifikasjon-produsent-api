@@ -2,8 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete
 
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
@@ -16,36 +16,31 @@ import java.time.Instant
 
 object SkedulertHardDelete {
     val databaseConfig = Database.config("skedulert_harddelete_model")
-    private val hendelsesstrøm by lazy {
-        HendelsesstrømKafkaImpl(
+
+    fun main(httpPort: Int = 8080) = runBlocking {
+        val hendelsesstrøm = HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
             groupId = "skedulert-harddelete-model-builder-1",
             replayPeriodically = true,
         )
-    }
+        val database = openDatabaseAsync(databaseConfig).await()
+        val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
 
-    fun main(httpPort: Int = 8080) {
         embeddedServer(CIO, port = httpPort) {
-            val databaseDeferred = openDatabaseAsync(databaseConfig)
+            val repository = SkedulertHardDeleteRepositoryImpl(database)
+            val service = SkedulertHardDeleteService(repository, hendelseProdusent)
 
-            val repositoryDeferred = async {
-                SkedulertHardDeleteRepositoryImpl(databaseDeferred.await())
-            }
             launch {
-                val repo = repositoryDeferred.await()
                 hendelsesstrøm.forEach { hendelse, metadata ->
-                    repo.oppdaterModellEtterHendelse(hendelse, metadata.timestamp)
+                    repository.oppdaterModellEtterHendelse(hendelse, metadata.timestamp)
                 }
             }
 
-            val service = async {
-                SkedulertHardDeleteService(repositoryDeferred.await(), lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC))
-            }
             launchProcessingLoop(
                 "autoslett-service",
                 pauseAfterEach = Duration.ofMinutes(10)
             ) {
-                service.await().sendSkedulerteHardDeletes(Instant.now())
+                service.sendSkedulerteHardDeletes(Instant.now())
             }
 
             configureRouting {  }

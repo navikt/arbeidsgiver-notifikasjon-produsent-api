@@ -3,6 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.kafka_backup
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
@@ -11,19 +12,16 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 object KafkaBackup {
     internal val databaseConfig = Database.config("kafka_backup_model")
 
-    private val hendelsestrøm: RawKafkaReader by lazy {
-        RawKafkaReaderImpl(
+    fun main(httpPort: Int = 8080) = runBlocking {
+        val hendelsestrøm: RawKafkaReader = RawKafkaReaderImpl(
             topic = NOTIFIKASJON_TOPIC,
             groupId = "kafka-backup-model-builder",
         )
-    }
+        val database = openDatabaseAsync(databaseConfig).await()
 
-    fun main(httpPort: Int = 8080) {
         embeddedServer(CIO, port = httpPort) {
-            val databaseDeferred = openDatabaseAsync(databaseConfig)
-
             launch {
-                val repository = BackupRepository(databaseDeferred.await())
+                val repository = BackupRepository(database)
 
                 hendelsestrøm.forEach { record ->
                     repository.process(record)
@@ -34,4 +32,3 @@ object KafkaBackup {
         }.start(wait = true)
     }
 }
-

@@ -6,8 +6,8 @@ import io.ktor.server.engine.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
@@ -21,30 +21,31 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProd
 object EksternVarsling {
     val databaseConfig = Database.config("ekstern_varsling_model")
 
-    private val hendelsestrøm by lazy {
-        HendelsesstrømKafkaImpl(
+    fun main(httpPort: Int = 8080) = runBlocking {
+        val hendelsestrøm = HendelsesstrømKafkaImpl(
             topic = NOTIFIKASJON_TOPIC,
             groupId = "ekstern-varsling-model-builder",
             replayPeriodically = false,
         )
-    }
+        val exporterHendelsestrøm = HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "ekstern-varsling-status-exporter",
+            replayPeriodically = false,
+        )
 
-    fun main(httpPort: Int = 8080) {
+        val database = openDatabaseAsync(databaseConfig).await()
+        val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
+
         embeddedServer(CIO, port = httpPort) {
-            val databaseDeferred = openDatabaseAsync(databaseConfig)
-            val eksternVarslingModelDeferred = async {
-                EksternVarslingRepository(databaseDeferred.await())
-            }
+            val eksternVarslingRepository = EksternVarslingRepository(database)
 
             launch {
-                val eksternVarslingModel = eksternVarslingModelDeferred.await()
                 hendelsestrøm.forEach { event ->
-                    eksternVarslingModel.oppdaterModellEtterHendelse(event)
+                    eksternVarslingRepository.oppdaterModellEtterHendelse(event)
                 }
             }
 
             launch {
-                val eksternVarslingRepository = eksternVarslingModelDeferred.await()
                 val service = EksternVarslingService(
                     eksternVarslingRepository = eksternVarslingRepository,
                     altinn2VarselKlient = basedOnEnv(
@@ -68,19 +69,14 @@ object EksternVarsling {
                         },
                         other = { Altinn3VarselKlientLogging() },
                     ),
-                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
+                    hendelseProdusent = hendelseProdusent,
                 )
                 service.start(this)
             }
 
             launch {
-                val eksternVarslingRepository = eksternVarslingModelDeferred.await()
                 val service = EksternVarslingStatusEksportService(
-                    eventSource = HendelsesstrømKafkaImpl(
-                        topic = NOTIFIKASJON_TOPIC,
-                        groupId = "ekstern-varsling-status-exporter",
-                        replayPeriodically = false,
-                    ),
+                    eventSource = exporterHendelsestrøm,
                     repo = eksternVarslingRepository,
                 )
                 service.start(this)
@@ -99,7 +95,7 @@ object EksternVarsling {
                     testEpost(internalTestClient)
                 }
                 post("/internal/update_emergency_brake") {
-                    updateEmergencyBrake(eksternVarslingModelDeferred.await())
+                    updateEmergencyBrake(eksternVarslingRepository)
                 }
             }
         }.start(wait = true)

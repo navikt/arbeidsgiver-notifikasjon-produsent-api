@@ -7,7 +7,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.CompletableDeferred
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerAPI
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerRepository
 import no.nav.arbeidsgiver.notifikasjon.bruker.TEST_FNR_1
@@ -54,7 +53,7 @@ fun ktorBrukerTestServer(
         graphqlSetup(
             authPluginConfig = FAKE_BRUKER_AUTHENTICATION,
             extractContext = extractBrukerContext,
-            graphql = CompletableDeferred(brukerGraphQL),
+            graphql = brukerGraphQL,
         )
     }
 
@@ -80,7 +79,7 @@ fun ktorProdusentTestServer(
         graphqlSetup(
             authPluginConfig = FAKE_PRODUSENT_AUTHENTICATION,
             extractContext = extractProdusentContext(produsentRegister),
-            graphql = CompletableDeferred(produsentGraphQL)
+            graphql = produsentGraphQL
         )
     }
 
