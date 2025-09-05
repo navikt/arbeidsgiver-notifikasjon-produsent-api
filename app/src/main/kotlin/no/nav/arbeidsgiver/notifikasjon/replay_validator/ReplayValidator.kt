@@ -9,15 +9,13 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 
 object ReplayValidator {
-    private val hendelsesstrøm by lazy {
-        HendelsesstrømKafkaImpl(
+    fun main(httpPort: Int = 8080) {
+        val hendelsesstrøm = HendelsesstrømKafkaImpl(
             groupId = "replay-validator",
             replayPeriodically = true,
             seekToBeginning = true
         )
-    }
 
-    fun main(httpPort: Int = 8080) {
         embeddedServer(CIO, port = httpPort) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
@@ -27,7 +25,7 @@ object ReplayValidator {
                 }
             }
 
-            configureRouting {  }
+            configureRouting { }
         }.start(wait = true)
     }
 }

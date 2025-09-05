@@ -10,16 +10,17 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionAwareHendel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 
 object ManueltVedlikehold {
-    private val hendelsesstrøm by lazy {
-        PartitionAwareHendelsesstrøm(
-            groupId = "manuelt-vedlikehold-1",
-            newPartitionProcessor = { ManueltVedlikeholdService(
-                lagKafkaHendelseProdusent(),
-                System.getenv("NAIS_CLIENT_ID")!!,
-            ) },
-        )
-    }
     fun main(httpPort: Int = 8080) {
+        val hendelsesstrøm = PartitionAwareHendelsesstrøm(
+            groupId = "manuelt-vedlikehold-1",
+            newPartitionProcessor = {
+                ManueltVedlikeholdService(
+                    lagKafkaHendelseProdusent(),
+                    System.getenv("NAIS_CLIENT_ID")!!,
+                )
+            },
+        )
+
         embeddedServer(CIO, port = httpPort) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 

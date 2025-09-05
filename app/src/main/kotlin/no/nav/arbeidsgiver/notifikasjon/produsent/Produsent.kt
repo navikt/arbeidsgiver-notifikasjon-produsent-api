@@ -2,8 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.produsent
 
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
@@ -18,42 +18,37 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 
 object Produsent {
     val databaseConfig = Database.config("produsent_model")
-    private val hendelsesstrøm by lazy {
-        HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "produsent-model-builder",
-            replayPeriodically = true
-        )
-    }
 
     fun main(
         httpPort: Int = 8080,
         produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
-    ) {
-        embeddedServer(CIO, port = httpPort) {
-            val databaseDeferred = openDatabaseAsync(databaseConfig)
-            val produsentRepositoryDeferred = async {
-                ProdusentRepositoryImpl(databaseDeferred.await())
-            }
+    ) = runBlocking {
+        val hendelsesstrøm = HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "produsent-model-builder",
+            replayPeriodically = true
+        )
 
+        val database = openDatabaseAsync(databaseConfig).await()
+        val produsentRepository = ProdusentRepositoryImpl(database)
+        val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
+
+        val graphql = ProdusentAPI.newGraphQL(
+            kafkaProducer = hendelseProdusent,
+            produsentRepository = produsentRepository,
+        )
+
+        embeddedServer(CIO, port = httpPort) {
             launch {
-                val produsentRepository = produsentRepositoryDeferred.await()
                 hendelsesstrøm.forEach { event, metadata ->
                     produsentRepository.oppdaterModellEtterHendelse(event, metadata)
                 }
             }
 
-            val graphqlDeferred = async {
-                ProdusentAPI.newGraphQL(
-                    kafkaProducer = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-                    produsentRepository = produsentRepositoryDeferred.await(),
-                )
-            }
-
             graphqlSetup(
                 authPluginConfig = HttpAuthProviders.PRODUSENT_API_AUTH,
                 extractContext = extractProdusentContext(produsentRegister),
-                graphql = graphqlDeferred
+                graphql = graphql
             )
         }.start(wait = true)
     }

@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
@@ -28,22 +28,17 @@ object Bruker {
             )
         ),
         httpPort: Int = 8080
-    ) {
+    ) = runBlocking {
+        val database = openDatabaseAsync(databaseConfig).await()
+        val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
+        val graphql = BrukerAPI.createBrukerGraphQL(
+            brukerRepository = BrukerRepositoryImpl(database),
+            hendelseProdusent = hendelseProdusent,
+            altinnTilgangerService = altinnTilgangerService,
+            virksomhetsinfoService = virksomhetsinfoService,
+        )
+
         embeddedServer(CIO, port = httpPort) {
-            val databaseDeferred = openDatabaseAsync(databaseConfig)
-            val brukerRepositoryDeferred = async {
-                BrukerRepositoryImpl(databaseDeferred.await())
-            }
-
-            val graphql = async {
-                BrukerAPI.createBrukerGraphQL(
-                    brukerRepository = brukerRepositoryDeferred.await(),
-                    hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC),
-                    altinnTilgangerService = altinnTilgangerService,
-                    virksomhetsinfoService = virksomhetsinfoService,
-                )
-            }
-
             graphqlSetup(
                 authPluginConfig = HttpAuthProviders.BRUKER_API_AUTH,
                 extractContext = extractBrukerContext,

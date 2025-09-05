@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.withContext
@@ -76,7 +75,7 @@ private val graphQLDispatcher: CoroutineContext = Executors.newFixedThreadPool(1
 fun <T : WithCoroutineScope> Application.graphqlSetup(
     authPluginConfig: TexasAuthPluginConfiguration,
     extractContext: RoutingContext.() -> T,
-    graphql: Deferred<TypedGraphQL<T>>,
+    graphql: TypedGraphQL<T>,
 ) {
     configureRouting {
         route("api") {
@@ -89,7 +88,7 @@ fun <T : WithCoroutineScope> Application.graphqlSetup(
                 withContext(call.coroutineContext + graphQLDispatcher + MDCContext()) {
                     val context = extractContext()
                     val request = call.receive<GraphQLRequest>()
-                    val result = graphql.await().timedExecute(request, context)
+                    val result = graphql.timedExecute(request, context)
                     call.respond(result.toSpecification())
                 }
             }
