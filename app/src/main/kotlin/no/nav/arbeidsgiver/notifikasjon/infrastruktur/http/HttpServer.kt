@@ -15,6 +15,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.*
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
@@ -193,6 +194,11 @@ fun Application.configureRouting(
                     "error" to "unexpected error",
                 )
             )
+        }
+
+        exception<ClosedWriteChannelException> { call, ex ->
+            this@configureRouting.log.warn("client closed connection before response was sent: {}", ex::class.qualifiedName, ex)
+            // no response, channel already closed
         }
     }
 
