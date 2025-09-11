@@ -14,6 +14,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
+import org.slf4j.event.Level
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -155,7 +156,13 @@ private constructor(
                 } catch (e: Exception) {
                     val attempt = retries.incrementAndGet()
                     val backoffMillis = 1000L * 2.toThePowerOf(attempt)
-                    log.error(
+                    // log error if attempt is > 3 else just warn
+                    log.atLevel(
+                        if (attempt > 3)
+                            Level.ERROR
+                        else
+                            Level.WARN
+                    ).log(
                         "exception while processing {}. attempt={}. backoff={}.",
                         record.loggableToString(),
                         attempt,
