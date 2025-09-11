@@ -42,14 +42,15 @@ class AltinnTilgangerClient(
             registry = Metrics.meterRegistry
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = 10_000
+            requestTimeoutMillis = 5_000
         }
         install(HttpRequestRetry) {
             maxRetries = 3
             retryOnExceptionIf { _, cause ->
                 cause is ConnectionClosedException ||
                         cause is SocketTimeoutException ||
-                        cause is SSLHandshakeException
+                        cause is SSLHandshakeException ||
+                        cause is HttpRequestTimeoutException
             }
             delayMillis { 250L }
         }
