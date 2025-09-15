@@ -133,15 +133,9 @@ fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetche
         .build()
 }
 
-/**
- * Filters out errors that are caused by cancellation exceptions.
- * This is useful to avoid logging errors that are expected due to request cancellations.
- *
- * The cancellation can show up in different forms, therefore this extension function
- */
-private fun ExecutionResult.nonAbortErrors() = errors.filterNot<GraphQLError> { error ->
-    error is GraphQLException && error.isCausedBy<CancellationException>()
-            || error is ExceptionWhileDataFetching && error.exception is kotlinx.coroutines.CancellationException
+private inline fun <reified T : Throwable> List<GraphQLError>.excluding() = filterNot { error ->
+    error is GraphQLException && error.isCausedBy<T>()
+            || error is ExceptionWhileDataFetching && error.exception.isCausedBy<T>()
 }
 
 object GraphQLLogger {
@@ -239,7 +233,12 @@ fun <T : WithCoroutineScope> TypedGraphQL<T>.timedExecute(
     context: T
 ): ExecutionResult = with(Timer.start(meterRegistry)) {
     execute(request, context).also { result ->
-        if (result.nonAbortErrors().isNotEmpty()) {
+        if (
+            result.errors
+                .excluding<CancellationException>() // Client cancelled the request
+                .excluding<ValideringsFeil>() // Validation errors are expected
+                .isNotEmpty()
+        ) {
             GraphQLLogger.log.error("graphql request failed: {}", result.errors)
         }
         val tags = mutableSetOf(
