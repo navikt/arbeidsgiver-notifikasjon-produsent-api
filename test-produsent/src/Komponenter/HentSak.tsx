@@ -1,4 +1,5 @@
-import {gql, useLazyQuery} from "@apollo/client";
+import {gql} from "@apollo/client";
+import {useLazyQuery} from "@apollo/client/react";
 import {Button, TextField, ToggleGroup} from "@navikt/ds-react";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";
 import SyntaxHighlighter from "react-syntax-highlighter/dist/cjs/prism";

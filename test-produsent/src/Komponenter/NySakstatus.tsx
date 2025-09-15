@@ -1,4 +1,5 @@
-import {gql, useMutation} from "@apollo/client";
+import {gql} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import React, {useEffect, useState} from "react";
 import {Mutation, SaksStatus} from "../api/graphql-types.ts";
 import cssClasses from "./KalenderAvtale.module.css";

@@ -1,4 +1,5 @@
-import {gql, useMutation} from "@apollo/client";
+import {gql} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {Mutation} from "../api/graphql-types.ts";
 import {Prism as SyntaxHighlighter} from "react-syntax-highlighter";
 import {darcula} from "react-syntax-highlighter/dist/esm/styles/prism";

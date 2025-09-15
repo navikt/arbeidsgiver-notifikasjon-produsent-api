@@ -1,5 +1,4 @@
 import {WhoAmI} from "./WhoAmI.tsx";
-import { AdHocMutation, AdHocQuery } from './AdHoc.tsx';
 import {HentSak} from "./HentSak.tsx";
 import {NySak} from "./NySak.tsx";
 import {NyOppgave} from "./NyOppgave.tsx";
@@ -16,19 +15,17 @@ import { EndrePåminnelseOppgave } from './EndrePåminnelseOppgave.tsx';
 
 export const komponenter = {
     "Who am I": <WhoAmI/>,
-    "Ad hoc Qurey": <AdHocQuery/>,
-    "Ad hoc Mutation": <AdHocMutation/>,
     "Hent sak": <HentSak/>,
     "Ny sak": <NySak/>,
+    "Ny status sak" : <NySakstatus/>,
+    "Tilleggsinformasjon sak": <TilleggsinformasjonSak/>,
+    "Neste steg sak": <NesteStegSak/>,
     "Ny beskjed": <NyBeskjed/>,
     "Ny oppgave": <NyOppgave/>,
-    "Ny Kalenderavtale": <NyKalenderAvtale/>,
-    "Oppdater Kalenderavtale": <OppdaterKalenderAvtale/>,
-    "Oppdater sak" : <NySakstatus/>,
-    "Endre påminnelse oppgave" : <EndrePåminnelseOppgave/>,
-    "Neste steg sak": <NesteStegSak/>,
-    "Tilleggsinformasjon sak": <TilleggsinformasjonSak/>,
     "Ny oppgavestatus": <NyOppgavestatus/>,
+    "Endre påminnelse oppgave" : <EndrePåminnelseOppgave/>,
+    "Ny kalenderavtale": <NyKalenderAvtale/>,
+    "Oppdater kalenderavtale": <OppdaterKalenderAvtale/>,
     "Hard delete": <HardDelete/>,
 }
 

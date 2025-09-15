@@ -212,6 +212,10 @@ export type EksterntVarselEpostInput = {
   sendetidspunkt: SendetidspunktInput;
 };
 
+/**
+ * Input som definerer hvordan et eksternt varsel skal sendes.
+ * Kun ett av feltene i inputen kan være satt.
+ */
 export type EksterntVarselInput = {
   altinnressurs?: InputMaybe<EksterntVarselAltinnressursInput>;
   altinntjeneste?: InputMaybe<EksterntVarselAltinntjenesteInput>;
@@ -453,10 +457,7 @@ export type Mutation = {
    * Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
    */
   hardDeleteNotifikasjon: HardDeleteNotifikasjonResultat;
-  /**
-   * Se dokumentasjon for `hardDeleteNotifikasjon(id)`.
-   * @deprecated Using the type ID for `eksternId` can lead to unexpected behaviour. Use hardDeleteNotifikasjonByEksternId_V2 instead.
-   */
+  /** @deprecated Using the type ID for `eksternId` can lead to unexpected behaviour. Use hardDeleteNotifikasjonByEksternId_V2 instead. */
   hardDeleteNotifikasjonByEksternId: HardDeleteNotifikasjonResultat;
   /** Se dokumentasjon for `hardDeleteNotifikasjon(id)`. */
   hardDeleteNotifikasjonByEksternId_V2: HardDeleteNotifikasjonResultat;
@@ -536,37 +537,15 @@ export type Mutation = {
    * Dersom dere ønsker at brukeren skal få en påminnelse når fristen nærmer seg må det angis i denne mutasjonen.
    */
   oppgaveUtsettFristByEksternId: OppgaveUtsettFristResultat;
-  /**
-   * Markerer en notifikasjon som slettet (soft delete).
-   *
-   * Notifikasjonen vil forsvinne helt for mottakeren: de vil ikke kunne se den på
-   * noen som helst måte — som om notifikasjonen aldri eksisterte.
-   *
-   * For dere (produsenter), så kan dere fortsatt se notifikasjonen i listen over deres notifikasjoner.
-   *
-   * Eventuelle eksterne varsler (SMS, e-post) knyttet til notifikasjonen vil bli fortsatt bli sendt.
-   *
-   * Advarsel: det er ikke mulig å angre på denne operasjonen.
-   */
+  /** @deprecated All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteNotifikasjon(id) i stedet. */
   softDeleteNotifikasjon: SoftDeleteNotifikasjonResultat;
-  /**
-   * Se dokumentasjon for `softDeleteNotifikasjon(id)`.
-   * @deprecated Using the type ID for `eksternId` can lead to unexpected behaviour. Use softDeleteNotifikasjonByEksternId_V2 instead.
-   */
+  /** @deprecated All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteNotifikasjonByEksternId_V2(merkelapp, eksternId) i stedet. */
   softDeleteNotifikasjonByEksternId: SoftDeleteNotifikasjonResultat;
-  /** Se dokumentasjon for `softDeleteNotifikasjon(id)`. */
+  /** @deprecated All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteNotifikasjonByEksternId_V2(merkelapp, eksternId) i stedet. */
   softDeleteNotifikasjonByEksternId_V2: SoftDeleteNotifikasjonResultat;
-  /**
-   * Markerer en sak som slettet (soft delete).
-   *
-   * Sak vil forsvinne helt for mottakeren: de vil ikke kunne se den på
-   * noen som helst måte — som om saken aldri eksisterte.
-   *
-   * Advarsel: det er ikke mulig å angre på denne operasjonen.
-   * Advarsel: ingen notifikasjoner blir slettet, selv om de har samme grupperingsid.
-   */
+  /** @deprecated All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteSak(id) i stedet. */
   softDeleteSak: SoftDeleteSakResultat;
-  /** Se dokumentasjon for `softDeleteSak(id)`. */
+  /** @deprecated All sletting er endret til å medføre hard delete. Denne mutation blir snart fjernet. bruk hardDeleteSakByGrupperingsid(merkelapp, grupperingsid) i stedet. */
   softDeleteSakByGrupperingsid: SoftDeleteSakResultat;
   tilleggsinformasjonSak: TilleggsinformasjonSakResultat;
   tilleggsinformasjonSakByGrupperingsid: TilleggsinformasjonSakResultat;
@@ -1199,6 +1178,31 @@ export type OppgavenErAlleredeUtfoert = Error & {
   feilmelding: Scalars['String']['output'];
 };
 
+export type PaaminnelseEksterntVarselAltinnressursInput = {
+  /**
+   * Kroppen til e-posten. Kan inneholde HTML.
+   * OBS: Det er ikke lov med personopplysninger i teksten.
+   */
+  epostHtmlBody: Scalars['String']['input'];
+  /**
+   * Subject/emne til e-posten
+   * OBS: Det er ikke lov med personopplysninger i teksten.
+   */
+  epostTittel: Scalars['String']['input'];
+  mottaker: AltinnRessursMottakerInput;
+  /**
+   * Vi sender eposten med utgangspunkt i påminnelsestidspunktet, men tar hensyn
+   * til sendingsvinduet. Hvis påminnelsestidspunktet er utenfor vinduet, sender vi
+   * det ved første mulighet.
+   */
+  sendevindu: Sendevindu;
+  /**
+   * Teksten som sendes i SMS-en.
+   * OBS: Det er ikke lov med personopplysninger i teksten.
+   */
+  smsTekst: Scalars['String']['input'];
+};
+
 export type PaaminnelseEksterntVarselAltinntjenesteInput = {
   /**
    * Kroppen til e-posten. Dersom det sendes SMS blir dette feltet lagt til i kroppen på sms etter tittel
@@ -1240,6 +1244,7 @@ export type PaaminnelseEksterntVarselEpostInput = {
 };
 
 export type PaaminnelseEksterntVarselInput = {
+  altinnressurs?: InputMaybe<PaaminnelseEksterntVarselAltinnressursInput>;
   altinntjeneste?: InputMaybe<PaaminnelseEksterntVarselAltinntjenesteInput>;
   epost?: InputMaybe<PaaminnelseEksterntVarselEpostInput>;
   sms?: InputMaybe<PaaminnelseEksterntVarselSmsInput>;
