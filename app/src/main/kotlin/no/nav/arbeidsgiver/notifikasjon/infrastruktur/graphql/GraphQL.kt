@@ -7,6 +7,7 @@ import graphql.*
 import graphql.GraphQL.newGraphQL
 import graphql.execution.AbortExecutionException
 import graphql.execution.DataFetcherResult
+import graphql.execution.DataFetcherResult.newResult
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.RuntimeWiring.newRuntimeWiring
@@ -107,7 +108,7 @@ fun handleCancellationException(
         fieldName,
         exception.message
     )
-    return DataFetcherResult.newResult<Nothing?>()
+    return newResult<Nothing?>()
         .error(AbortExecutionException("GraphQL fetcher was cancelled (field: $fieldName)", exception))
         .build()
 }
@@ -119,7 +120,9 @@ fun handleCancellationException(
 private fun handleValideringsFeil(
     e: ValideringsFeil,
     env: DataFetchingEnvironment
-) = handleUnexpectedError(e, ExceptionWhileDataFetching(env.executionStepInfo.path, e, env.field.sourceLocation))
+) = newResult<Nothing?>()
+    .error(ExceptionWhileDataFetching(env.executionStepInfo.path, e, env.field.sourceLocation))
+    .build()
 
 fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetcherResult<*> {
     GraphQLLogger.log.error(
@@ -128,7 +131,7 @@ fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetche
         error.javaClass.canonicalName,
         exception
     )
-    return DataFetcherResult.newResult<Nothing?>()
+    return newResult<Nothing?>()
         .error(error)
         .build()
 }
