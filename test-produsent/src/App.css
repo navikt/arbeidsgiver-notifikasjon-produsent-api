@@ -37,18 +37,19 @@
   border-right: 0.25rem solid var(--a-border-focus-on-inverted);
 }
 
-.meny li {
-  list-style-type: none;
-}
 .meny ul {
     padding: 0;
     margin: 0;
     width: 100%;
+}
 
+.meny li {
+  list-style-type: none;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .meny button {
-  width: 100%;
 }
 
 .innhold {
