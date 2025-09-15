@@ -1,4 +1,5 @@
-import {gql, useMutation} from "@apollo/client";
+import {gql} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import React, {useRef, useState} from "react";
 import {Textarea, TextField, ToggleGroup} from "@navikt/ds-react";
 import {Mutation} from "../api/graphql-types.ts";

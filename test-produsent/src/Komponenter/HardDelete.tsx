@@ -1,4 +1,5 @@
-import {gql, useMutation} from "@apollo/client";
+import {gql} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {useContext, useEffect, useState} from "react";
 import {Button, TextField, ToggleGroup} from "@navikt/ds-react";
 import {GrupperingsidContext} from "../App.tsx";

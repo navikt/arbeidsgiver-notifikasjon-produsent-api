@@ -1,4 +1,5 @@
-import {ApolloClient, ApolloProvider, InMemoryCache} from '@apollo/client';
+import {ApolloClient, HttpLink, InMemoryCache} from '@apollo/client';
+import {ApolloProvider} from '@apollo/client/react';
 import {Box, Button, Heading, TextField, VStack} from "@navikt/ds-react";
 import "@navikt/ds-css";
 import "./App.css"
@@ -7,7 +8,7 @@ import {alleKomponenter, komponenter, KomponentNavn} from "./Komponenter/Kompone
 import shipit from "./assets/shipit.png"
 
 const client = new ApolloClient({
-    uri: '/notifikasjon-produsent-api',
+    link: new HttpLink({ uri: '/notifikasjon-produsent-api' }),
     cache: new InMemoryCache(),
 });
 
