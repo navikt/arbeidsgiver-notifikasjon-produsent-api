@@ -182,6 +182,8 @@ class InputValideringTest {
 
         listOf(
             "donald@duck.co",
+            "dønald.dåkk@duck.co",
+            "Dønn.dånn@Dæck.co",
         ).forEach { epost ->
             assertTrue(
                 client.nyBeskjed(

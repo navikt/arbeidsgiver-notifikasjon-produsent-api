@@ -72,7 +72,9 @@ object Validators {
     }
 
     fun Email(path: String): Validator<String> = { value ->
-        val regex = Regex("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")
+        // Support EAI (Email Address Internationalization) including Norwegian characters æøå
+        // \p{L} = Unicode letter, \p{N} = Unicode number
+        val regex = Regex("""^[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.\p{L}{2,}$""", RegexOption.IGNORE_CASE)
         if (!value.matches(regex)) {
             throw ValideringsFeil("$path: verdien er ikke en gyldig e-postadresse.")
         }
