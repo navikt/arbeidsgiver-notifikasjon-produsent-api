@@ -115,5 +115,9 @@ spec:
           namespace: k9saksbehandling
           cluster: dev-gcp
 
+        - application: melosys-skjema-api
+          namespace: teammelosys
+          cluster: dev-gcp
+
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
