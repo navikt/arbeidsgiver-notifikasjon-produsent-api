@@ -427,6 +427,24 @@ val K9 = Produsent(
     )
 )
 
+val MELOSYS = Produsent(
+    id = "melosys-skjema-api-notifikasjon",
+    accessPolicy = basedOnEnv(
+        prod = { listOf() },
+        other = {
+            listOf(
+                "dev-gcp:teammelosys:melosys-skjema-api",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Utsendt arbeidstaker",
+    ),
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "test-fager"),
+    )
+)
+
 
 val PRODUSENT_LIST =
     listOf(
@@ -441,6 +459,7 @@ val PRODUSENT_LIST =
         YRKESSKADE,
         FORELDREPENGER,
         K9,
+        MELOSYS,
     )
         .filter { it.accessPolicy.isNotEmpty() }
 
