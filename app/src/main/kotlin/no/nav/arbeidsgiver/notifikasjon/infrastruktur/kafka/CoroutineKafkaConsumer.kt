@@ -176,8 +176,8 @@ private constructor(
                     iterationEntryCounter.increment()
                     withContext(Dispatchers.IO) {
                         body(record)
+                        consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     }
-                    consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     iterationExitCounter.increment()
                     if (!seekToBeginning) log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)
