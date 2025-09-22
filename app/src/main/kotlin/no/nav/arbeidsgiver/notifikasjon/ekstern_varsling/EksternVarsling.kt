@@ -12,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
@@ -98,6 +99,9 @@ object EksternVarsling {
                     updateEmergencyBrake(eksternVarslingRepository)
                 }
             }
+            registerShutdownListener()
+            hendelsestrøm.registerShutdownListener(this)
+            exporterHendelsestrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

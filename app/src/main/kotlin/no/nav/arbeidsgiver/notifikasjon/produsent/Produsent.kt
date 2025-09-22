@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDat
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractProdusentContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
@@ -50,6 +51,8 @@ object Produsent {
                 extractContext = extractProdusentContext(produsentRegister),
                 graphql = graphql
             )
+            registerShutdownListener()
+            hendelsesstrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

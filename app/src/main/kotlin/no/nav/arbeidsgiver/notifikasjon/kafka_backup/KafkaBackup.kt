@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 
 object KafkaBackup {
@@ -29,6 +30,7 @@ object KafkaBackup {
             }
 
             configureRouting { }
+            registerShutdownListener()
         }.start(wait = true)
     }
 }

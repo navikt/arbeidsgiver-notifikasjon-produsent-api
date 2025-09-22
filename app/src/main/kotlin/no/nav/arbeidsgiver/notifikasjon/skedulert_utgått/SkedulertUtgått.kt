@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
@@ -52,6 +53,8 @@ object SkedulertUtgått {
             }
 
             configureRouting { }
+            registerShutdownListener()
+            hendelsesstrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

@@ -35,7 +35,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.TypedGraphQL
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.WithCoroutineScope
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.timedExecute
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produceMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuth
@@ -242,21 +241,11 @@ fun Application.configureRouting(
             }
         }
     }
+}
 
+fun Application.registerShutdownListener() {
     monitor.subscribe(ApplicationStopping) {
         log.info("ApplicationStopping: signal Health.terminate()")
         Health.terminate()
-    }
-}
-
-fun Application.notifyOnShutdown(hendelsesstrømKafkaImpl: HendelsesstrømKafkaImpl) {
-    monitor.subscribe(ApplicationStopping) {
-        log.info("ApplicationStopping: shutting down Kafka consumer")
-        hendelsesstrømKafkaImpl.wakeup()
-    }
-
-    monitor.subscribe(ApplicationStopped) {
-        log.info("ApplicationStopped: closing Kafka consumer")
-        hendelsesstrømKafkaImpl.close()
     }
 }
