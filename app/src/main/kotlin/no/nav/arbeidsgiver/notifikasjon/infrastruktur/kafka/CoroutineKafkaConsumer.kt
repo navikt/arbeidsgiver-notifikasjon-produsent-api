@@ -269,6 +269,6 @@ private fun <K, V> ConsumerRecord<K, V>.loggableValue() : String {
             |    kildeAppNavn = ${value.kildeAppNavn})
         """.trimMargin()
 
-        else -> value::class.java.simpleName
+        else -> value!!::class.java.simpleName
     }
 }
