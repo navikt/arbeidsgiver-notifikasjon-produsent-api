@@ -59,6 +59,9 @@ class HendelsesstrømKafkaImpl(
             }
         }
     }
+
+    fun wakeup() = consumer.wakeup()
+    fun close() = consumer.close()
 }
 
 

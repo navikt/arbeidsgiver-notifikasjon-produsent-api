@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
-import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -13,8 +12,6 @@ enum class Subsystem {
 }
 
 object Health {
-    private val log = logger()
-
     val subsystemAlive = ConcurrentHashMap(mapOf(
         Subsystem.DATABASE to true,
         Subsystem.KAFKA to true,
@@ -38,23 +35,7 @@ object Health {
     val terminating: Boolean
         get() = !alive || terminatingAtomic.get()
 
-    init {
-        val shutdownTimeout = basedOnEnv(
-            prod = { Duration.ofSeconds(20) },
-            dev = { Duration.ofSeconds(20) },
-            other = { Duration.ofMillis(0) },
-        )
-
-        Runtime.getRuntime().addShutdownHook(object: Thread() {
-            override fun run() {
-                terminatingAtomic.set(true)
-                log.info("shutdown signal received")
-                try {
-                    sleep(shutdownTimeout.toMillis())
-                } catch (e: Exception) {
-                    // nothing to do
-                }
-            }
-        })
+    fun terminate() {
+        terminatingAtomic.set(true)
     }
 }
