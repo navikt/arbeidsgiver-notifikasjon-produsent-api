@@ -69,7 +69,7 @@ val PRODUCER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ProducerProp.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java.canonicalName,
     ProducerProp.VALUE_SERIALIZER_CLASS_CONFIG to ValueSerializer::class.java.canonicalName,
     ProducerProp.PARTITIONER_CLASS_CONFIG to OrgnrPartitioner::class.java.canonicalName,
-    ProducerProp.MAX_BLOCK_MS_CONFIG to 5_000,
+    ProducerProp.MAX_BLOCK_MS_CONFIG to 30_000,
     ProducerProp.ACKS_CONFIG to "all",
 )
 
