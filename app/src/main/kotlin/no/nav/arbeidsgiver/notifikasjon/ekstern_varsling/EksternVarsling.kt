@@ -100,8 +100,6 @@ object EksternVarsling {
                 }
             }
             registerShutdownListener()
-            hendelsestrøm.registerShutdownListener(this)
-            exporterHendelsestrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

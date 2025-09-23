@@ -46,7 +46,6 @@ object SkedulertHardDelete {
 
             configureRouting {  }
             registerShutdownListener()
-            hendelsesstrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

@@ -52,7 +52,6 @@ object Produsent {
                 graphql = graphql
             )
             registerShutdownListener()
-            hendelsesstrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

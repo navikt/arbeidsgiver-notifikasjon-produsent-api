@@ -1,12 +1,10 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
-import io.ktor.server.application.*
 import kotlinx.coroutines.slf4j.MDCContext
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.hendelse.Hendelsesstrøm
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.common.serialization.StringDeserializer
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -18,8 +16,6 @@ class HendelsesstrømKafkaImpl(
     replayPeriodically: Boolean = false,
     configure: Properties.() -> Unit = {},
 ): Hendelsesstrøm {
-
-    private val log = logger()
 
     private val consumer = CoroutineKafkaConsumer.new(
         topic = topic,
@@ -61,18 +57,6 @@ class HendelsesstrømKafkaImpl(
                     body(recordValue, HendelseMetadata.fromKafkaTimestamp(record.timestamp()))
                 }
             }
-        }
-    }
-
-    fun registerShutdownListener(app: Application) {
-        app.monitor.subscribe(ApplicationStopping) {
-            log.info("ApplicationStopping: shutting down Kafka consumer")
-            consumer.wakeup()
-        }
-
-        app.monitor.subscribe(ApplicationStopped) {
-            log.info("ApplicationStopped: closing Kafka consumer")
-            consumer.close()
         }
     }
 }

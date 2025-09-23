@@ -108,28 +108,6 @@ private constructor(
         enabled = replayPeriodically,
     )
 
-    fun wakeup() {
-        consumer.wakeup()
-    }
-
-    fun close() {
-        try {
-            consumer.close()
-        } catch (e: Exception) {
-            log.error("Exception while closing Kafka consumer", e)
-        }
-        try {
-            kafkaContext.close()
-        } catch (e: Exception) {
-            log.error("Exception while closing Kafka context", e)
-        }
-        try {
-            retryTimer.cancel()
-        } catch (e: Exception) {
-            log.error("Exception while cancelling retry timer", e)
-        }
-    }
-
     suspend fun forEach(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (ConsumerRecord<K, V>) -> Unit
@@ -269,6 +247,6 @@ private fun <K, V> ConsumerRecord<K, V>.loggableValue() : String {
             |    kildeAppNavn = ${value.kildeAppNavn})
         """.trimMargin()
 
-        else -> value!!::class.java.simpleName
+        else -> value::class.java.simpleName
     }
 }

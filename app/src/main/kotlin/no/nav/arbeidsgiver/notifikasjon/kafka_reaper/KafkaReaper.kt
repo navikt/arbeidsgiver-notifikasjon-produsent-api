@@ -37,7 +37,6 @@ object KafkaReaper {
 
             configureRouting { }
             registerShutdownListener()
-            hendelsesstrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

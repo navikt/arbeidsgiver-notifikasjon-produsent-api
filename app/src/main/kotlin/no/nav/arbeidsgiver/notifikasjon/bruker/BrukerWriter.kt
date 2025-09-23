@@ -42,7 +42,6 @@ object BrukerWriter {
 
             configureRouting { }
             registerShutdownListener()
-            hendelsesstrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }

@@ -41,7 +41,6 @@ object KafkaBQ {
 
             configureRouting { }
             registerShutdownListener()
-            hendelsesstrøm.registerShutdownListener(this)
         }.start(wait = true)
     }
 }
