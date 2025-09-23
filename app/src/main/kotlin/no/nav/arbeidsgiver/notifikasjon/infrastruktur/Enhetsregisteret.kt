@@ -55,6 +55,7 @@ class EnhetsregisteretImpl(
         val response: HttpResponse = try {
             httpClient.get("$baseUrl/v1/organisasjon/$orgnr/noekkelinfo")
         } catch (e: RuntimeException) {
+            e.rethrowIfCancellation()
             log.warn("kall mot $baseUrl feilet", e)
             return@coRecord Enhetsregisteret.Underenhet(orgnr, "")
         }
@@ -65,6 +66,7 @@ class EnhetsregisteretImpl(
                     navn = response.body<NavEregResponse>().navn.navn
                 )
             } catch (e: RuntimeException) {
+                e.rethrowIfCancellation()
                 log.warn("feil ved deserializing av response fra enhetsregisteret", e)
                 Enhetsregisteret.Underenhet(orgnr, "")
             }
