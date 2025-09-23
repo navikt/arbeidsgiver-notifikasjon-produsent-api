@@ -7,6 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.BigQueryClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 
 object KafkaBQ {
@@ -39,6 +40,7 @@ object KafkaBQ {
             }
 
             configureRouting { }
+            registerShutdownListener()
         }.start(wait = true)
     }
 }

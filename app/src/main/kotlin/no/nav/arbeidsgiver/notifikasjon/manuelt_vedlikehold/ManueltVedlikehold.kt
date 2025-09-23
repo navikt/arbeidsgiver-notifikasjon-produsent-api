@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionAwareHendelsesstrøm
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 
@@ -29,6 +30,7 @@ object ManueltVedlikehold {
             }
 
             configureRouting {  }
+            registerShutdownListener()
         }.start(wait = true)
     }
 }

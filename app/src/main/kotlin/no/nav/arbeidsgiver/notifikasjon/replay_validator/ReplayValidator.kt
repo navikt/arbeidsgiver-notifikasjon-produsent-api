@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 
 object ReplayValidator {
@@ -26,6 +27,7 @@ object ReplayValidator {
             }
 
             configureRouting { }
+            registerShutdownListener()
         }.start(wait = true)
     }
 }

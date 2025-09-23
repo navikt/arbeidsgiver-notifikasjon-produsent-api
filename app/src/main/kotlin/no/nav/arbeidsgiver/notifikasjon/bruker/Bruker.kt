@@ -13,6 +13,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.enhetsregisterFactory
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.HttpAuthProviders
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.extractBrukerContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.graphqlSetup
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 
@@ -44,6 +45,8 @@ object Bruker {
                 extractContext = extractBrukerContext,
                 graphql = graphql
             )
+
+            registerShutdownListener()
         }.start(wait = true)
     }
 }

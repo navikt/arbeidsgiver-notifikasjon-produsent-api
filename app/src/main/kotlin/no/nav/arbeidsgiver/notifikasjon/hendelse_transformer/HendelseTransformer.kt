@@ -10,6 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.mapAt
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.JsonNodeKafkaConsumer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
@@ -34,6 +35,7 @@ object HendelseTransformer {
             }
 
             configureRouting { }
+            registerShutdownListener()
         }.start(wait = true)
     }
 }

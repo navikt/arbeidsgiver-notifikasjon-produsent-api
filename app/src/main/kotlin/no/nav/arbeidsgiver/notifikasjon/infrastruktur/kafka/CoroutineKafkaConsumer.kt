@@ -7,7 +7,7 @@ import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
@@ -20,6 +20,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
@@ -110,28 +111,34 @@ private constructor(
     suspend fun forEach(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (ConsumerRecord<K, V>) -> Unit
-    ) {
-        withContext(kafkaContext) {
-            while (!stop.get() && !Health.terminating) {
-                replayer.replayWhenLeap()
-                consumer.resume(resumeQueue.pollAll())
-                val records = try {
-                    consumer.poll(Duration.ofMillis(1000))
-                } catch (e: Exception) {
-                    log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
-                    Health.subsystemAlive[Subsystem.KAFKA] = false
-                    throw e
-                }
+    ) = withContext(kafkaContext) {
+        while (isActive && !stop.get() && !Health.terminating) {
+            replayer.replayWhenLeap()
+            consumer.resume(resumeQueue.pollAll())
 
-                pollBodyTimer.record(Runnable {
-                    forEachRecord(records, body)
-                })
+            val records = try {
+                consumer.poll(Duration.ofMillis(1000))
+            } catch (e: Exception) {
+                log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
+                Health.subsystemAlive[Subsystem.KAFKA] = false
+                throw e
             }
 
+            if (!records.isEmpty) {
+                val start = System.nanoTime()
+
+                try {
+                    forEachRecord(records, body)
+                } finally {
+                    val elapsed = System.nanoTime() - start
+                    pollBodyTimer.record(elapsed, TimeUnit.NANOSECONDS)
+                }
+            }
         }
+
     }
 
-    private fun forEachRecord(
+    private suspend fun forEachRecord(
         records: ConsumerRecords<K, V>,
         body: suspend (ConsumerRecord<K, V>) -> Unit
     ) {
@@ -145,10 +152,10 @@ private constructor(
                 try {
                     if (!seekToBeginning) log.info("processing {}", record.loggableToString())
                     iterationEntryCounter.increment()
-                    runBlocking(Dispatchers.IO) {
+                    withContext(Dispatchers.IO) {
                         body(record)
+                        consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     }
-                    consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
                     iterationExitCounter.increment()
                     if (!seekToBeginning) log.info("successfully processed {}", record.loggableToString())
                     retries.set(0)
@@ -240,6 +247,6 @@ private fun <K, V> ConsumerRecord<K, V>.loggableValue() : String {
             |    kildeAppNavn = ${value.kildeAppNavn})
         """.trimMargin()
 
-        else -> value!!::class.java.simpleName
+        else -> value::class.java.simpleName
     }
 }

@@ -242,3 +242,10 @@ fun Application.configureRouting(
         }
     }
 }
+
+fun Application.registerShutdownListener() {
+    monitor.subscribe(ApplicationStopping) {
+        log.info("ApplicationStopping: signal Health.terminate()")
+        Health.terminate()
+    }
+}
