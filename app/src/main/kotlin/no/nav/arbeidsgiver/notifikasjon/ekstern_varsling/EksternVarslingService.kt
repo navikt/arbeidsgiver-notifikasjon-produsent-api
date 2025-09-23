@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTidImpl
 import org.slf4j.event.Level.ERROR
@@ -272,6 +273,7 @@ class EksternVarslingService(
                         }
                     }
                 } catch (e: RuntimeException) {
+                    e.rethrowIfCancellation()
                     log.error("Exception producing kafka-kvittering", e)
                     eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                 }
@@ -282,6 +284,7 @@ class EksternVarslingService(
                     hendelseProdusent.send(varsel.toHendelse())
                     eksternVarslingRepository.deleteFromJobQueue(varselId)
                 } catch (e: RuntimeException) {
+                    e.rethrowIfCancellation()
                     log.error("Exception producing kafka-kvittering", e)
                     eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                 }
@@ -391,6 +394,7 @@ class EksternVarslingService(
                     hendelseProdusent.send(varsel.toHendelse())
                     eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
                 } catch (e: RuntimeException) {
+                    e.rethrowIfCancellation()
                     log.error("Exception producing kafka-kvittering", e)
                     eksternVarslingRepository.returnToJobQueue(varselId)
                 }
@@ -401,6 +405,7 @@ class EksternVarslingService(
                     hendelseProdusent.send(varsel.toHendelse())
                     eksternVarslingRepository.deleteFromJobQueue(varselId)
                 } catch (e: RuntimeException) {
+                    e.rethrowIfCancellation()
                     log.error("Exception producing kafka-kvittering", e)
                     eksternVarslingRepository.returnToJobQueue(varselId)
                 }
