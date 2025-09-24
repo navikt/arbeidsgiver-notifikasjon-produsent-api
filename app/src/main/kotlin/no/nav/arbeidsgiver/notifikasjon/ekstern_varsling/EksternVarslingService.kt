@@ -135,7 +135,7 @@ class EksternVarslingService(
             ) {
                 val released = eksternVarslingRepository.releaseTimedOutJobLocks()
                 if (released.isNotEmpty()) {
-                    log.error(
+                    log.warn(
                         """
                     Found ${released.size} abandoned jobs.
                     Returning to job queue ${released.joinToString(", ")}.
