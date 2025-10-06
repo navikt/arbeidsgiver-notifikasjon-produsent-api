@@ -11,14 +11,14 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafka
 
 object ReplayValidator {
     fun main(httpPort: Int = 8080) {
+        val hendelsesstrøm = HendelsesstrømKafkaImpl(
+            groupId = "replay-validator",
+            replayPeriodically = true,
+            seekToBeginning = true
+        )
+
         embeddedServer(CIO, port = httpPort) {
             Health.subsystemReady[Subsystem.DATABASE] = true
-
-            val hendelsesstrøm = HendelsesstrømKafkaImpl(
-                groupId = "replay-validator",
-                replayPeriodically = true,
-                seekToBeginning = true
-            )
 
             launch {
                 hendelsesstrøm.forEach { _ ->
