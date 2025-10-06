@@ -7,7 +7,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.writeValueAsStringSupportingTypeInfoInCollections
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.unblocking.NonBlockingDataSource
@@ -135,21 +137,17 @@ class Database private constructor(
             }
         }
 
-        fun CoroutineScope.openDatabaseAsync(
+        suspend fun openDatabaseAndSetReady(
             config: Config,
             flywayAction: Flyway.() -> Unit = { migrate() },
             fluentConfig: FluentConfiguration.() -> Unit = {},
-        ): Deferred<Database> {
-            return async {
-                try {
-                    openDatabase(config, flywayAction, fluentConfig = fluentConfig).also {
-                        Health.subsystemReady[Subsystem.DATABASE] = true
-                    }
-                } catch (e: Exception) {
-                    Health.subsystemAlive[Subsystem.DATABASE] = false
-                    throw e
-                }
+        ) = try {
+            openDatabase(config, flywayAction, fluentConfig = fluentConfig).also {
+                Health.subsystemReady[Subsystem.DATABASE] = true
             }
+        } catch (e: Exception) {
+            Health.subsystemAlive[Subsystem.DATABASE] = false
+            throw e
         }
     }
 
