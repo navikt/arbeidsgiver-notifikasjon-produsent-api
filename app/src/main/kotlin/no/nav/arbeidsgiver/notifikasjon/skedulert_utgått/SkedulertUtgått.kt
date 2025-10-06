@@ -3,8 +3,9 @@ package no.nav.arbeidsgiver.notifikasjon.skedulert_utgått
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabase
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
@@ -16,20 +17,20 @@ import java.time.Duration
 object SkedulertUtgått {
     val databaseConfig = Database.config("skedulert_utgatt_model")
 
-    fun main(httpPort: Int = 8080) {
+    fun main(httpPort: Int = 8080) = runBlocking {
+        val database = openDatabaseAsync(databaseConfig).await()
+        val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
+        val hendelsesstrøm = HendelsesstrømKafkaImpl(
+            topic = NOTIFIKASJON_TOPIC,
+            groupId = "skedulert-utgatt-model-builder-0",
+            replayPeriodically = true,
+        )
+
         embeddedServer(CIO, port = httpPort) {
-            val database = openDatabase(databaseConfig)
             val repository = SkedulertUtgåttRepository(database)
-            val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
             val service = SkedulertUtgåttService(
                 repository = repository,
                 hendelseProdusent = hendelseProdusent
-            )
-
-            val hendelsesstrøm = HendelsesstrømKafkaImpl(
-                topic = NOTIFIKASJON_TOPIC,
-                groupId = "skedulert-utgatt-model-builder-0",
-                replayPeriodically = true,
             )
 
             launch {
