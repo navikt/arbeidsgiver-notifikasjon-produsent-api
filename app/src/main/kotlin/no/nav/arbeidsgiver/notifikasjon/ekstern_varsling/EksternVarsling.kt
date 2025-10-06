@@ -7,9 +7,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabase
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
@@ -22,23 +21,23 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProd
 object EksternVarsling {
     val databaseConfig = Database.config("ekstern_varsling_model")
 
-    fun main(httpPort: Int = 8080) = runBlocking {
-        val hendelsestrøm = HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "ekstern-varsling-model-builder",
-            replayPeriodically = false,
-        )
-        val exporterHendelsestrøm = HendelsesstrømKafkaImpl(
-            topic = NOTIFIKASJON_TOPIC,
-            groupId = "ekstern-varsling-status-exporter",
-            replayPeriodically = false,
-        )
-
-        val database = openDatabaseAsync(databaseConfig).await()
-        val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
-
+    fun main(httpPort: Int = 8080) {
         embeddedServer(CIO, port = httpPort) {
+            val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
+            val database = openDatabase(databaseConfig)
             val eksternVarslingRepository = EksternVarslingRepository(database)
+
+            val hendelsestrøm = HendelsesstrømKafkaImpl(
+                topic = NOTIFIKASJON_TOPIC,
+                groupId = "ekstern-varsling-model-builder",
+                replayPeriodically = false,
+            )
+            val exporterHendelsestrøm = HendelsesstrømKafkaImpl(
+                topic = NOTIFIKASJON_TOPIC,
+                groupId = "ekstern-varsling-status-exporter",
+                replayPeriodically = false,
+            )
+
 
             launch {
                 hendelsestrøm.forEach { event ->
