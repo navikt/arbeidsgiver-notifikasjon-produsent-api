@@ -2,9 +2,8 @@ package no.nav.arbeidsgiver.notifikasjon.bruker
 
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabaseAsync
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDatabase
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Enhetsregisteret
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
@@ -29,17 +28,17 @@ object Bruker {
             )
         ),
         httpPort: Int = 8080
-    ) = runBlocking {
-        val database = openDatabaseAsync(databaseConfig).await()
-        val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
-        val graphql = BrukerAPI.createBrukerGraphQL(
-            brukerRepository = BrukerRepositoryImpl(database),
-            hendelseProdusent = hendelseProdusent,
-            altinnTilgangerService = altinnTilgangerService,
-            virksomhetsinfoService = virksomhetsinfoService,
-        )
-
+    ) {
         embeddedServer(CIO, port = httpPort) {
+            val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
+            val database = openDatabase(databaseConfig)
+            val graphql = BrukerAPI.createBrukerGraphQL(
+                brukerRepository = BrukerRepositoryImpl(database),
+                hendelseProdusent = hendelseProdusent,
+                altinnTilgangerService = altinnTilgangerService,
+                virksomhetsinfoService = virksomhetsinfoService,
+            )
+
             graphqlSetup(
                 authPluginConfig = HttpAuthProviders.BRUKER_API_AUTH,
                 extractContext = extractBrukerContext,

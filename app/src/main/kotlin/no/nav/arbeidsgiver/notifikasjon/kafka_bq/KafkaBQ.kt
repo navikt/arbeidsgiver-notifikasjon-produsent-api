@@ -28,10 +28,10 @@ object KafkaBQ {
     )
 
     fun main(httpPort: Int = 8080) {
-        val hendelsesstrøm = HendelsesstrømKafkaImpl(groupId = "kafka-bq-v1")
-
         embeddedServer(CIO, port = httpPort) {
             Health.subsystemReady[Subsystem.DATABASE] = true
+
+            val hendelsesstrøm = HendelsesstrømKafkaImpl(groupId = "kafka-bq-v1")
 
             launch {
                 hendelsesstrøm.forEach { hendelse ->
