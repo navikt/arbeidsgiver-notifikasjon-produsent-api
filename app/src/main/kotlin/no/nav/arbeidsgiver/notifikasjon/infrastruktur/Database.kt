@@ -146,7 +146,6 @@ class Database private constructor(
                 Health.subsystemReady[Subsystem.DATABASE] = true
             }
         } catch (e: Exception) {
-            e.rethrowIfCancellation()
             Health.subsystemAlive[Subsystem.DATABASE] = false
             throw e
         }
