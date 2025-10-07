@@ -37,6 +37,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.timedExecute
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produceMetrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuth
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthPluginConfiguration
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
@@ -188,6 +189,7 @@ fun Application.configureRouting(
         }
 
         exception<Throwable> { call, ex ->
+            ex.rethrowIfCancellation()
             this@configureRouting.log.error("unhandled exception in ktor pipeline: {}", ex::class.qualifiedName, ex)
             call.respond(
                 HttpStatusCode.InternalServerError, mapOf(

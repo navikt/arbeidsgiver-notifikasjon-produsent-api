@@ -101,6 +101,6 @@ inline fun <reified T : Throwable> Throwable.findCause(): T? {
     return null
 }
 
-fun Exception.rethrowIfCancellation() {
+fun Throwable.rethrowIfCancellation() {
     if (this is CancellationException) throw this
 }
