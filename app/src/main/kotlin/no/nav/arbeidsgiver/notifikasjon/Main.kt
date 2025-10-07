@@ -1,18 +1,19 @@
 package no.nav.arbeidsgiver.notifikasjon
 
-import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDelete
+import kotlinx.coroutines.CancellationException
 import no.nav.arbeidsgiver.notifikasjon.bruker.Bruker
-import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
 import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerWriter
+import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
+import no.nav.arbeidsgiver.notifikasjon.kafka_bq.KafkaBQ
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper
 import no.nav.arbeidsgiver.notifikasjon.manuelt_vedlikehold.ManueltVedlikehold
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
-import no.nav.arbeidsgiver.notifikasjon.kafka_bq.KafkaBQ
 import no.nav.arbeidsgiver.notifikasjon.replay_validator.ReplayValidator
+import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDelete
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.SkedulertPåminnelse
 import no.nav.arbeidsgiver.notifikasjon.skedulert_utgått.SkedulertUtgått
 import kotlin.system.exitProcess
@@ -40,6 +41,9 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             "notifikasjon-kafka-bq" -> KafkaBQ.main()
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }
+    } catch (e: CancellationException) {
+        Main.log.error("Application was cancelled {}. exiting.", e.message, e)
+        exitProcess(1)
     } catch (e: Exception) {
         Main.log.error("unhandled toplevel exception {}. exiting.", e.message, e)
         exitProcess(1)
