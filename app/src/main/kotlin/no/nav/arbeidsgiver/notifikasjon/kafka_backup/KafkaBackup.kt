@@ -13,7 +13,13 @@ object KafkaBackup {
     internal val databaseConfig = Database.config("kafka_backup_model")
 
     fun main(httpPort: Int = 8080) {
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             val hendelsestrøm: RawKafkaReader = RawKafkaReaderImpl(
                 topic = NOTIFIKASJON_TOPIC,
                 groupId = "kafka-backup-model-builder",

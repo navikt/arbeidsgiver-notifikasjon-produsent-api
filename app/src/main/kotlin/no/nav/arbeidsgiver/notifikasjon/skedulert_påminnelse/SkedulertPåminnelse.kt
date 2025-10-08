@@ -17,7 +17,13 @@ object SkedulertPåminnelse {
     val databaseConfig = Database.config("skedulert_paaminnelse_model")
 
     fun main(httpPort: Int = 8080) {
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             val database = openDatabaseAndSetReady(databaseConfig)
             val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)
             val service = SkedulertPåminnelseService(

@@ -22,7 +22,13 @@ object HendelseTransformer {
     private val producer by lazy { lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC) }
 
     fun main(httpPort: Int = 8080) {
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {

@@ -11,7 +11,13 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafka
 
 object ReplayValidator {
     fun main(httpPort: Int = 8080) {
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             val hendelsesstrøm = HendelsesstrømKafkaImpl(

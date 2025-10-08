@@ -22,7 +22,13 @@ object ManueltVedlikehold {
             },
         )
 
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             Health.subsystemReady[Subsystem.DATABASE] = true
 
             launch {
