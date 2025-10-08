@@ -138,7 +138,7 @@ private constructor(
                     }
                 }
             } finally { // auto close via consumer.use to avoid rebalance storm
-                log.error( // TODO change to log.info when we see that this is the root cause of application timout errors
+                log.info(
                     "stop signal received, closing consumer. Health.terminating={}, stop={}, isActive={}",
                     Health.terminating, stop.get(), isActive
                 )
