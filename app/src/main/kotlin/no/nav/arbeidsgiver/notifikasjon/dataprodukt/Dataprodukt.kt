@@ -17,7 +17,13 @@ object Dataprodukt {
         ?: error("Missing required environment variable: SALT_VERDI")
 
     fun main(httpPort: Int = 8080) {
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             val database = openDatabaseAndSetReady(databaseConfig) {
                 placeholders(
                     mapOf("SALT_VERDI" to saltVerdi),

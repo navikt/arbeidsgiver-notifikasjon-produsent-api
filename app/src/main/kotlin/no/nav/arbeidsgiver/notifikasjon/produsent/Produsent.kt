@@ -24,7 +24,13 @@ object Produsent {
         produsentRegister: ProdusentRegister = PRODUSENT_REGISTER,
     ) {
 
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             val database = openDatabaseAndSetReady(databaseConfig)
             val produsentRepository = ProdusentRepositoryImpl(database)
 

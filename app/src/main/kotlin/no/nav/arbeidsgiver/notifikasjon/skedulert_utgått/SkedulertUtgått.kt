@@ -17,7 +17,13 @@ object SkedulertUtgått {
     val databaseConfig = Database.config("skedulert_utgatt_model")
 
     fun main(httpPort: Int = 8080) {
-        embeddedServer(CIO, port = httpPort) {
+        embeddedServer(CIO, configure = {
+            connector {
+                port = httpPort
+            }
+            shutdownGracePeriod = 20000
+            shutdownTimeout = 30000
+        }) {
             val database = openDatabaseAndSetReady(databaseConfig)
             val repository = SkedulertUtgåttRepository(database)
             val hendelseProdusent = lagKafkaHendelseProdusent(topic = NOTIFIKASJON_TOPIC)

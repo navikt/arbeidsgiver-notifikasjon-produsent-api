@@ -132,6 +132,7 @@ class Database private constructor(
                 log.info("attempting database connection: success")
                 null
             } catch (e: Exception) {
+                e.rethrowIfCancellation()
                 log.info("attempting database connection: fail with exception", e)
                 e
             }
