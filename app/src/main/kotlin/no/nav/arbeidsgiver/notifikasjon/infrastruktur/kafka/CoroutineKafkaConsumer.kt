@@ -112,27 +112,36 @@ private constructor(
         stop: AtomicBoolean = AtomicBoolean(false),
         body: suspend (ConsumerRecord<K, V>) -> Unit
     ) = withContext(kafkaContext) {
-        while (isActive && !stop.get() && !Health.terminating) {
-            replayer.replayWhenLeap()
-            consumer.resume(resumeQueue.pollAll())
+        consumer.use {
+            try {
+                while (isActive && !stop.get() && !Health.terminating) {
+                    replayer.replayWhenLeap()
+                    consumer.resume(resumeQueue.pollAll())
 
-            val records = try {
-                consumer.poll(Duration.ofMillis(1000))
-            } catch (e: Exception) {
-                log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
-                Health.subsystemAlive[Subsystem.KAFKA] = false
-                throw e
-            }
+                    val records = try {
+                        consumer.poll(Duration.ofMillis(1000))
+                    } catch (e: Exception) {
+                        log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
+                        Health.subsystemAlive[Subsystem.KAFKA] = false
+                        throw e
+                    }
 
-            if (!records.isEmpty) {
-                val start = System.nanoTime()
+                    if (!records.isEmpty) {
+                        val start = System.nanoTime()
 
-                try {
-                    forEachRecord(records, body)
-                } finally {
-                    val elapsed = System.nanoTime() - start
-                    pollBodyTimer.record(elapsed, TimeUnit.NANOSECONDS)
+                        try {
+                            forEachRecord(records, body)
+                        } finally {
+                            val elapsed = System.nanoTime() - start
+                            pollBodyTimer.record(elapsed, TimeUnit.NANOSECONDS)
+                        }
+                    }
                 }
+            } finally { // auto close via consumer.use to avoid rebalance storm
+                log.error( // TODO change to log.info when we see that this is the root cause of application timout errors
+                    "stop signal received, closing consumer. Health.terminating={}, stop={}, isActive={}",
+                    Health.terminating, stop.get(), isActive
+                )
             }
         }
 
