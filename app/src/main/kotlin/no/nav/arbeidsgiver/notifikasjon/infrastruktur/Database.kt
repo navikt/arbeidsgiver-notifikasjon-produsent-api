@@ -81,7 +81,7 @@ class Database private constructor(
                 metricRegistry = Metrics.meterRegistry
                 minimumIdle = 1
                 maximumPoolSize = 10
-                connectionTimeout = 10000
+                connectionTimeout = 10123
                 idleTimeout = 10001
                 maxLifetime = 30001
                 leakDetectionThreshold = 30000
