@@ -6,6 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.bruker.BrukerWriter
 import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.kafka_bq.KafkaBQ
@@ -16,6 +17,7 @@ import no.nav.arbeidsgiver.notifikasjon.replay_validator.ReplayValidator
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.SkedulertHardDelete
 import no.nav.arbeidsgiver.notifikasjon.skedulert_påminnelse.SkedulertPåminnelse
 import no.nav.arbeidsgiver.notifikasjon.skedulert_utgått.SkedulertUtgått
+import org.slf4j.event.Level
 import kotlin.system.exitProcess
 
 private object Main {
@@ -42,7 +44,9 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
             else -> Main.log.error("ukjent \$NAIS_APP_NAME '$navn'")
         }
     } catch (e: CancellationException) {
-        Main.log.error("Application was cancelled {}. exiting.", e.message, e)
+        Main.log.atLevel(
+            if (Health.terminating) Level.INFO else Level.ERROR
+        ).log("Application was cancelled {}. exiting.", e.message, e)
         exitProcess(1)
     } catch (e: Exception) {
         Main.log.error("unhandled toplevel exception {}. exiting.", e.message, e)
