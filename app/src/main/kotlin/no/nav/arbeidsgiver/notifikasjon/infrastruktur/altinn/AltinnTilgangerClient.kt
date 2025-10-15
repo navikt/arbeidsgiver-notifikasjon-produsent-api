@@ -50,7 +50,8 @@ class AltinnTilgangerClient(
                 cause is ConnectionClosedException ||
                         cause is SocketTimeoutException ||
                         cause is SSLHandshakeException ||
-                        cause is HttpRequestTimeoutException
+                        cause is HttpRequestTimeoutException ||
+                        cause is java.nio.channels.UnresolvedAddressException
             }
             delayMillis { 250L }
         }
