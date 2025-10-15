@@ -15,8 +15,10 @@ spec:
       memory: 1024Mi
   liveness:
     path: /internal/alive
+    initialDelay: 60
   readiness:
     path: /internal/ready
+    initialDelay: 60
   replicas:
     min: 1
     max: 1
