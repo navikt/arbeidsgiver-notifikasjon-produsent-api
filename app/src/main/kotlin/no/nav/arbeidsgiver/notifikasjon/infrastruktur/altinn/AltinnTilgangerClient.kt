@@ -42,7 +42,7 @@ class AltinnTilgangerClient(
             registry = Metrics.meterRegistry
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = 5_000
+            requestTimeoutMillis = 30_000
         }
         install(HttpRequestRetry) {
             maxRetries = 3
