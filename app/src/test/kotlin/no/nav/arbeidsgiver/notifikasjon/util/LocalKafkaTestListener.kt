@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProd
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReaderImpl
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -17,10 +17,10 @@ fun localKafka() = LocalKafkaTestListener()
 private val topic = AtomicReference(NOTIFIKASJON_TOPIC)
 private val groupIdCounter = AtomicInteger(0)
 
-class LocalKafkaTestListener: BeforeAllCallback {
+class LocalKafkaTestListener: BeforeEachCallback {
     private fun newId() = "test-" + groupIdCounter.incrementAndGet()
 
-    override fun beforeAll(context: ExtensionContext) = runBlocking {
+    override fun beforeEach(context: ExtensionContext) = runBlocking {
         topic.set("${NOTIFIKASJON_TOPIC}-${UUID.randomUUID()}")
     }
 
