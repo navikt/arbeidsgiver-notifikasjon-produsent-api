@@ -1,26 +1,23 @@
 package no.nav.arbeidsgiver.notifikasjon.util
 
-import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.RawKafkaReaderImpl
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.junit.jupiter.api.extension.BeforeEachCallback
-import org.junit.jupiter.api.extension.ExtensionContext
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-fun localKafka() = LocalKafkaTestListener()
+fun localKafka() = LocalKafka()
 private val topic = AtomicReference(NOTIFIKASJON_TOPIC)
 private val groupIdCounter = AtomicInteger(0)
 
-class LocalKafkaTestListener: BeforeEachCallback {
+class LocalKafka {
     private fun newId() = "test-" + groupIdCounter.incrementAndGet()
 
-    override fun beforeEach(context: ExtensionContext) = runBlocking {
+    init {
         topic.set("${NOTIFIKASJON_TOPIC}-${UUID.randomUUID()}")
     }
 
