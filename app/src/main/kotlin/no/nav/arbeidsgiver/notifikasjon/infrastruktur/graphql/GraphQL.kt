@@ -136,10 +136,9 @@ fun handleUnexpectedError(exception: Exception, error: GraphQLError): DataFetche
         .build()
 }
 
-private inline fun <reified T : Throwable> List<GraphQLError>.excluding() = filterNot { error ->
-    error is GraphQLException && error.isCausedBy<T>()
-            || error is ExceptionWhileDataFetching && error.exception.isCausedBy<T>()
-}
+private inline fun <reified T : Throwable> GraphQLError.graphQLErrorIsCausedBy() =
+    this is GraphQLException && this.isCausedBy<T>()
+            || this is ExceptionWhileDataFetching && this.exception.isCausedBy<T>()
 
 object GraphQLLogger {
     val log = logger()
@@ -236,13 +235,15 @@ fun <T : WithCoroutineScope> TypedGraphQL<T>.timedExecute(
     context: T
 ): ExecutionResult = with(Timer.start(meterRegistry)) {
     execute(request, context).also { result ->
-        if (
-            result.errors
-                .excluding<CancellationException>() // Client cancelled the request
-                .excluding<ValideringsFeil>() // Validation errors are expected
-                .isNotEmpty()
-        ) {
-            GraphQLLogger.log.error("graphql request failed: {}", result.errors)
+        val (warns, errors) = result.errors.partition {
+            it.graphQLErrorIsCausedBy<CancellationException>() || // Client cancelled the request
+            it.graphQLErrorIsCausedBy<ValideringsFeil>() // Validation errors are expected
+        }
+        if (warns.isNotEmpty()) {
+            GraphQLLogger.log.warn("graphql request had warnings: {}", warns.map { it.message })
+        }
+        if (errors.isNotEmpty()) {
+            GraphQLLogger.log.error("graphql request failed: {}", errors)
         }
         val tags = mutableSetOf(
             "queryName" to (request.queryName),
