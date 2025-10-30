@@ -259,9 +259,13 @@ class EksternVarslingService(
                                 Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
 
                                 Altinn3VarselStatus.Kansellert,
-                                Altinn3VarselStatus.Kvittert,
-                                Altinn3VarselStatus.KvittertMedFeil -> {
+                                Altinn3VarselStatus.Kvittert -> {
                                     hendelseProdusent.send(varsel.copy(response = AltinnResponse.Ok(altinnResponse)).toHendelse())
+                                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
+                                }
+                                Altinn3VarselStatus.KvittertMedFeil -> {
+                                    val (feilkode, feilmelding) = altinnResponse.extractStatusAndDescription()
+                                    hendelseProdusent.send(varsel.copy(response = AltinnResponse.Feil(altinnResponse, feilkode, feilmelding)).toHendelse())
                                     eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
                                 }
                             }
@@ -416,4 +420,39 @@ class EksternVarslingService(
             }
         }
     }
+}
+
+/**
+ * Extracts status and description from the given JsonNode.
+ * Either from the /processingStatus node or from the /notifications array.
+ */
+private fun JsonNode.extractStatusAndDescription(): Pair<String, String> {
+
+    // Case 1: ordrestatus. Object with processingStatus
+    val statusNode = at("/processingStatus/status")
+    val descNode = at("/processingStatus/description")
+    if (!statusNode.isMissingNode && !descNode.isMissingNode) {
+        return statusNode.asText() to descNode.asText()
+    }
+
+    // Case 2: notifications: Array with notifications
+    if (isArray) {
+        return flatMap { order ->
+            val notifications = order.at("/notifications")
+            if (notifications.isArray) {
+                notifications.mapNotNull { notification ->
+                    val status = notification.at("/sendStatus/status").asText()
+                    val desc = notification.at("/sendStatus/description").asText()
+                    if (status.isNotEmpty() && desc.isNotEmpty()) status to desc else null
+                }
+            } else emptyList()
+        }.let { pairs ->
+            pairs.unzip<String, String>().let { (statuses, descriptions) ->
+                statuses.joinToString(",") to descriptions.joinToString(",")
+            }
+        }
+    }
+
+    logger().error("Could not extract status and description from JsonNode. This should not happen.")
+    return "ukjent" to ""
 }
