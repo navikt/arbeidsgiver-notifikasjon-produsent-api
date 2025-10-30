@@ -40,7 +40,7 @@ spec:
     sqlInstances:
       - name: notifikasjon-dataprodukt-v2
         type: POSTGRES_17
-        tier: db-custom-1-3840
+        tier: db-custom-2-5120
         diskAutoresize: true
         databases:
           - name: dataprodukt-model
