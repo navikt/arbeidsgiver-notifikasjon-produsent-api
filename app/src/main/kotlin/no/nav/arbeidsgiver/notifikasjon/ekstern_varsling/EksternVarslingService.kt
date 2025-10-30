@@ -446,10 +446,8 @@ private fun JsonNode.extractStatusAndDescription(): Pair<String, String> {
                     if (status.isNotEmpty() && desc.isNotEmpty()) status to desc else null
                 }
             } else emptyList()
-        }.let { pairs ->
-            pairs.unzip<String, String>().let { (statuses, descriptions) ->
-                statuses.joinToString(",") to descriptions.joinToString(",")
-            }
+        }.unzip<String, String>().let { (statuses, descriptions) ->
+            statuses.joinToString(",") to descriptions.joinToString(",")
         }
     }
 

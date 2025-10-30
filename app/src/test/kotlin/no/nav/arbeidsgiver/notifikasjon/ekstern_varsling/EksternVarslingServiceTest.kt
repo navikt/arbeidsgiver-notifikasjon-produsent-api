@@ -885,6 +885,127 @@ class EksternVarslingServiceTest {
         }
     }
 
+    /**
+     * Denne testen simulerer en feil vi så i prod i etterkant av azure feil i altinn3 tjenesten.
+     * Feilen gjorde at ca 7 ordre ble markert som Completed("generated":1,"succeeded":0),
+     * men notifications ble satt til status:Failed, description:The email was not sent due to an unspecified failure.
+     *
+     * Disse ble markert i sluttilstand som er korrekt, men som EksterntVarselVellyket som er feil.
+     * De skulle vært markert som EksterntVarselFeilet.
+     */
+    @Test
+    fun `Altinn3 varsel oppførsel status simulering asynkron feil`() = runBlocking {
+        //language=JSON
+        val orderStatusResponse = """
+            {
+              "id": "314",
+              "requestedSendTime": "2025-10-29T18:49:31.27885Z",
+              "creator": "nav",
+              "created": "2025-10-29T18:49:31.27928Z",
+              "notificationChannel": "Email",
+              "processingStatus": {
+                "status": "Completed",
+                "description": "Order processing is completed. All notifications have a final status.",
+                "lastUpdate": "2025-10-29T18:50:14.736615Z"
+              },
+              "notificationsStatusSummary": {
+                "email": {
+                  "links": {
+                    "self": "https://platform.altinn.no/notifications/api/v1/orders/1e0f2323-4b56-4489-aca4-9bc6c2cd86e6/notifications/email"
+                  },
+                  "generated": 1,
+                  "succeeded": 0
+                }
+              }
+            }
+        """.trimIndent()
+        //language=JSON
+        val notificationsRespons = """
+            {
+                "generated": 1,
+                "succeeded": 0,
+                "notifications": [
+                  {
+                    "id": "042f1a8a-fe29-47c9-a992-433399563c12",
+                    "recipient": {
+                      "emailAddress": "abc@a.no",
+                      "organizationNumber": "12341234"
+                    },
+                    "sendStatus": {
+                      "description": "The email was not sent due to an unspecified failure.",
+                      "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                      "status": "Failed"
+                    },
+                    "succeeded": false
+                  }
+                ],
+                "orderId": "314"
+              }
+              """.trimIndent()
+        val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+            override suspend fun order(eksternVarsel: EksternVarsel) =
+                Altinn3VarselKlient.OrderResponse.Success(
+                    orderId = "314",
+                    rå = JsonNodeFactory.instance.objectNode().put("orderId", "314")
+                )
+
+            /**
+             * notifications gjør 2 kall (sms og email) og konkatenerer resultatene, deerfor (+ "[]") her
+             */
+            override suspend fun notifications(orderId: String): NotificationsResponse.Success {
+                return NotificationsResponse.Success.fromJson(
+                    laxObjectMapper.readValue<JsonNode>(notificationsRespons)
+                ) + NotificationsResponse.Success.fromJson(
+                    laxObjectMapper.readValue<JsonNode>("""
+                        {"orderId":"314","generated":0,"succeeded":0,"notifications":[]}
+                    """)
+                )
+            }
+
+            override suspend fun orderStatus(orderId: String) =
+                Altinn3VarselKlient.OrderStatusResponse.Success(
+                    rå = laxObjectMapper.readValue<JsonNode>(orderStatusResponse),
+                    orderId = orderId,
+                    sendersReference = null,
+                    Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
+                        Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
+                        null,
+                        null
+                    ),
+                    NotificationStatusSummary(1, 0)
+                )
+        }
+
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent) = setupService(
+                database,
+                altinn3VarselKlient = altinn3VarselKlient
+            )
+            repository.oppdaterModellEtterHendelse(oppgave)
+
+            assertEquals(1, repository.jobQueueCount())
+            database.nonTransactionalExecuteUpdate(
+                """
+                update emergency_break set stop_processing = false where id = 0
+                """
+            )
+            val job = service.start(this)
+            eventually(5.seconds) {
+                val feilet = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
+                assertEquals(1, feilet.size)
+                assertEquals(
+                    "Failed",
+                    feilet.first().altinnFeilkode
+                )
+                assertEquals(
+                    "The email was not sent due to an unspecified failure.",
+                    feilet.first().feilmelding
+                )
+            }
+            job.cancel()
+        }
+    }
+
     @Test
     fun `Altinn3 varsel oppførsel status simulering (synkron feil)`() = runBlocking {
         val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
