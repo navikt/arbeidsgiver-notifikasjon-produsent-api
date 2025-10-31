@@ -121,5 +121,8 @@ spec:
           namespace: teammelosys
           cluster: dev-gcp
 
+        - application: ekspertbistand-backend
+          namespace: fager
+          cluster: dev-gcp
   envFrom:
     - secret: notifikasjon-produsent-api-secrets
