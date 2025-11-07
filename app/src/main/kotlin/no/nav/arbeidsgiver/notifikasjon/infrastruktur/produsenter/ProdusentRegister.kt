@@ -445,6 +445,24 @@ val MELOSYS = Produsent(
     )
 )
 
+val EKSPERTBISTAND = Produsent(
+    id = "ekspertbistand",
+    accessPolicy = basedOnEnv(
+        prod = { listOf() },
+        other = {
+            listOf(
+                "dev-gcp:fager:ekspertbistand-backend",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Ekspertbistand",
+    ),
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "nav_tiltak_ekspertbistand"),
+    )
+)
+
 
 val PRODUSENT_LIST =
     listOf(
@@ -460,6 +478,7 @@ val PRODUSENT_LIST =
         FORELDREPENGER,
         K9,
         MELOSYS,
+        EKSPERTBISTAND,
     )
         .filter { it.accessPolicy.isNotEmpty() }
 
