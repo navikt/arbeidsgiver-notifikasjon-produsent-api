@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
-import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
@@ -196,11 +195,43 @@ class EksternVarslingRepository(
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
-        oppdaterUtfall(eksterntVarselFeilet.varselId, SendeStatus.FEIL, eksterntVarselFeilet.råRespons)
+        database.nonTransactionalExecuteUpdate(
+            """
+            update ekstern_varsel_kontaktinfo 
+            set 
+                altinn_response = ?::jsonb,
+                state = '${EksterntVarselTilstand.KVITTERT}',
+                sende_status = ?::status,
+                altinn_feilkode = ?,
+                feilmelding = ?
+            where
+                varsel_id = ? 
+        """
+        ) {
+            jsonb(eksterntVarselFeilet.råRespons)
+            text(SendeStatus.FEIL.toString())
+            text(eksterntVarselFeilet.altinnFeilkode)
+            text(eksterntVarselFeilet.feilmelding)
+            uuid(eksterntVarselFeilet.varselId)
+        }
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: EksterntVarselVellykket) {
-        oppdaterUtfall(eksterntVarselVellykket.varselId, SendeStatus.OK, eksterntVarselVellykket.råRespons)
+        database.nonTransactionalExecuteUpdate(
+            """
+            update ekstern_varsel_kontaktinfo 
+            set 
+                altinn_response = ?::jsonb,
+                state = '${EksterntVarselTilstand.KVITTERT}',
+                sende_status = ?::status
+            where
+                varsel_id = ? 
+        """
+        ) {
+            jsonb(eksterntVarselVellykket.råRespons)
+            text(SendeStatus.OK.toString())
+            uuid(eksterntVarselVellykket.varselId)
+        }
     }
 
     private suspend fun oppdaterModellEtterEksterntVarselKansellert(hendelse: EksterntVarselKansellert) {
@@ -214,24 +245,6 @@ class EksternVarslingRepository(
         """
         ) {
             uuid(hendelse.varselId)
-        }
-    }
-
-    private suspend fun oppdaterUtfall(varselId: UUID, sendeStatus: SendeStatus, råRespons: JsonNode) {
-        database.nonTransactionalExecuteUpdate(
-            """
-            update ekstern_varsel_kontaktinfo 
-            set 
-                altinn_response = ?::jsonb,
-                state = '${EksterntVarselTilstand.KVITTERT}',
-                sende_status = ?::status
-            where
-                varsel_id = ? 
-        """
-        ) {
-            jsonb(råRespons)
-            text(sendeStatus.toString())
-            uuid(varselId)
         }
     }
 

@@ -993,6 +993,7 @@ class EksternVarslingServiceTest {
             eventually(5.seconds) {
                 val feilet = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
                 assertEquals(1, feilet.size)
+                assertNotNull(feilet.first())
                 assertEquals(
                     "Failed",
                     feilet.first().altinnFeilkode
@@ -1001,6 +1002,17 @@ class EksternVarslingServiceTest {
                     "The email was not sent due to an unspecified failure.",
                     feilet.first().feilmelding
                 )
+                repository.oppdaterModellEtterHendelse(feilet.first())
+                repository.findVarsel(feilet.first().varselId).let { varselTilstand ->
+                    assertNotNull(varselTilstand)
+                    varselTilstand as EksternVarselTilstand.Kvittert
+                    varselTilstand.response as AltinnResponse.Feil
+                    assertEquals("Failed", varselTilstand.response.feilkode)
+                    assertEquals(
+                        "The email was not sent due to an unspecified failure.",
+                        varselTilstand.response.feilmelding
+                    )
+                }
             }
             job.cancel()
         }
