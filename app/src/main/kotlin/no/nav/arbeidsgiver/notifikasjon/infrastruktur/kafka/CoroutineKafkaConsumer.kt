@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.schedule
+import kotlin.math.min
 
 class CoroutineKafkaConsumer<K, V>
 private constructor(
@@ -171,7 +172,7 @@ private constructor(
                     return@currentRecord
                 } catch (e: Exception) {
                     val attempt = retries.incrementAndGet()
-                    val backoffMillis = 1000L * 2.toThePowerOf(attempt)
+                    val backoffMillis = capWithinMaxPollInterval(1000L * 2.toThePowerOf(attempt))
                     // log error if attempt is > 3 else just warn
                     log.atLevel(
                         if (attempt > 3)
@@ -195,6 +196,18 @@ private constructor(
                 }
             }
         }
+    }
+
+    /**
+     * make sure our backoff never exceeds max.poll.interval.ms - 5 seconds (or at least 1 second)
+     * so that Kafka doesn't consider us dead
+     */
+    private fun capWithinMaxPollInterval(backoffMs: Long) : Long {
+        val maxPollIntervalMs: Long = properties.getProperty(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG).toLong()
+        return min(
+            backoffMs,
+            (maxPollIntervalMs - 5_000).coerceAtLeast(1_000)
+        )
     }
 
     private fun retriesForPartition(partition: Int) =
