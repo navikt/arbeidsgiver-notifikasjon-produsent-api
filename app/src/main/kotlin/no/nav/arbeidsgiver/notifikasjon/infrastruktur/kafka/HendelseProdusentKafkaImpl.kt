@@ -18,15 +18,9 @@ import java.util.*
 
 fun lagKafkaHendelseProdusent(
     topic: String = NOTIFIKASJON_TOPIC,
-    configure: Properties.() -> Unit = {},
+    configOverrides: Map<String, Any> = emptyMap(),
 ): HendelseProdusent {
-    val properties = Properties().apply {
-        PRODUCER_PROPERTIES.forEach { (k, v) ->
-            setProperty(k, v.toString())
-        }
-        configure()
-    }
-    val kafkaProducer = KafkaProducer<KafkaKey, Hendelse>(properties)
+    val kafkaProducer = KafkaProducer<KafkaKey, Hendelse>(PRODUCER_PROPERTIES + configOverrides)
     KafkaClientMetrics(kafkaProducer).bindTo(Metrics.meterRegistry)
     return HendelseProdusentKafkaImpl(kafkaProducer, topic)
 }

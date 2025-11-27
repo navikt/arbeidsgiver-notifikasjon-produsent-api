@@ -26,11 +26,12 @@ class LocalKafka {
         return HendelsesstrømKafkaImpl(
             topic = topic.get(),
             groupId = id,
-        ) {
-            this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
-            this[CommonClientConfigs.GROUP_INSTANCE_ID_CONFIG] = id
-            this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
-        }
+            configOverrides = mapOf(
+                ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 1000,
+                CommonClientConfigs.GROUP_INSTANCE_ID_CONFIG to id,
+                CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+            )
+        )
     }
 
     fun newRawConsumer(): RawKafkaReaderImpl {
@@ -38,16 +39,20 @@ class LocalKafka {
         return RawKafkaReaderImpl(
             topic = topic.get(),
             groupId = id,
-        ) {
-            this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
-            this[CommonClientConfigs.GROUP_INSTANCE_ID_CONFIG] = id
-            this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
-        }
+            configOverrides = mapOf(
+                ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 1000,
+                CommonClientConfigs.GROUP_INSTANCE_ID_CONFIG to id,
+                CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+            )
+        )
     }
 
     fun newProducer() =
-        lagKafkaHendelseProdusent(topic = topic.get()) {
-            this[CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG] = 15000
-            this[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
-        }
+        lagKafkaHendelseProdusent(
+            topic = topic.get(),
+            configOverrides = mapOf(
+             CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG to 15000,
+             CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+            )
+        )
 }
