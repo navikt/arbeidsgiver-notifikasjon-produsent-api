@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import org.apache.kafka.clients.consumer.*
+import org.apache.kafka.clients.consumer.ConsumerConfig.*
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.Deserializer
 import org.slf4j.event.Level
@@ -36,7 +37,7 @@ private constructor(
     replayPeriodically: Boolean = false,
     private val onPartitionAssigned: ((partition: TopicPartition, maxOffset: Long) -> Unit)?,
     private val onPartitionRevoked: ((partition: TopicPartition) -> Unit)?,
-    private val configure: Properties.() -> Unit = {},
+    private val configOverrides: Map<String, Any> = emptyMap(),
 ) {
     private val pollBodyTimer = Timer.builder("kafka.poll.body")
         .register(Metrics.meterRegistry)
@@ -60,7 +61,7 @@ private constructor(
             replayPeriodically: Boolean = false,
             onPartitionAssigned: ((partition: TopicPartition, endOffset: Long) -> Unit)? = null,
             onPartitionRevoked: ((partition: TopicPartition) -> Unit)? = null,
-            configure: Properties.() -> Unit = {},
+            configOverrides: Map<String, Any> = emptyMap(),
         ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
             topic,
             groupId,
@@ -70,19 +71,17 @@ private constructor(
             replayPeriodically,
             onPartitionAssigned,
             onPartitionRevoked,
-            configure
+            configOverrides
         )
     }
 
-    private val properties = Properties().apply {
-        putAll(CONSUMER_PROPERTIES.mapValues { (key, value) -> value.toString() })
-        this[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = keyDeserializer.canonicalName
-        this[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = valueDeserializer.canonicalName
-        this[ConsumerConfig.GROUP_ID_CONFIG] = groupId
-        configure()
-    }
-
-    private val consumer: Consumer<K, V> = KafkaConsumer(properties)
+    private val consumer: Consumer<K, V> = KafkaConsumer(
+        CONSUMER_PROPERTIES + mapOf<String, String>(
+            KEY_DESERIALIZER_CLASS_CONFIG to keyDeserializer.canonicalName,
+            VALUE_DESERIALIZER_CLASS_CONFIG to valueDeserializer.canonicalName,
+            GROUP_ID_CONFIG to groupId,
+        ) + configOverrides
+    )
 
     init {
         KafkaClientMetrics(consumer).bindTo(Metrics.meterRegistry)
@@ -202,13 +201,10 @@ private constructor(
      * make sure our backoff never exceeds max.poll.interval.ms - 5 seconds (or at least 1 second)
      * so that Kafka doesn't consider us dead
      */
-    private fun capWithinMaxPollInterval(backoffMs: Long) : Long {
-        val maxPollIntervalMs: Long = properties.getProperty(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG).toLong()
-        return min(
-            backoffMs,
-            (maxPollIntervalMs - 5_000).coerceAtLeast(1_000)
-        )
-    }
+    private fun capWithinMaxPollInterval(backoffMs: Long) = min(
+        backoffMs,
+        (MAX_POLL_INTERVAL_MS.toLong() - 5_000).coerceAtLeast(1_000)
+    )
 
     private fun retriesForPartition(partition: Int) =
         retriesPerPartition.getOrPut(partition) {

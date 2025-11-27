@@ -14,7 +14,7 @@ class HendelsesstrømKafkaImpl(
     groupId: String,
     seekToBeginning: Boolean = false,
     replayPeriodically: Boolean = false,
-    configure: Properties.() -> Unit = {},
+    configOverrides: Map<String, Any> = emptyMap(),
 ): Hendelsesstrøm {
 
     private val consumer = CoroutineKafkaConsumer.new(
@@ -24,7 +24,7 @@ class HendelsesstrømKafkaImpl(
         valueDeserializer = ValueDeserializer::class.java,
         seekToBeginning = seekToBeginning,
         replayPeriodically = replayPeriodically,
-        configure = configure,
+        configOverrides = configOverrides,
     )
 
 

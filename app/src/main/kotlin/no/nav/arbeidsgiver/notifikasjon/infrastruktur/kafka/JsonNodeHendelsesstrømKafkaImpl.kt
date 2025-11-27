@@ -3,14 +3,13 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.common.serialization.StringDeserializer
-import java.util.*
 
 class JsonNodeValueDeserializer : JsonDeserializer<JsonNode>(JsonNode::class.java)
 
 class JsonNodeKafkaConsumer(
     groupId: String,
     seekToBeginning: Boolean = false,
-    configure: Properties.() -> Unit = {},
+    configOverrides: Map<String, Any> = emptyMap(),
 ) {
     private val log = logger()
 
@@ -20,7 +19,7 @@ class JsonNodeKafkaConsumer(
         keyDeserializer = StringDeserializer::class.java,
         valueDeserializer = JsonNodeValueDeserializer::class.java,
         seekToBeginning = seekToBeginning,
-        configure = configure,
+        configOverrides = configOverrides,
     )
 
     suspend fun forEach(
