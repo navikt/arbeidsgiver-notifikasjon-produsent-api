@@ -21,7 +21,9 @@ fun lagKafkaHendelseProdusent(
     configure: Properties.() -> Unit = {},
 ): HendelseProdusent {
     val properties = Properties().apply {
-        putAll(PRODUCER_PROPERTIES)
+        PRODUCER_PROPERTIES.forEach { (k, v) ->
+            setProperty(k, v.toString())
+        }
         configure()
     }
     val kafkaProducer = KafkaProducer<KafkaKey, Hendelse>(properties)
