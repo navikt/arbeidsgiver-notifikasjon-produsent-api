@@ -75,7 +75,7 @@ private constructor(
     }
 
     private val properties = Properties().apply {
-        putAll(CONSUMER_PROPERTIES)
+        putAll(CONSUMER_PROPERTIES.mapValues { (key, value) -> value.toString() })
         this[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = keyDeserializer.canonicalName
         this[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = valueDeserializer.canonicalName
         this[ConsumerConfig.GROUP_ID_CONFIG] = groupId
