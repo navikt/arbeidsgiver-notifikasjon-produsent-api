@@ -3,7 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.kafka_backup
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.CoroutineKafkaConsumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 interface RawKafkaReader {
@@ -13,14 +12,14 @@ interface RawKafkaReader {
 class RawKafkaReaderImpl(
     topic: String,
     groupId: String,
-    configure: Properties.() -> (Unit) = {},
+    configOverrides: Map<String, Any> = emptyMap(),
 ) : RawKafkaReader {
     private val consumer: CoroutineKafkaConsumer<ByteArray, ByteArray> = CoroutineKafkaConsumer.new(
         topic = topic,
         groupId = groupId,
         keyDeserializer = ByteArrayDeserializer::class.java,
         valueDeserializer = ByteArrayDeserializer::class.java,
-        configure = configure,
+        configOverrides = configOverrides,
     )
 
     override suspend fun forEach(

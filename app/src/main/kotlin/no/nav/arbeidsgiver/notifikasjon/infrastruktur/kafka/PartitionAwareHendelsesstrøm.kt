@@ -11,7 +11,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 data class PartitionHendelseMetadata(
@@ -26,7 +25,7 @@ interface PartitionProcessor: AutoCloseable {
 class PartitionAwareHendelsesstrøm(
     groupId: String,
     replayPeriodically: Boolean = false,
-    configure: Properties.() -> Unit = {},
+    configOverrides: Map<String, Any> = emptyMap(),
     private val newPartitionProcessor: () -> PartitionProcessor,
 ) {
     private val catchupTimer = LongTaskTimer
@@ -47,7 +46,7 @@ class PartitionAwareHendelsesstrøm(
         valueDeserializer = ValueDeserializer::class.java,
         seekToBeginning = true,
         replayPeriodically = replayPeriodically,
-        configure = configure,
+        configOverrides = configOverrides,
         onPartitionAssigned = { partition: TopicPartition, maxOffset: Long ->
             partitionProcessors[partition] = PartitionProcessorState(
                 partitionProcessor = newPartitionProcessor(),
