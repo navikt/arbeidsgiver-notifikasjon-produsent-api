@@ -2,6 +2,9 @@ name: "Platform: deploy replay-validator prod"
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   dev-deploy:
     runs-on: ubuntu-latest
