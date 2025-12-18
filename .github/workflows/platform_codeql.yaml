@@ -21,6 +21,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'app/src/**'
+  workflow_dispatch:
   schedule:
     - cron: '31 5 * * 6'
 
