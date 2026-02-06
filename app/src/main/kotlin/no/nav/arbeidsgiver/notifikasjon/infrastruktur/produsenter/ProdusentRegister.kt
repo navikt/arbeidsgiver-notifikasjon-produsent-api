@@ -212,7 +212,11 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb"),
         ServicecodeDefinisjon(code = "5516", version = "4", description = "Mentor"),
         ServicecodeDefinisjon(code = "5516", version = "5", description = "Inkluderingstilskudd"),
-        ServicecodeDefinisjon(code = "5516", version = "6", description = "Varig tilrettelagt arbeid i ordinær virksomhet"),
+        ServicecodeDefinisjon(
+            code = "5516",
+            version = "6",
+            description = "Varig tilrettelagt arbeid i ordinær virksomhet"
+        ),
     )
 )
 
@@ -448,7 +452,11 @@ val MELOSYS = Produsent(
 val EKSPERTBISTAND = Produsent(
     id = "ekspertbistand",
     accessPolicy = basedOnEnv(
-        prod = { listOf() },
+        prod = {
+            listOf(
+                "prod-gcp:fager:ekspertbistand-backend",
+            )
+        },
         other = {
             listOf(
                 "dev-gcp:fager:ekspertbistand-backend",

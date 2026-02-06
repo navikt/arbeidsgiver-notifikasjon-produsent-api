@@ -98,6 +98,10 @@ spec:
         - application: k9-inntektsmelding
           namespace: k9saksbehandling
           cluster: prod-gcp
+
+        - application: ekspertbistand-backend
+          namespace: fager
+          cluster: prod-gcp
   azure:
     application:
       enabled: true
