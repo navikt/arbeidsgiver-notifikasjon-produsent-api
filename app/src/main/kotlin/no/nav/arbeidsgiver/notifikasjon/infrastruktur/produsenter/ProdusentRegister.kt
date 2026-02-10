@@ -290,8 +290,18 @@ val HELSEARBEIDSGIVER = Produsent(
         "Inntektsmelding",
         "Inntektsmelding sykepenger"
     ),
-    tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+    tillatteMottakere = basedOnEnv(
+        prod = {
+            listOf(
+                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+            )
+        },
+        other = {
+            listOf(
+                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+                RessursIdDefinisjon(ressursId = "nav_sykepenger_inntektsmelding")
+            )
+        }
     )
 )
 
