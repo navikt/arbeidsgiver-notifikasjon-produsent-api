@@ -212,7 +212,11 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb"),
         ServicecodeDefinisjon(code = "5516", version = "4", description = "Mentor"),
         ServicecodeDefinisjon(code = "5516", version = "5", description = "Inkluderingstilskudd"),
-        ServicecodeDefinisjon(code = "5516", version = "6", description = "Varig tilrettelagt arbeid i ordinær virksomhet"),
+        ServicecodeDefinisjon(
+            code = "5516",
+            version = "6",
+            description = "Varig tilrettelagt arbeid i ordinær virksomhet"
+        ),
     )
 )
 
@@ -416,8 +420,18 @@ val FORELDREPENGER = Produsent(
         "Inntektsmelding foreldrepenger",
         "Inntektsmelding svangerskapspenger",
     ),
-    tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+    tillatteMottakere = basedOnEnv(
+        other = {
+            listOf(
+                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+                RessursIdDefinisjon(ressursId = "nav_foreldrepenger_inntektsmelding")
+            )
+        },
+        prod = {
+            listOf(
+                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+            )
+        }
     )
 )
 
