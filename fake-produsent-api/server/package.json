@@ -7,7 +7,7 @@
   "dependencies": {
     "apollo-server-express": "^3.13.0",
     "casual": "^1.6.2",
-    "express": "^4.19.2",
+    "express": "^4.22.1",
     "graphql": "^16.9.0",
     "nodemon": "^3.1.4",
     "winston": "^3.13.1"
