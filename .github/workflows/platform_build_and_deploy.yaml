@@ -73,7 +73,6 @@ jobs:
           tag: ${{ github.sha }}
           dockerfile: app/Dockerfile
           docker_context: app
-          byosbom: app/target/bom.json
 
   deploy:
     if: github.ref == 'refs/heads/main'
