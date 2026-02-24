@@ -482,7 +482,11 @@ val MELOSYS = Produsent(
 val EKSPERTBISTAND = Produsent(
     id = "ekspertbistand",
     accessPolicy = basedOnEnv(
-        prod = { listOf() },
+        prod = {
+            listOf(
+                "prod-gcp:fager:ekspertbistand-backend",
+            )
+        },
         other = {
             listOf(
                 "dev-gcp:fager:ekspertbistand-backend",
