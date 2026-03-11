@@ -194,6 +194,7 @@ interface Altinn3VarselKlient {
             @JsonIgnore val epostInnhold: String,
             @JsonIgnore val smsInnhold: String,
         ) : OrderRequest() {
+            val resourceAction = "access"
             val notificationChannel
                 get() = "EmailPreferred"
             val recipients
