@@ -152,6 +152,7 @@ class Altinn3VarselKlientImplTest {
                             "organizationNumber" : "42"
                           } ],
                           "resourceId" : "nav_foo-bar",
+                          "resourceAction" : "access",
                           "emailTemplate" : {
                             "subject" : "Test",
                             "body" : "Hei, epost",
