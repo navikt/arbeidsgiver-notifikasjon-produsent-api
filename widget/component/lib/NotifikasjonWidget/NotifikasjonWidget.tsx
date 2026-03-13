@@ -1,7 +1,8 @@
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { NotifikasjonBjelle } from './NotifikasjonBjelle/NotifikasjonBjelle';
 import NotifikasjonPanel from './NotifikasjonPanel/NotifikasjonPanel';
-import { ServerError, useQuery } from '@apollo/client';
+import { ServerError } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { HENT_NOTIFIKASJONER } from '../api/graphql';
 import { filtrerUlesteNotifikasjoner } from '../utils/filtrerUlesteNotifikasjoner';
 import { useOnClickOutside } from '../hooks/useOnClickOutside';
@@ -27,12 +28,12 @@ const NotifikasjonWidget = () => {
     useEffect(() => {
       if (error) {
         console.error('Error fetching notifications:', error);
-        if ((error.networkError as ServerError)?.statusCode === 401) {
+        if (ServerError.is(error) && error.statusCode === 401) {
           console.log('stopper poll pga 401 unauthorized');
           stopPolling();
         }
       }
-    }, [error]);
+    }, [error, stopPolling]);
 
     function trackLukking() {
       logEvent('panel-kollaps', {

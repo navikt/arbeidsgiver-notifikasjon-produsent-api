@@ -1,5 +1,5 @@
 import { createContext, PropsWithChildren, useContext } from 'react';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import NotifikasjonWidgetComponent from './NotifikasjonWidget/NotifikasjonWidget';
 import { createClient } from './api/graphql';
 import { AnalyticsProvider } from './context/AnalyticsProvider';
