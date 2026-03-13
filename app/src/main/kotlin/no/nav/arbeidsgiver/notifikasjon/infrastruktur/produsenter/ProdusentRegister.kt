@@ -420,18 +420,9 @@ val FORELDREPENGER = Produsent(
         "Inntektsmelding foreldrepenger",
         "Inntektsmelding svangerskapspenger",
     ),
-    tillatteMottakere = basedOnEnv(
-        other = {
-            listOf(
-                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
-                RessursIdDefinisjon(ressursId = "nav_foreldrepenger_inntektsmelding")
-            )
-        },
-        prod = {
-            listOf(
-                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
-            )
-        }
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+        RessursIdDefinisjon(ressursId = "nav_foreldrepenger_inntektsmelding")
     )
 )
 
