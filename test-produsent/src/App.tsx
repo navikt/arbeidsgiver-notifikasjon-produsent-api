@@ -60,8 +60,8 @@ function App() {
                             </ul>
                         </nav>
                         <div className="innhold">
-                            <VStack gap="4">
-                                <Box padding="4" background="bg-subtle">
+                            <VStack gap="space-4">
+                                <Box padding="space-4" background="neutral-soft">
                                     <Heading size="medium" level="2">{valgtKomponent}</Heading>
                                 </Box>
                                 <Box>
