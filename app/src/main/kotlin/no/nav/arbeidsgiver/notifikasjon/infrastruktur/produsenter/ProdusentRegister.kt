@@ -448,7 +448,8 @@ val K9 = Produsent(
         "Refusjonskrav for omsorgspenger",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding")
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+        RessursIdDefinisjon(ressursId = "nav_sykdom-i-familien_inntektsmelding")
     )
 )
 
