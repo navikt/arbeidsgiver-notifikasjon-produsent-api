@@ -1,4 +1,4 @@
-import {ApolloClient, from, gql, HttpLink, InMemoryCache, TypedDocumentNode,} from '@apollo/client'
+import {ApolloClient, from, gql, HttpLink, InMemoryCache, ServerError, TypedDocumentNode,} from '@apollo/client'
 import {Query} from "./graphql-types";
 import {RetryLink} from "@apollo/client/link/retry";
 
@@ -10,7 +10,7 @@ export const createClient = (uri: string) =>
         attempts: {
           max: 25,
           retryIf: (error, _operation) => {
-            if (error.statusCode === 401) {
+            if (ServerError.is(error) && error.statusCode === 401) {
               // do not retry 401
               return false;
             }

@@ -1,4 +1,5 @@
-import { gql, TypedDocumentNode, useMutation, useQuery } from '@apollo/client';
+import { gql, TypedDocumentNode } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { useEffect, useState } from 'react';
 import useLocalStorage from './useLocalStorage';
 import { MutationNotifikasjonerSistLestArgs, NotifikasjonerSistLestResultat, Query } from '../api/graphql-types';

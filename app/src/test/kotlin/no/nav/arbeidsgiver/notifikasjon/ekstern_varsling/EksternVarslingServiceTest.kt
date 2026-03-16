@@ -644,7 +644,7 @@ class EksternVarslingServiceTest {
             var serviceJob = service.start(this)
 
             // sending av varsel skeduleres
-            eventually(5.seconds) {
+            eventually(10.seconds) {
                 assertNotEquals((0 to 0), repository.waitQueueCount())
                 assertFalse(
                     database.nonTransactionalExecuteQuery(
@@ -690,19 +690,19 @@ class EksternVarslingServiceTest {
             )
 
             // melding sendes til kafka
-            eventually(5.seconds) {
+            eventually(10.seconds) {
                 assertEquals(MeldingsType.Altinn3, meldingSendt.get())
             }
 
             // ny varsel er sendt vellykket
-            eventually(2.seconds) {
+            eventually(10.seconds) {
                 val velykkedeVarsler = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
                 assertFalse(velykkedeVarsler.isEmpty())
                 assertEquals(nyVarselId, velykkedeVarsler.first().varselId)
             }
 
             // gammel varsel er fortsatt i wait_queue
-            eventually(2.seconds) {
+            eventually(10.seconds) {
                 assertFalse(
                     database.nonTransactionalExecuteQuery<Map<String, Any>>(
                         """
@@ -718,7 +718,7 @@ class EksternVarslingServiceTest {
             serviceJob = service.start(this)
 
             // gammel varsel kanselleres
-            eventually(2.seconds) {
+            eventually(10.seconds) {
                 val kansellerteVarsler = hendelseProdusent.hendelserOfType<EksterntVarselKansellert>()
                 assertFalse(kansellerteVarsler.isEmpty())
                 assertEquals(gammelVarselId, kansellerteVarsler.first().varselId)

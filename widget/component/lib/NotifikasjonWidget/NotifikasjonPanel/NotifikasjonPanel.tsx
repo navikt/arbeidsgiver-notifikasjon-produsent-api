@@ -3,7 +3,7 @@ import { Alert, BodyShort, Button, Dropdown, Link } from '@navikt/ds-react';
 import { NotifikasjonListeElement } from './NotifikasjonListeElement/NotifikasjonListeElement';
 import './NotifikasjonPanel.css';
 import { Notifikasjon, NotifikasjonerResultat } from '../../api/graphql-types';
-import { useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { NOTIFIKASJONER_KLIKKET_PAA } from '../../api/graphql';
 import { LukkIkon } from './NotifikasjonListeElement/Ikoner';
 import { ExpandIcon } from '@navikt/aksel-icons';

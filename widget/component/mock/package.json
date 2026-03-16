@@ -6,7 +6,7 @@
     "type": "git",
     "url": "git+https://github.com/navikt/arbeidsgiver-notifikasjon-widget.git"
   },
-  "version": "8.0.0-rc.9",
+  "version": "8.0.5",
   "license": "MIT",
   "main": "dist/notifikasjonMockMiddleware.js",
   "files": [
@@ -14,10 +14,10 @@
   ],
   "types": "dist/notifikasjonMockMiddleware.d.ts",
   "dependencies": {
-    "@apollo/server": "5.2.0",
-    "@graphql-tools/mock": "9.0.23",
+    "@apollo/server": "5.4.0",
+    "@graphql-tools/mock": "9.1.5",
     "casual": "1.6.2",
-    "graphql": "16.11.0"
+    "graphql": "16.13.1"
   },
   "scripts": {
     "setup": "npm install && npm run build",
@@ -27,14 +27,14 @@
   },
   "devDependencies": {
     "@as-integrations/express5": "1.1.2",
-    "@types/express": "5.0.2",
+    "@types/express": "5.0.6",
     "@types/graphql": "14.5.0",
-    "@types/node": "22.15.21",
-    "@types/supertest": "6.0.3",
-    "express": "5.1.0",
+    "@types/node": "25.5.0",
+    "@types/supertest": "7.2.0",
+    "express": "5.2.1",
     "graphql-tag": "2.12.6",
-    "supertest": "7.1.1",
-    "typescript": "5.8.3",
-    "vitest": "3.1.4"
+    "supertest": "7.2.2",
+    "typescript": "5.9.3",
+    "vitest": "4.1.0"
   }
 }
