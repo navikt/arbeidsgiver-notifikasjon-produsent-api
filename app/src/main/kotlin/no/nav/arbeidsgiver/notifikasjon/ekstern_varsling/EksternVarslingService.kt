@@ -224,8 +224,7 @@ class EksternVarslingService(
                 val kalkulertSendeTidspunkt =
                     varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
                 if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
-                    // TODO, use varsel.data.varselId as idempotency key for altinn
-                    when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel)) {
+                    when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel, varsel.data.varselId.toString())) {
                         is Altinn3VarselKlient.OrderResponse.Success -> {
                             eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                         }

@@ -9,6 +9,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthConfig
 import no.nav.arbeidsgiver.notifikasjon.util.App.`ekstern-varsling`
 import no.nav.arbeidsgiver.notifikasjon.util.DevGcpEnv
 import java.net.URI
+import java.util.*
 
 fun main() = runBlocking {
     val gcpEnv = DevGcpEnv(`ekstern-varsling`)
@@ -71,7 +72,7 @@ fun main() = runBlocking {
             body = "Dette er en test",
             ordreId = null,
         )
-        val orderResponse = devGcpClient.order(varsel).let {
+        val orderResponse = devGcpClient.order(varsel, UUID.randomUUID().toString()).let {
             println("orderrespons:")
             println(it)
             println("")

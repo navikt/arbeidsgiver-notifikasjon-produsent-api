@@ -42,12 +42,12 @@ open class Altinn3VarselKlientImpl(
 
     private val log = logger()
 
-    override suspend fun order(eksternVarsel: EksternVarsel) = try {
+    override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) = try {
         httpClient.post {
             url("$altinnBaseUrl/notifications/api/v1/future/orders")
             plattformTokenBearerAuth()
             contentType(ContentType.Application.Json)
-            setBody(OrderRequest.from(eksternVarsel))
+            setBody(OrderRequest.from(eksternVarsel, idempotencyId))
         }.body<JsonNode>().let {
             OrderResponse.Success.fromJson(it)
         }
@@ -106,7 +106,7 @@ private const val EPOST_AVSENDER = "ikke-svar@nav.no"
 
 @Suppress("ConstPropertyName")
 interface Altinn3VarselKlient {
-    suspend fun order(eksternVarsel: EksternVarsel): OrderResponse
+    suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): OrderResponse
     suspend fun shipment(shipmentId: String): ShipmentResponse
 
 
@@ -142,8 +142,8 @@ interface Altinn3VarselKlient {
             }
 
             companion object {
-                fun from(eksternVarsel: EksternVarsel.Epost) = Email(
-                    idempotencyId = eksternVarsel.ordreId ?: UUID.randomUUID().toString(),
+                fun from(eksternVarsel: EksternVarsel.Epost, idempotencyId: String) = Email(
+                    idempotencyId = idempotencyId,
                     recipient = Recipient(
                         recipientEmail = RecipientEmail(
                             emailAddress = eksternVarsel.epostadresse,
@@ -178,8 +178,8 @@ interface Altinn3VarselKlient {
             )
 
             companion object {
-                fun from(eksternVarsel: EksternVarsel.Sms) = Sms(
-                    idempotencyId = eksternVarsel.ordreId ?: UUID.randomUUID().toString(),
+                fun from(eksternVarsel: EksternVarsel.Sms, idempotencyId: String) = Sms(
+                    idempotencyId = idempotencyId,
                     recipient = Recipient(
                         recipientSms = RecipientSms(
                             phoneNumber = fiksGyldigMobilnummer(eksternVarsel.mobilnummer),
@@ -226,8 +226,8 @@ interface Altinn3VarselKlient {
             )
 
             companion object {
-                fun from(eksternVarsel: EksternVarsel.Altinnressurs) = Organization(
-                    idempotencyId = eksternVarsel.ordreId ?: UUID.randomUUID().toString(),
+                fun from(eksternVarsel: EksternVarsel.Altinnressurs, idempotencyId: String) = Organization(
+                    idempotencyId = idempotencyId,
                     recipient = Recipient(
                         recipientOrganization = RecipientOrganization(
                             orgNumber = eksternVarsel.fnrEllerOrgnr,
@@ -247,10 +247,10 @@ interface Altinn3VarselKlient {
         }
 
         companion object {
-            fun from(eksternVarsel: EksternVarsel): OrderRequest = when (eksternVarsel) {
-                is EksternVarsel.Altinnressurs -> Organization.from(eksternVarsel)
-                is EksternVarsel.Epost -> Email.from(eksternVarsel)
-                is EksternVarsel.Sms -> Sms.from(eksternVarsel)
+            fun from(eksternVarsel: EksternVarsel, idempotencyId: String): OrderRequest = when (eksternVarsel) {
+                is EksternVarsel.Altinnressurs -> Organization.from(eksternVarsel, idempotencyId)
+                is EksternVarsel.Epost -> Email.from(eksternVarsel, idempotencyId)
+                is EksternVarsel.Sms -> Sms.from(eksternVarsel, idempotencyId)
                 is EksternVarsel.Altinntjeneste -> throw UnsupportedOperationException("Altinntjeneste er ikke støttet")
             }
 
@@ -466,7 +466,7 @@ class Altinn3VarselKlientMedFilter(
     private val loggingKlient: Altinn3VarselKlientLogging
 ) : Altinn3VarselKlientImpl() {
 
-    override suspend fun order(eksternVarsel: EksternVarsel): OrderResponse {
+    override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): OrderResponse {
         val mottaker = when (eksternVarsel) {
             is EksternVarsel.Sms -> eksternVarsel.mobilnummer
             is EksternVarsel.Epost -> eksternVarsel.epostadresse
@@ -474,9 +474,9 @@ class Altinn3VarselKlientMedFilter(
             is EksternVarsel.Altinntjeneste -> throw UnsupportedOperationException("Altinntjeneste er ikke støttet")
         }
         return if (repository.mottakerErPåAllowList(mottaker)) {
-            super.order(eksternVarsel)
+            super.order(eksternVarsel, idempotencyId)
         } else {
-            loggingKlient.order(eksternVarsel)
+            loggingKlient.order(eksternVarsel, idempotencyId)
         }
     }
 
@@ -492,7 +492,7 @@ class Altinn3VarselKlientMedFilter(
 class Altinn3VarselKlientLogging : Altinn3VarselKlient {
     private val log = logger()
 
-    override suspend fun order(eksternVarsel: EksternVarsel): OrderResponse {
+    override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): OrderResponse {
         log.info("order($eksternVarsel)")
         val fakeOrderId = "fake-${UUID.randomUUID()}"
         val fakeShipmentId = "fake-${UUID.randomUUID()}"

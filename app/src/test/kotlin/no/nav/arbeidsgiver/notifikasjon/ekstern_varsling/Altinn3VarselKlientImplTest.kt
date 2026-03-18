@@ -31,12 +31,12 @@ class Altinn3VarselKlientImplTest {
             tekst = "Hei, dette er en test",
             ordreId = "test-idempotency-123"
         ).let { dto ->
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
                         {
-                          "idempotencyId": "test-idempotency-123",
+                          "idempotencyId": "test-idempotency",
                           "recipient": {
                             "recipientSms": {
                               "phoneNumber": "+4799999999",
@@ -77,12 +77,12 @@ class Altinn3VarselKlientImplTest {
                 tekst = "Hei, dette er en test",
                 ordreId = "ordre123"
             )
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
                         {
-                          "idempotencyId": "ordre123",
+                          "idempotencyId": "test-idempotency",
                           "recipient": {
                             "recipientSms": {
                               "phoneNumber": "$output",
@@ -110,12 +110,12 @@ class Altinn3VarselKlientImplTest {
             body = "Hei, dette er en test",
             ordreId = "test-idempotency-456"
         ).let { dto ->
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
                         {
-                          "idempotencyId": "test-idempotency-456",
+                          "idempotencyId": "test-idempotency",
                           "recipient": {
                             "recipientEmail": {
                               "emailAddress": "foo@bar.baz",
@@ -147,12 +147,12 @@ class Altinn3VarselKlientImplTest {
             smsInnhold = "Hei, sms",
             ordreId = "test-idempotency-789"
         ).let { dto ->
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
                         {
-                          "idempotencyId": "test-idempotency-789",
+                          "idempotencyId": "test-idempotency",
                           "recipient": {
                             "recipientOrganization": {
                               "orgNumber": "42",
@@ -191,7 +191,7 @@ class Altinn3VarselKlientImplTest {
         )
 
         assertThrows<UnsupportedOperationException> {
-            Altinn3VarselKlient.OrderRequest.from(eksternVarsel)
+            Altinn3VarselKlient.OrderRequest.from(eksternVarsel, "test-idempotency")
 
         }
     }
@@ -217,7 +217,7 @@ class Altinn3VarselKlientImplTest {
                 override suspend fun token(scope: String) = "fake-token"
             },
         )
-        client.order(eksternVarselSms).let {
+        client.order(eksternVarselSms, "123").let {
             it as Altinn3VarselKlient.OrderResponse.Success
             assertEquals("42", it.orderId)
             assertEquals("shipment-42", it.shipmentId)
@@ -269,7 +269,7 @@ class Altinn3VarselKlientImplTest {
                 override suspend fun token(scope: String) = "fake-token"
             },
         )
-        client.order(eksternVarselEpost).let {
+        client.order(eksternVarselEpost, "123").let {
             it as Altinn3VarselKlient.OrderResponse.Success
             assertEquals("42", it.orderId)
             assertEquals("shipment-42", it.shipmentId)
@@ -325,7 +325,7 @@ class Altinn3VarselKlientImplTest {
             },
         )
 
-        client.order(eksternVarselSms).let {
+        client.order(eksternVarselSms, "123").let {
             it as Altinn3VarselKlient.ErrorResponse
             assertEquals("RuntimeException", it.code)
             assertEquals("Failed to get token", it.message)
@@ -375,7 +375,7 @@ class Altinn3VarselKlientImplTest {
                 override suspend fun token(scope: String) = "fake-token"
             },
         )
-        client.order(eksternVarselSms).let {
+        client.order(eksternVarselSms, "123").let {
             it as Altinn3VarselKlient.ErrorResponse
             assertEquals("400", it.code)
             assertTrue(it.message.contains("Bad Request"))

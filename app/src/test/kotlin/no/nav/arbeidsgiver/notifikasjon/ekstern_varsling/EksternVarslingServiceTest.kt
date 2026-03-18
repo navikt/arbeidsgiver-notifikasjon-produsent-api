@@ -81,7 +81,7 @@ class EksternVarslingServiceTest {
                 }
             },
             altinn3VarselKlient = altinn3VarselKlient ?: object : Altinn3VarselKlient {
-                override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
+                override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): Altinn3VarselKlient.OrderResponse {
                     meldingSendt.set(MeldingsType.Altinn3)
                     val fakeOrderId = "fake-${UUID.randomUUID()}"
                     val fakeShipmentId = "fake-${UUID.randomUUID()}"
@@ -782,7 +782,7 @@ class EksternVarslingServiceTest {
                 },
             )
 
-            override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): Altinn3VarselKlient.OrderResponse {
                 val ordreId = UUID.randomUUID()
                 val shipmentId = UUID.randomUUID()
                 return Altinn3VarselKlient.OrderResponse.Success(
@@ -852,7 +852,7 @@ class EksternVarslingServiceTest {
             }
         """.trimIndent()
         val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
-            override suspend fun order(eksternVarsel: EksternVarsel) =
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) =
                 Altinn3VarselKlient.OrderResponse.Success(
                     orderId = "314",
                     shipmentId = "shipment-314",
@@ -905,7 +905,7 @@ class EksternVarslingServiceTest {
     @Test
     fun `Altinn3 varsel oppførsel status simulering (synkron feil)`() = runBlocking {
         val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
-            override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): Altinn3VarselKlient.OrderResponse {
                 return Altinn3VarselKlient.ErrorResponse(
                     message = """
                             Bad Request: {
