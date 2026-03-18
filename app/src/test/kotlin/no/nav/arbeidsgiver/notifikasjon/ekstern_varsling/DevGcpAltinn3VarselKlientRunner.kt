@@ -71,23 +71,16 @@ fun main() = runBlocking {
             body = "Dette er en test",
             ordreId = null,
         )
-        val orderId = devGcpClient.order(varsel).let {
+        val orderResponse = devGcpClient.order(varsel).let {
             println("orderrespons:")
             println(it)
             println("")
-            (it as Altinn3VarselKlient.OrderResponse.Success).orderId
+            it as Altinn3VarselKlient.OrderResponse.Success
         }
 
-        devGcpClient.orderStatus(orderId).also {
+        devGcpClient.shipment(orderResponse.shipmentId).also {
             println("")
-            println("ordreStatus orderId $orderId:")
-            println(it)
-            println("")
-        }
-
-        devGcpClient.notifications(orderId).also {
-            println("")
-            println("notifications orderId $orderId:")
+            println("shipment status shipmentId ${orderResponse.shipmentId}:")
             println(it)
             println("")
         }

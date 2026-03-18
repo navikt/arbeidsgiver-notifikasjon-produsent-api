@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.NotificationStatusSummary
+import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.ShipmentStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
@@ -86,57 +83,41 @@ class EksternVarslingServiceTest {
             altinn3VarselKlient = altinn3VarselKlient ?: object : Altinn3VarselKlient {
                 override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
                     meldingSendt.set(MeldingsType.Altinn3)
-                    return Altinn3VarselKlient.OrderResponse.Success.fromJson(
-                        JsonNodeFactory.instance.objectNode().apply {
-                            put("orderId", "fake-${UUID.randomUUID()}")
-                        }
-                    )
-                }
-
-                override suspend fun notifications(orderId: String): NotificationsResponse {
-                    return NotificationsResponse.Success(
-                        orderId = orderId,
-                        generated = 3,
-                        succeeded = 3,
-                        sendersReference = "fake-${UUID.randomUUID()}",
-                        rå = JsonNodeFactory.instance.nullNode(),
-                        notifications = listOf(
-                            Notification(
-                                id = "fake-${UUID.randomUUID()}",
-                                succeeded = true,
-                                sendStatus = SendStatus(
-                                    status = SendStatus.Delivered,
-                                    description = "",
-                                    lastUpdate = ""
-                                ),
-                                recipient = Notification.Recipient(
-                                    null,
-                                    null,
-                                    null,
-                                    null
-                                )
-                            )
-                        )
-
-                    )
-                }
-
-                override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
-                    return Altinn3VarselKlient.OrderStatusResponse.Success(
-                        orderId = orderId,
-                        processingStatus = Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
-                            status = Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
-                            description = null,
-                            lastUpdate = null,
-                        ),
+                    val fakeOrderId = "fake-${UUID.randomUUID()}"
+                    val fakeShipmentId = "fake-${UUID.randomUUID()}"
+                    return Altinn3VarselKlient.OrderResponse.Success(
                         rå = JsonNodeFactory.instance.objectNode().apply {
-                            put("orderId", orderId)
+                            put("notificationOrderId", fakeOrderId)
+                            putObject("notification").put("shipmentId", fakeShipmentId)
                         },
-                        sendersReference = "fake-${UUID.randomUUID()}",
-                        notificationsStatusSummary = NotificationStatusSummary(
-                            generated = 3, succeeded = 3,
-                        )
+                        orderId = fakeOrderId,
+                        shipmentId = fakeShipmentId,
+                    )
+                }
 
+                override suspend fun shipment(shipmentId: String): Altinn3VarselKlient.ShipmentResponse {
+                    return Altinn3VarselKlient.ShipmentResponse.Success(
+                        rå = JsonNodeFactory.instance.objectNode().apply {
+                            put("shipmentId", shipmentId)
+                            put("status", ShipmentStatus.Order_Completed)
+                            putArray("recipients").addObject().apply {
+                                put("status", ShipmentStatus.Email_Delivered)
+                                put("lastUpdate", "2025-03-31T16:21:04.126885Z")
+                                put("destination", "test@test.no")
+                            }
+                        },
+                        shipmentId = shipmentId,
+                        sendersReference = null,
+                        type = "Notification",
+                        status = ShipmentStatus.Order_Completed,
+                        lastUpdate = null,
+                        recipients = listOf(
+                            Altinn3VarselKlient.ShipmentResponse.Success.RecipientDelivery(
+                                status = ShipmentStatus.Email_Delivered,
+                                lastUpdate = "2025-03-31T16:21:04.126885Z",
+                                destination = "test@test.no",
+                            )
+                        ),
                     )
                 }
             },
@@ -730,135 +711,93 @@ class EksternVarslingServiceTest {
 
     @Test
     fun `Altinn3 varsel oppførsel status simulering`() = runBlocking {
-        val notificationsNewRå = laxObjectMapper.readValue<JsonNode>(
+        val shipmentProcessingRå = laxObjectMapper.readValue<JsonNode>(
             """
                 {
-                "generated": 2,
-                "notifications": [
-                  {
-                    "id": "042f1a8a-fe29-47c9-a992-433399563c12",
-                    "recipient": {
-                      "emailAddress": "abc@a.no",
-                      "organizationNumber": "12341234"
-                    },
-                    "sendStatus": {
-                      "description": "The email was successfully delivered to the recipient. No errors were reported, indicating successful delivery.",
-                      "lastUpdate": "2025-03-31T16:21:04.12234Z",
-                      "status": "Delivered"
-                    },
-                    "succeeded": true
-                  },
-                  {
-                    "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
-                    "recipient": {
-                      "emailAddress": "sss.sss@sss.no",
-                      "organizationNumber": "12341234"
-                    },
-                    "sendStatus": {
-                      "description": "The email has been created, but has not been picked up for processing yet.",
-                      "lastUpdate": "2025-03-31T16:21:04.126885Z",
-                      "status": "New"
-                    },
-                    "succeeded": false
-                  }
-                ],
-                "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
-                "succeeded": 1
+                "shipmentId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Processing",
+                "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                "recipients": []
               }
             """.trimIndent()
         )
-        val notificationsDeliveredRå = laxObjectMapper.readValue<JsonNode>(
+        val shipmentWithNewRecipientsRå = laxObjectMapper.readValue<JsonNode>(
             """
                 {
-                "generated": 2,
-                "notifications": [
+                "shipmentId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Completed",
+                "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                "recipients": [
                   {
-                    "id": "042f1a8a-fe29-47c9-a992-433399563c12",
-                    "recipient": {
-                      "emailAddress": "abc@a.no",
-                      "organizationNumber": "12341234"
-                    },
-                    "sendStatus": {
-                      "description": "The email was successfully delivered to the recipient. No errors were reported, indicating successful delivery.",
-                      "lastUpdate": "2025-03-31T16:21:04.12234Z",
-                      "status": "Delivered"
-                    },
-                    "succeeded": true
+                    "status": "Email_Delivered",
+                    "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                    "destination": "abc@a.no"
                   },
                   {
-                    "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
-                    "recipient": {
-                      "emailAddress": "sss.sss@sss.no",
-                      "organizationNumber": "12341234"
-                    },
-                    "sendStatus": {
-                      "description": "The email was successfully delivered to the recipient. No errors were reported, indicating successful delivery.",
-                      "lastUpdate": "2025-03-31T16:21:04.126885Z",
-                      "status": "Delivered"
-                    },
-                    "succeeded": true
+                    "status": "Email_New",
+                    "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                    "destination": "sss.sss@sss.no"
                   }
-                ],
-                "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
-                "succeeded": 2
+                ]
+              }
+            """.trimIndent()
+        )
+        val shipmentAllDeliveredRå = laxObjectMapper.readValue<JsonNode>(
+            """
+                {
+                "shipmentId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Completed",
+                "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                "recipients": [
+                  {
+                    "status": "Email_Delivered",
+                    "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                    "destination": "abc@a.no"
+                  },
+                  {
+                    "status": "Email_Delivered",
+                    "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                    "destination": "sss.sss@sss.no"
+                  }
+                ]
               }
             """.trimIndent()
         )
         val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
-            val orderStatusResolvers = mutableListOf(
-                { orderId: String ->
-                    Altinn3VarselKlient.OrderStatusResponse.Success(
-                        rå = JsonNodeFactory.instance.objectNode(),
-                        orderId = orderId,
-                        sendersReference = null,
-                        Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
-                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Processing,
-                            null,
-                            null
-                        ),
-                        NotificationStatusSummary(0, 0)
-                    )
+            val shipmentResolvers = mutableListOf(
+                { _: String ->
+                    Altinn3VarselKlient.ShipmentResponse.Success.fromJson(shipmentProcessingRå)
                 },
-                { orderId: String ->
-                    Altinn3VarselKlient.OrderStatusResponse.Success(
-                        rå = JsonNodeFactory.instance.objectNode(),
-                        orderId = orderId,
-                        sendersReference = null,
-                        Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
-                            Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
-                            null,
-                            null
-                        ),
-                        NotificationStatusSummary(0, 0)
-                    )
+                { _: String ->
+                    Altinn3VarselKlient.ShipmentResponse.Success.fromJson(shipmentWithNewRecipientsRå)
+                },
+                { _: String ->
+                    Altinn3VarselKlient.ShipmentResponse.Success.fromJson(shipmentAllDeliveredRå)
                 },
             )
-            val notificationResolvers = mutableListOf(
-                {
-                    NotificationsResponse.Success.fromJson(notificationsNewRå)
-                },
-                {
-                    NotificationsResponse.Success.fromJson(notificationsDeliveredRå)
-                },
-            )
-
 
             override suspend fun order(eksternVarsel: EksternVarsel): Altinn3VarselKlient.OrderResponse {
                 val ordreId = UUID.randomUUID()
+                val shipmentId = UUID.randomUUID()
                 return Altinn3VarselKlient.OrderResponse.Success(
                     orderId = "$ordreId",
-                    rå = JsonNodeFactory.instance.objectNode().put("orderId", ordreId.toString())
+                    shipmentId = "$shipmentId",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", ordreId.toString())
+                        putObject("notification").put("shipmentId", shipmentId.toString())
+                    }
                 )
             }
 
-            override suspend fun notifications(orderId: String): NotificationsResponse {
-                return if (notificationResolvers.size > 1) notificationResolvers.removeAt(0)
-                    .invoke() else notificationResolvers.first().invoke()
-            }
-
-            override suspend fun orderStatus(orderId: String): Altinn3VarselKlient.OrderStatusResponse {
-                return if (orderStatusResolvers.size > 1) orderStatusResolvers.removeAt(0)
-                    .invoke(orderId) else orderStatusResolvers.first().invoke(orderId)
+            override suspend fun shipment(shipmentId: String): Altinn3VarselKlient.ShipmentResponse {
+                return if (shipmentResolvers.size > 1) shipmentResolvers.removeAt(0)
+                    .invoke(shipmentId) else shipmentResolvers.first().invoke(shipmentId)
             }
         }
 
@@ -879,7 +818,7 @@ class EksternVarslingServiceTest {
             eventually(5.seconds) {
                 val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
                 assertEquals(1, vellykket.size)
-                assertEquals(notificationsDeliveredRå, vellykket.first().råRespons)
+                assertEquals(shipmentAllDeliveredRå, vellykket.first().råRespons)
             }
             job.cancel()
         }
@@ -896,83 +835,36 @@ class EksternVarslingServiceTest {
     @Test
     fun `Altinn3 varsel oppførsel status simulering asynkron feil`() = runBlocking {
         //language=JSON
-        val orderStatusResponse = """
+        val shipmentResponse = """
             {
-              "id": "314",
-              "requestedSendTime": "2025-10-29T18:49:31.27885Z",
-              "creator": "nav",
-              "created": "2025-10-29T18:49:31.27928Z",
-              "notificationChannel": "Email",
-              "processingStatus": {
-                "status": "Completed",
-                "description": "Order processing is completed. All notifications have a final status.",
-                "lastUpdate": "2025-10-29T18:50:14.736615Z"
-              },
-              "notificationsStatusSummary": {
-                "email": {
-                  "links": {
-                    "self": "https://platform.altinn.no/notifications/api/v1/orders/1e0f2323-4b56-4489-aca4-9bc6c2cd86e6/notifications/email"
-                  },
-                  "generated": 1,
-                  "succeeded": 0
+              "shipmentId": "314",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Completed",
+              "lastUpdate": "2025-10-29T18:50:14.736615Z",
+              "recipients": [
+                {
+                  "status": "Email_Failed",
+                  "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                  "destination": "abc@a.no"
                 }
-              }
+              ]
             }
         """.trimIndent()
-        //language=JSON
-        val notificationsRespons = """
-            {
-                "generated": 1,
-                "succeeded": 0,
-                "notifications": [
-                  {
-                    "id": "042f1a8a-fe29-47c9-a992-433399563c12",
-                    "recipient": {
-                      "emailAddress": "abc@a.no",
-                      "organizationNumber": "12341234"
-                    },
-                    "sendStatus": {
-                      "description": "The email was not sent due to an unspecified failure.",
-                      "lastUpdate": "2025-03-31T16:21:04.12234Z",
-                      "status": "Failed"
-                    },
-                    "succeeded": false
-                  }
-                ],
-                "orderId": "314"
-              }
-              """.trimIndent()
         val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
             override suspend fun order(eksternVarsel: EksternVarsel) =
                 Altinn3VarselKlient.OrderResponse.Success(
                     orderId = "314",
-                    rå = JsonNodeFactory.instance.objectNode().put("orderId", "314")
+                    shipmentId = "shipment-314",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", "314")
+                        putObject("notification").put("shipmentId", "shipment-314")
+                    }
                 )
 
-            /**
-             * notifications gjør 2 kall (sms og email) og konkatenerer resultatene, deerfor (+ "[]") her
-             */
-            override suspend fun notifications(orderId: String): NotificationsResponse.Success {
-                return NotificationsResponse.Success.fromJson(
-                    laxObjectMapper.readValue<JsonNode>(notificationsRespons)
-                ) + NotificationsResponse.Success.fromJson(
-                    laxObjectMapper.readValue<JsonNode>("""
-                        {"orderId":"314","generated":0,"succeeded":0,"notifications":[]}
-                    """)
-                )
-            }
-
-            override suspend fun orderStatus(orderId: String) =
-                Altinn3VarselKlient.OrderStatusResponse.Success(
-                    rå = laxObjectMapper.readValue<JsonNode>(orderStatusResponse),
-                    orderId = orderId,
-                    sendersReference = null,
-                    Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus(
-                        Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus.Completed,
-                        null,
-                        null
-                    ),
-                    NotificationStatusSummary(1, 0)
+            override suspend fun shipment(shipmentId: String) =
+                Altinn3VarselKlient.ShipmentResponse.Success.fromJson(
+                    laxObjectMapper.readValue<JsonNode>(shipmentResponse)
                 )
         }
 
@@ -995,23 +887,15 @@ class EksternVarslingServiceTest {
                 assertEquals(1, feilet.size)
                 assertNotNull(feilet.first())
                 assertEquals(
-                    "Failed",
+                    "Email_Failed",
                     feilet.first().altinnFeilkode
-                )
-                assertEquals(
-                    "The email was not sent due to an unspecified failure.",
-                    feilet.first().feilmelding
                 )
                 repository.oppdaterModellEtterHendelse(feilet.first())
                 repository.findVarsel(feilet.first().varselId).let { varselTilstand ->
                     assertNotNull(varselTilstand)
                     varselTilstand as EksternVarselTilstand.Kvittert
                     varselTilstand.response as AltinnResponse.Feil
-                    assertEquals("Failed", varselTilstand.response.feilkode)
-                    assertEquals(
-                        "The email was not sent due to an unspecified failure.",
-                        varselTilstand.response.feilmelding
-                    )
+                    assertEquals("Email_Failed", varselTilstand.response.feilkode)
                 }
             }
             job.cancel()
@@ -1055,8 +939,7 @@ class EksternVarslingServiceTest {
                 )
             }
 
-            override suspend fun notifications(orderId: String) = TODO("Not yet implemented")
-            override suspend fun orderStatus(orderId: String) = TODO("Not yet implemented")
+            override suspend fun shipment(shipmentId: String) = TODO("Not yet implemented")
         }
         withTestDatabase(EksternVarsling.databaseConfig) { database ->
             val (repository, service, hendelseProdusent) = setupService(

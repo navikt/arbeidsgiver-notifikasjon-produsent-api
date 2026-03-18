@@ -3,8 +3,6 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 import com.fasterxml.jackson.databind.JsonNode
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification.SendStatus
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.OrderStatusResponse.ProcessingStatus
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
@@ -226,6 +224,7 @@ class EksternVarslingService(
                 val kalkulertSendeTidspunkt =
                     varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
                 if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
+                    // TODO, use varsel.data.varselId as idempotency key for altinn
                     when (val response = altinn3VarselKlient.order(varsel.data.eksternVarsel)) {
                         is Altinn3VarselKlient.OrderResponse.Success -> {
                             eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
@@ -250,10 +249,12 @@ class EksternVarslingService(
                 try {
                     when (varsel.response) {
                         is AltinnResponse.Ok -> {
-                            val ordreId = varsel.response.rå["orderId"].asText()
-                            if (ordreId.isEmpty())
-                                throw RuntimeException("Ordre er markert som sendt, men mangler orderId")
-                            val (ordreStatus, altinnResponse) = hentVarselOrdreStatus(ordreId)
+                            val shipmentId = varsel.response.rå["notification"]?.get("shipmentId")?.asText()
+                                ?: varsel.response.rå["orderId"]?.asText()
+                                ?: ""
+                            if (shipmentId.isEmpty())
+                                throw RuntimeException("Ordre er markert som sendt, men mangler shipmentId")
+                            val (ordreStatus, altinnResponse) = hentShipmentStatus(shipmentId)
                             when (ordreStatus) {
                                 Altinn3VarselStatus.Prosessert,
                                 Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
@@ -309,47 +310,42 @@ class EksternVarslingService(
     }
 
 
-    private suspend fun hentVarselOrdreStatus(ordreId: String): Pair<Altinn3VarselStatus, JsonNode> {
-        val ordreStatus = altinn3VarselKlient.orderStatus(ordreId)
-        if (ordreStatus !is Altinn3VarselKlient.OrderStatusResponse.Success) {
-            log.error("Feil ved henting av ordrestatus ${ordreStatus.rå}")
-            return Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
+    private suspend fun hentShipmentStatus(shipmentId: String): Pair<Altinn3VarselStatus, JsonNode> {
+        val shipment = altinn3VarselKlient.shipment(shipmentId)
+        if (shipment !is Altinn3VarselKlient.ShipmentResponse.Success) {
+            log.error("Feil ved henting av shipment status ${shipment.rå}")
+            return Pair(Altinn3VarselStatus.Prosesserer, shipment.rå)
         }
 
-        return when (ordreStatus.processingStatus.status) {
-            ProcessingStatus.Registered,
-            ProcessingStatus.Processing -> Pair(Altinn3VarselStatus.Prosesserer, ordreStatus.rå)
-            ProcessingStatus.Processed -> Pair(Altinn3VarselStatus.Prosessert, ordreStatus.rå)
+        return when {
+            shipment.isOrderProcessing ->
+                Pair(Altinn3VarselStatus.Prosesserer, shipment.rå)
 
-            ProcessingStatus.Cancelled -> Pair(Altinn3VarselStatus.Kansellert, ordreStatus.rå)
+            shipment.isOrderProcessed ->
+                Pair(Altinn3VarselStatus.Prosessert, shipment.rå)
 
-            ProcessingStatus.Completed -> {
-                // Orderen er ferdig prosessert og alle notifikasjoner er blitt generert. Sjekker om notifikasjoner alle notifikasjoner er blitt sendt ut
-                altinn3VarselKlient.notifications(ordreId).let {
-                    if (it !is Altinn3VarselKlient.NotificationsResponse.Success) {
-                        log.error("Feil ved henting av notifikasjoner: ${it.rå}")
-                        return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
-                    }
+            shipment.isOrderCancelled || shipment.isOrderConditionNotMet ->
+                Pair(Altinn3VarselStatus.Kansellert, shipment.rå)
 
-                    if (it.isProcessing) {
-                        return Pair(Altinn3VarselStatus.Prosesserer, it.rå)
-                    }
-
-                    val failed = it.notifications.filter { notification ->
-                        notification.sendStatus.status.startsWith(SendStatus.Failed)
-                    }
-                    if (failed.isNotEmpty()) {
-                        log.warn("Eksternt varsel med altinn ordre id $ordreId er fullført, men har ikke klart å sende ut alle notifikasjoner. antall feilet: ${failed.count()}. succedded: ${it.succeeded}, generated: ${it.generated}")
-                    }
-                    if (it.generated == it.succeeded)
-                        return Pair(Altinn3VarselStatus.Kvittert, it.rå)
-
-                    return Pair(Altinn3VarselStatus.KvittertMedFeil, it.rå)
+            shipment.isOrderCompleted -> {
+                // Orderen er ferdig prosessert. Sjekker status på mottakere.
+                if (shipment.recipients.any { it.isProcessing }) {
+                    return Pair(Altinn3VarselStatus.Prosesserer, shipment.rå)
                 }
+
+                if (shipment.hasFailedRecipients) {
+                    val failedCount = shipment.recipients.count { it.isFailed }
+                    log.warn("Eksternt varsel med shipment id $shipmentId er fullført, men har ikke klart å sende ut alle notifikasjoner. antall feilet: $failedCount, totalt: ${shipment.recipients.size}")
+                }
+
+                if (shipment.allRecipientsDelivered)
+                    return Pair(Altinn3VarselStatus.Kvittert, shipment.rå)
+
+                return Pair(Altinn3VarselStatus.KvittertMedFeil, shipment.rå)
             }
 
             else -> {
-                throw RuntimeException("Fikk ${ordreStatus.processingStatus.status} fra Altinn, denne blir ikke håndtert")
+                throw RuntimeException("Fikk ${shipment.status} fra Altinn, denne blir ikke håndtert")
             }
         }
     }
@@ -424,18 +420,31 @@ class EksternVarslingService(
 
 /**
  * Extracts status and description from the given JsonNode.
- * Either from the /processingStatus node or from the /notifications array.
+ * Supports both the new /future/shipment format and legacy formats.
  */
 private fun JsonNode.extractStatusAndDescription(): Pair<String, String> {
 
-    // Case 1: ordrestatus. Object with processingStatus
+    // Case 1: New /future/shipment format. Object with status and recipients array.
+    val shipmentStatus = at("/status")
+    val recipients = at("/recipients")
+    if (!shipmentStatus.isMissingNode && recipients.isArray) {
+        val failedRecipients = recipients.filter { it.at("/status").asText().contains("Failed") }
+        return if (failedRecipients.isNotEmpty()) {
+            failedRecipients.map { it.at("/status").asText() }.joinToString(",") to
+                failedRecipients.map { it.at("/destination")?.asText("ukjent") ?: "ukjent" }.joinToString(",")
+        } else {
+            shipmentStatus.asText() to ""
+        }
+    }
+
+    // Case 2: Legacy ordrestatus. Object with processingStatus
     val statusNode = at("/processingStatus/status")
     val descNode = at("/processingStatus/description")
     if (!statusNode.isMissingNode && !descNode.isMissingNode) {
         return statusNode.asText() to descNode.asText()
     }
 
-    // Case 2: notifications: Array with notifications
+    // Case 3: Legacy notifications: Array with notifications
     if (isArray) {
         return flatMap { order ->
             val notifications = order.at("/notifications")
