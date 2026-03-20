@@ -9,8 +9,6 @@ import io.ktor.http.content.*
 import io.ktor.serialization.jackson.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.test.runTest
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success
-import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.NotificationsResponse.Success.Notification
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
@@ -24,26 +22,28 @@ import kotlin.test.assertTrue
 class Altinn3VarselKlientImplTest {
 
     @Test
-    fun `DTO mapping EksternVarsel Sms - NotificationDTO Sms`() {
+    fun `DTO mapping EksternVarsel Sms - new future orders format`() {
         EksternVarsel.Sms(
             fnrEllerOrgnr = "99999999901",
             sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
             sendeTidspunkt = null,
             mobilnummer = "99999999",
             tekst = "Hei, dette er en test",
-            ordreId = "123"
+            ordreId = "test-idempotency-123"
         ).let { dto ->
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
                         {
-                          "notificationChannel" : "Sms",
-                          "recipients" : [ {
-                            "mobileNumber" : "+4799999999"
-                          } ],
-                          "smsTemplate" : {
-                            "body" : "Hei, dette er en test"
+                          "idempotencyId": "test-idempotency",
+                          "recipient": {
+                            "recipientSms": {
+                              "phoneNumber": "+4799999999",
+                              "smsSettings": {
+                                "body": "Hei, dette er en test"
+                              }
+                            }
                           }
                         }
                       """,
@@ -75,21 +75,23 @@ class Altinn3VarselKlientImplTest {
                 sendeTidspunkt = null,
                 mobilnummer = input,
                 tekst = "Hei, dette er en test",
-                ordreId = "123"
+                ordreId = "ordre123"
             )
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
-                            {
-                              "notificationChannel" : "Sms",
-                              "recipients" : [ {
-                                "mobileNumber" : "$output"
-                              } ],
-                              "smsTemplate" : {
-                                "body" : "Hei, dette er en test"
+                        {
+                          "idempotencyId": "test-idempotency",
+                          "recipient": {
+                            "recipientSms": {
+                              "phoneNumber": "$output",
+                              "smsSettings": {
+                                "body": "Hei, dette er en test"
                               }
                             }
+                          }
+                        }
                           """,
                 laxObjectMapper.writeValueAsString(json),
                 true
@@ -98,7 +100,7 @@ class Altinn3VarselKlientImplTest {
     }
 
     @Test
-    fun `DTO mapping EksternVarsel Epost - NotificationDTO Email`() {
+    fun `DTO mapping EksternVarsel Epost - new future orders format`() {
         EksternVarsel.Epost(
             fnrEllerOrgnr = "99999999901",
             sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
@@ -106,21 +108,24 @@ class Altinn3VarselKlientImplTest {
             epostadresse = "foo@bar.baz",
             tittel = "Test",
             body = "Hei, dette er en test",
-            ordreId = "123"
+            ordreId = "test-idempotency-456"
         ).let { dto ->
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
                         {
-                          "notificationChannel" : "Email",
-                          "recipients" : [ {
-                            "emailAddress" : "foo@bar.baz"
-                          } ],
-                          "emailTemplate" : {
-                            "subject" : "Test",
-                            "body" : "Hei, dette er en test",
-                            "contentType" : "Html"
+                          "idempotencyId": "test-idempotency",
+                          "recipient": {
+                            "recipientEmail": {
+                              "emailAddress": "foo@bar.baz",
+                              "emailSettings": {
+                                "fromAddress": "ikke-svar@nav.no",
+                                "subject": "Test",
+                                "body": "Hei, dette er en test",
+                                "contentType": "Html"
+                              }
+                            }
                           }
                         }
                         """,
@@ -131,7 +136,7 @@ class Altinn3VarselKlientImplTest {
     }
 
     @Test
-    fun `DTO mapping EksternVarsel Altinnressurs - NotificationDTO Resource`() {
+    fun `DTO mapping EksternVarsel Altinnressurs - new future orders format`() {
         EksternVarsel.Altinnressurs(
             fnrEllerOrgnr = "42",
             sendeVindu = HendelseModel.EksterntVarselSendingsvindu.LØPENDE,
@@ -140,26 +145,30 @@ class Altinn3VarselKlientImplTest {
             epostTittel = "Test",
             epostInnhold = "Hei, epost",
             smsInnhold = "Hei, sms",
-            ordreId = "123"
+            ordreId = "test-idempotency-789"
         ).let { dto ->
-            val json = Altinn3VarselKlient.OrderRequest.from(dto)
+            val json = Altinn3VarselKlient.OrderRequest.from(dto, "test-idempotency")
             JSONAssert.assertEquals(
                 //language=json
                 """
                         {
-                          "notificationChannel" : "EmailPreferred",
-                          "recipients" : [ {
-                            "organizationNumber" : "42"
-                          } ],
-                          "resourceId" : "nav_foo-bar",
-                          "resourceAction" : "access",
-                          "emailTemplate" : {
-                            "subject" : "Test",
-                            "body" : "Hei, epost",
-                            "contentType" : "Html"
-                          },
-                          "smsTemplate" : {
-                            "body" : "Hei, sms"
+                          "idempotencyId": "test-idempotency",
+                          "recipient": {
+                            "recipientOrganization": {
+                              "orgNumber": "42",
+                              "channelSchema": "EmailPreferred",
+                              "resourceId": "nav_foo-bar",
+                              "resourceAction": "access",
+                              "emailSettings": {
+                                "fromAddress": "ikke-svar@nav.no",
+                                "subject": "Test",
+                                "body": "Hei, epost",
+                                "contentType": "Html"
+                              },
+                              "smsSettings": {
+                                "body": "Hei, sms"
+                              }
+                            }
                           }
                         }
                         """,
@@ -182,17 +191,17 @@ class Altinn3VarselKlientImplTest {
         )
 
         assertThrows<UnsupportedOperationException> {
-            Altinn3VarselKlient.OrderRequest.from(eksternVarsel)
+            Altinn3VarselKlient.OrderRequest.from(eksternVarsel, "test-idempotency")
 
         }
     }
 
     @Test
-    fun `Altinn3VarselKlientImpl#order success for sms returnerer order id`() = runTest {
+    fun `Altinn3VarselKlientImpl#order success for sms returnerer order id og shipment id`() = runTest {
         val mockEngine = MockEngine {
             respond(
-                content = mockResponse,
-                status = HttpStatusCode.OK,
+                content = mockOrderResponse,
+                status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
@@ -208,25 +217,28 @@ class Altinn3VarselKlientImplTest {
                 override suspend fun token(scope: String) = "fake-token"
             },
         )
-        client.order(eksternVarselSms).let {
+        client.order(eksternVarselSms, "123").let {
             it as Altinn3VarselKlient.OrderResponse.Success
             assertEquals("42", it.orderId)
+            assertEquals("shipment-42", it.shipmentId)
         }
         assertEquals(1, mockEngine.requestHistory.size)
         mockEngine.requestHistory.first().let { req ->
-            assertEquals("http://altinn/notifications/api/v1/orders", req.url.toString())
+            assertEquals("http://altinn/notifications/api/v1/future/orders", req.url.toString())
             assertEquals(HttpMethod.Post, req.method)
             assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
             JSONAssert.assertEquals(
                 //language=json
                 """
                     {
-                      "notificationChannel" : "Sms",
-                      "recipients" : [ {
-                        "mobileNumber" : "+4799999999"
-                      } ],
-                      "smsTemplate" : {
-                        "body" : "Hei, dette er en test"
+                      "idempotencyId": "123",
+                      "recipient": {
+                        "recipientSms": {
+                          "phoneNumber": "+4799999999",
+                          "smsSettings": {
+                            "body": "Hei, dette er en test"
+                          }
+                        }
                       }
                     }
                     """,
@@ -237,11 +249,11 @@ class Altinn3VarselKlientImplTest {
     }
 
     @Test
-    fun `Altinn3VarselKlientImpl#order success for email returnerer order id`() = runTest {
+    fun `Altinn3VarselKlientImpl#order success for email returnerer order id og shipment id`() = runTest {
         val mockEngine = MockEngine {
             respond(
-                content = mockResponse,
-                status = HttpStatusCode.OK,
+                content = mockOrderResponse,
+                status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
@@ -257,30 +269,32 @@ class Altinn3VarselKlientImplTest {
                 override suspend fun token(scope: String) = "fake-token"
             },
         )
-        client.order(eksternVarselEpost).let {
+        client.order(eksternVarselEpost, "123").let {
             it as Altinn3VarselKlient.OrderResponse.Success
             assertEquals("42", it.orderId)
+            assertEquals("shipment-42", it.shipmentId)
         }
         assertEquals(1, mockEngine.requestHistory.size)
         mockEngine.requestHistory.last().let { req ->
-            assertEquals("http://altinn/notifications/api/v1/orders", req.url.toString())
+            assertEquals("http://altinn/notifications/api/v1/future/orders", req.url.toString())
             assertEquals(HttpMethod.Post, req.method)
             assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
             JSONAssert.assertEquals(
                 //language=json
                 """
                     {
-                      "notificationChannel": "Email",
-                      "emailTemplate": {
-                        "subject": "Hei, dette er en tittel",
-                        "body": "Hei, dette er en test",
-                        "contentType": "Html"
-                      },
-                      "recipients": [
-                        {
-                          "emailAddress": "adresse@epost.com"
+                      "idempotencyId": "123",
+                      "recipient": {
+                        "recipientEmail": {
+                          "emailAddress": "adresse@epost.com",
+                          "emailSettings": {
+                            "fromAddress": "ikke-svar@nav.no",
+                            "subject": "Hei, dette er en tittel",
+                            "body": "Hei, dette er en test",
+                            "contentType": "Html"
+                          }
                         }
-                      ]
+                      }
                     }
                     """,
                 req.bodyAsString(),
@@ -293,8 +307,8 @@ class Altinn3VarselKlientImplTest {
     fun `Altinn3VarselKlientImpl#order returns error when platform token fails`() = runTest {
         val mockEngine = MockEngine {
             respond(
-                content = mockResponse,
-                status = HttpStatusCode.OK,
+                content = mockOrderResponse,
+                status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
@@ -311,7 +325,7 @@ class Altinn3VarselKlientImplTest {
             },
         )
 
-        client.order(eksternVarselSms).let {
+        client.order(eksternVarselSms, "123").let {
             it as Altinn3VarselKlient.ErrorResponse
             assertEquals("RuntimeException", it.code)
             assertEquals("Failed to get token", it.message)
@@ -361,7 +375,7 @@ class Altinn3VarselKlientImplTest {
                 override suspend fun token(scope: String) = "fake-token"
             },
         )
-        client.order(eksternVarselSms).let {
+        client.order(eksternVarselSms, "123").let {
             it as Altinn3VarselKlient.ErrorResponse
             assertEquals("400", it.code)
             assertTrue(it.message.contains("Bad Request"))
@@ -369,200 +383,135 @@ class Altinn3VarselKlientImplTest {
     }
 
     @Test
-    fun `Altinn3VarselKlientImpl#notifications`() = runTest {
-        val orderId = "42"
+    fun `Altinn3VarselKlientImpl#shipment returns delivery manifest`() = runTest {
+        val shipmentId = "shipment-42"
         //language=json
-        val mockSmsResponse = """
+        val mockShipmentResponse = """
             {
-                "orderId": "42",
+                "shipmentId": "$shipmentId",
                 "sendersReference": null,
-                "generated": 1,
-                "succeeded": 1,
-                "notifications": [
+                "type": "Notification",
+                "status": "Order_Completed",
+                "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                "recipients": [
                     {
-                        "id": "4321",
-                        "succeeded": false,
-                        "recipient": {
-                            "mobileNumber": "+4799999999"
-                        },
-                        "sendStatus": {
-                            "status": "New",
-                            "description": "The sms has been created, but has not been picked up for processing yet.",
-                            "lastUpdate": "2023-11-14T16:06:02.877361Z"
-                        }
+                        "status": "Email_Delivered",
+                        "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                        "destination": "recipient@domain.com"
+                    },
+                    {
+                        "status": "SMS_Delivered",
+                        "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                        "destination": "+4799999999"
                     }
                 ]
             }"""
 
-        //language=json
-        val mockEmailResponse = """
-            {
-                "orderId": "42",
-                "generated": 1,
-                "succeeded": 1,
-                "notifications": [
-                    {
-                        "id": "1234",
-                        "succeeded": false,
-                        "recipient": {
-                            "emailAddress": "recipient@domain.com"
-                        },
-                        "sendStatus": {
-                            "status": "New",
-                            "description": "The email has been created, but has not been picked up for processing yet.",
-                            "lastUpdate": "2023-11-14T16:06:02.877361Z"
-                        }
-                    }
-                ]
-            }"""
+        val client = newClient(shipmentId, mockShipmentResponse)
+        val result = client.shipment(shipmentId)
+        result as Altinn3VarselKlient.ShipmentResponse.Success
+        assertEquals(shipmentId, result.shipmentId)
+        assertEquals("Order_Completed", result.status)
+        assertEquals(2, result.recipients.size)
+        assertTrue(result.allRecipientsDelivered)
+        assertTrue(result.allRecipientsFinished)
+        assertTrue(result.isOrderCompleted)
 
-        // gets sms and email notifications for a given order id
-        val client = newClient(orderId, mockSmsResponse, mockEmailResponse)
-        val result = client.notifications(orderId)
-        result as Success
-        assertEquals(orderId, result.orderId)
-        assertEquals(null, result.sendersReference)
-        assertEquals(2, result.generated)
-        assertEquals(2, result.succeeded)
-        assertEquals(2, result.notifications.size)
-        assertEquals(
-            listOf(
-                Notification(
-                    id = "4321",
-                    succeeded = false,
-                    recipient = Notification.Recipient(
-                        mobileNumber = "+4799999999"
-                    ),
-                    sendStatus = Notification.SendStatus(
-                        status = "New",
-                        description = "The sms has been created, but has not been picked up for processing yet.",
-                        lastUpdate = "2023-11-14T16:06:02.877361Z"
-                    )
-                ),
-                Notification(
-                    id = "1234",
-                    succeeded = false,
-                    recipient = Notification.Recipient(
-                        emailAddress = "recipient@domain.com"
-                    ),
-                    sendStatus = Notification.SendStatus(
-                        status = "New",
-                        description = "The email has been created, but has not been picked up for processing yet.",
-                        lastUpdate = "2023-11-14T16:06:02.877361Z"
-                    )
-                ),
-            ),
-            result.notifications
-        )
-        assertEquals(2, (client.httpClient.engine as MockEngine).requestHistory.size)
+        assertEquals(1, (client.httpClient.engine as MockEngine).requestHistory.size)
         (client.httpClient.engine as MockEngine).requestHistory.first().let { req ->
-            assertEquals("http://altinn/notifications/api/v1/orders/$orderId/notifications/sms", req.url.toString())
-            assertEquals(HttpMethod.Get, req.method)
-            assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
-        }
-        (client.httpClient.engine as MockEngine).requestHistory.last().let { req ->
-            assertEquals("http://altinn/notifications/api/v1/orders/$orderId/notifications/email", req.url.toString())
+            assertEquals("http://altinn/notifications/api/v1/future/shipment/$shipmentId", req.url.toString())
             assertEquals(HttpMethod.Get, req.method)
             assertEquals("Bearer fake-token", req.headers[HttpHeaders.Authorization])
         }
     }
 
     @Test
-    fun `Altinn3VarselKlientImpl#notifications no sms only email`() = runTest {
-        // gets sms and email notifications for a given order id
-        val client = newClient(
-            "43",
-            smsResponse = """
-                {
-                  "generated": 0,
-                  "notifications": [],
-                  "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
-                  "succeeded": 0
-                }""",
-            emailResponse = """
-                {
-                  "generated": 4,
-                  "notifications": [
+    fun `Altinn3VarselKlientImpl#shipment with processing recipients`() = runTest {
+        val shipmentId = "shipment-43"
+        //language=json
+        val mockShipmentResponse = """
+            {
+                "shipmentId": "$shipmentId",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Completed",
+                "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                "recipients": [
                     {
-                      "id": "042f1a8a-fe29-47c9-a992-433399563c12",
-                      "recipient": {
-                        "emailAddress": "abc@a.no",
-                        "organizationNumber": "211511052"
-                      },
-                      "sendStatus": {
-                        "description": "The email has been created, but has not been picked up for processing yet.",
+                        "status": "Email_New",
                         "lastUpdate": "2025-03-31T16:21:04.12234Z",
-                        "status": "New"
-                      },
-                      "succeeded": false
+                        "destination": "abc@a.no"
                     },
                     {
-                      "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
-                      "recipient": {
-                        "emailAddress": "sss.sss@ssss.no",
-                        "organizationNumber": "211511052"
-                      },
-                      "sendStatus": {
-                        "description": "The email is being processed and will be sent shortly.",
+                        "status": "Email_Sending",
                         "lastUpdate": "2025-03-31T16:21:04.126885Z",
-                        "status": "Sending"
-                      },
-                      "succeeded": false
+                        "destination": "sss.sss@ssss.no"
                     },
                     {
-                      "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
-                      "recipient": {
-                        "mobileNumber": "+4799999999",
-                        "organizationNumber": "211511052"
-                      },
-                      "sendStatus": {
-                        "description": "The SMS has been accepted by the gateway service and will be sent soon.",
+                        "status": "SMS_Accepted",
                         "lastUpdate": "2025-03-31T16:21:04.126885Z",
-                        "status": "Accepted"
-                      },
-                      "succeeded": false
+                        "destination": "+4799999999"
                     },
                     {
-                      "id": "6b3bfbc4-a092-4df7-8f38-e43171df49a9",
-                      "recipient": {
-                        "emailAddress": "sss.sss@ssss.no",
-                        "organizationNumber": "211511052"
-                      },
-                      "sendStatus": {
-                        "description": "The email has been accepted by the third-party service and will be sent soon.",
+                        "status": "Email_Succeeded",
                         "lastUpdate": "2025-03-31T16:21:04.126885Z",
-                        "status": "Succeeded"
-                      },
-                      "succeeded": false
+                        "destination": "sss.sss@ssss.no"
                     }
-                  ],
-                  "orderId": "70bc6dff-0c14-4842-b36a-3ab64a2dae08",
-                  "succeeded": 0
-                }"""
-        )
-        client.notifications("43").let {
-            it as Success
-            assertEquals(4, it.generated)
-            assertEquals(0, it.succeeded)
-            assertEquals(4, it.notifications.size)
-            assertTrue(it.notifications.all { notification -> notification.sendStatus.isProcessing })
+                ]
+            }"""
+
+        val client = newClient(shipmentId, mockShipmentResponse)
+        client.shipment(shipmentId).let {
+            it as Altinn3VarselKlient.ShipmentResponse.Success
+            assertEquals(4, it.recipients.size)
+            assertTrue(it.recipients.all { recipient -> recipient.isProcessing })
+        }
+    }
+
+    @Test
+    fun `Altinn3VarselKlientImpl#shipment with failed recipients`() = runTest {
+        val shipmentId = "shipment-44"
+        //language=json
+        val mockShipmentResponse = """
+            {
+                "shipmentId": "$shipmentId",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Completed",
+                "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                "recipients": [
+                    {
+                        "status": "Email_Delivered",
+                        "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                        "destination": "ok@test.no"
+                    },
+                    {
+                        "status": "Email_Failed_Bounced",
+                        "lastUpdate": "2025-03-31T16:21:04.126885Z",
+                        "destination": "bad@test.no"
+                    }
+                ]
+            }"""
+
+        val client = newClient(shipmentId, mockShipmentResponse)
+        client.shipment(shipmentId).let {
+            it as Altinn3VarselKlient.ShipmentResponse.Success
+            assertEquals(2, it.recipients.size)
+            assertTrue(it.hasFailedRecipients)
+            assertTrue(it.allRecipientsFinished)
+            assertTrue(!it.allRecipientsDelivered)
         }
     }
 }
 
 
 //language=json
-private const val mockResponse = """
+private const val mockOrderResponse = """
         {
-          "orderId": "42",
-          "recipientLookup": {
-            "status": "Success",
-            "isReserved": [
-              "string"
-            ],
-            "missingContact": [
-              "string"
-            ]
+          "notificationOrderId": "42",
+          "notification": {
+            "shipmentId": "shipment-42",
+            "sendersReference": null
           }
         }"""
 
@@ -596,41 +545,21 @@ private suspend fun HttpRequestData.bodyAsString(): String {
 }
 
 private fun newClient(
-    orderId: String,
-    @Language("JSON") smsResponse: String,
-    @Language("JSON") emailResponse: String
+    shipmentId: String,
+    @Language("JSON") shipmentResponse: String
 ) = Altinn3VarselKlientImpl(
     altinnBaseUrl = "http://altinn",
     httpClient = HttpClient(MockEngine { req ->
         when (req.url.encodedPath) {
-            "/notifications/api/v1/orders/$orderId/notifications/sms" -> respond(
-                content = smsResponse,
+            "/notifications/api/v1/future/shipment/$shipmentId" -> respond(
+                content = shipmentResponse,
                 status = HttpStatusCode.OK,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
 
-            "/notifications/api/v1/orders/$orderId/notifications/email" -> respond(
-                content = emailResponse,
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-
-            "/notifications/api/v1/orders" -> respond(
-                //language=json
-                content = """
-                            {
-                              "orderId": "42",
-                              "recipientLookup": {
-                                "status": "Success",
-                                "isReserved": [
-                                  "string"
-                                ],
-                                "missingContact": [
-                                  "string"
-                                ]
-                              }
-                            }""",
-                status = HttpStatusCode.OK,
+            "/notifications/api/v1/future/orders" -> respond(
+                content = mockOrderResponse,
+                status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
 

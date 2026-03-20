@@ -876,7 +876,7 @@ class EksternVarslingRepository(
             ) {
                 nullableText(
                     when (response) {
-                        is Altinn3VarselKlient.OrderResponse.Success -> response.orderId
+                        is Altinn3VarselKlient.OrderResponse.Success -> response.shipmentId
                         is Altinn3VarselKlient.ErrorResponse -> null
                     }
                 )
