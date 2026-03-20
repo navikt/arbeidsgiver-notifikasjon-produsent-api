@@ -340,7 +340,7 @@ class EksternVarslingService(
                 if (shipment.allRecipientsDelivered)
                     return Pair(Altinn3VarselStatus.Kvittert, shipment.rå)
 
-                return Pair(Altinn3VarselStatus.KvittertMedFeil, shipment.rå)
+                Pair(Altinn3VarselStatus.KvittertMedFeil, shipment.rå)
             }
 
             else -> {

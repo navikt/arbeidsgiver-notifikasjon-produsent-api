@@ -415,47 +415,126 @@ interface Altinn3VarselKlient {
     /**
      * Alle mulige statusverdier i det nye API-et.
      * Brukes for både order-level og recipient-level statuser.
+     *
+     * @see <a href="https://docs.altinn.studio/nb/notifications/reference/notification-status/">Altinn Notification Status Reference</a>
      */
     @Suppress("unused")
     object ShipmentStatus {
-        // Order-level statuser
+        // ── Order-level statuser ──────────────────────────────────────────
+
+        /** Midlertidig. Bestillingen er registrert i systemet og venter på å bli plukket opp for behandling. */
         const val Order_Registered = "Order_Registered"
+
+        /** Midlertidig. Bestillingen er plukket opp og varsler er under generering. */
         const val Order_Processing = "Order_Processing"
+
+        /**
+         * Endelig. Alle varsler i bestillingen er ferdig behandlet.
+         * Alle mottakere har fått et endelig resultat (levert eller feilet).
+         */
         const val Order_Completed = "Order_Completed"
+
+        /**
+         * Endelig. Sendebetingelsen ble ikke oppfylt, så ingen varsler ble sendt.
+         * Gjelder f.eks. send-condition med KRR-sjekk der mottaker har reservert seg.
+         */
         const val Order_SendConditionNotMet = "Order_SendConditionNotMet"
+
+        /** Endelig. Bestillingen ble kansellert før varsler ble sendt. */
         const val Order_Cancelled = "Order_Cancelled"
+
+        /**
+         * Midlertidig. Bestillingen er ferdig prosessert – alle varsler er generert.
+         * Varsler kan fortsatt være under utsending til mottakere.
+         */
         const val Order_Processed = "Order_Processed"
 
-        // SMS statuser
+        // ── SMS-statuser ──────────────────────────────────────────────────
+
+        /** Midlertidig. SMS-varselet er opprettet, men ikke ennå sendt til SMS-gateway. */
         const val SMS_New = "SMS_New"
+
+        /** Midlertidig. SMS-varselet er sendt til SMS-gateway og venter på bekreftelse. */
         const val SMS_Sending = "SMS_Sending"
+
+        /** Midlertidig. SMS-gateway har akseptert meldingen, men levering til mottaker er ikke bekreftet ennå. */
         const val SMS_Accepted = "SMS_Accepted"
+
+        /** Endelig. SMS-meldingen er levert til mottakers telefon. */
         const val SMS_Delivered = "SMS_Delivered"
+
+        /** Endelig. Generell feil – SMS-en kunne ikke leveres. */
         const val SMS_Failed = "SMS_Failed"
+
+        /** Endelig. Mottakers telefonnummer er ugyldig. */
         const val SMS_Failed_InvalidRecipient = "SMS_Failed_InvalidRecipient"
+
+        /** Endelig. Mottaker har reservert seg mot elektronisk kommunikasjon i KRR. */
         const val SMS_Failed_RecipientReserved = "SMS_Failed_RecipientReserved"
+
+        /** Endelig. Mottakers nummer er sperret (barred) hos operatør. */
         const val SMS_Failed_BarredReceiver = "SMS_Failed_BarredReceiver"
+
+        /** Endelig. SMS-en ble slettet av operatør eller gateway. */
         const val SMS_Failed_Deleted = "SMS_Failed_Deleted"
+
+        /** Endelig. SMS-en utløp hos operatør/gateway før den kunne leveres. */
         const val SMS_Failed_Expired = "SMS_Failed_Expired"
+
+        /** Endelig. SMS-en kunne ikke leveres til mottaker av ukjent årsak. */
         const val SMS_Failed_Undelivered = "SMS_Failed_Undelivered"
+
+        /** Endelig. Mottaker kunne ikke identifiseres (f.eks. oppslag i kontaktregister feilet). */
         const val SMS_Failed_RecipientNotIdentified = "SMS_Failed_RecipientNotIdentified"
+
+        /** Endelig. SMS-en ble avvist av gateway eller operatør. */
         const val SMS_Failed_Rejected = "SMS_Failed_Rejected"
+
+        /** Endelig. SMS-en overskred time-to-live og ble ikke levert innen tidsfristen. */
         const val SMS_Failed_TTL = "SMS_Failed_TTL"
 
-        // Email statuser
+        // ── E-post-statuser ───────────────────────────────────────────────
+
+        /** Midlertidig. E-postvarselet er opprettet, men ikke ennå sendt til e-posttjenesten. */
         const val Email_New = "Email_New"
+
+        /** Midlertidig. E-posten er sendt til e-posttjenesten og venter på bekreftelse. */
         const val Email_Sending = "Email_Sending"
+
+        /** Midlertidig. E-posttjenesten har akseptert meldingen for levering. Venter på endelig leveringsbekreftelse. */
         const val Email_Succeeded = "Email_Succeeded"
+
+        /** Endelig. E-posten er levert til mottakers innboks. */
         const val Email_Delivered = "Email_Delivered"
+
+        /** Endelig. Generell feil – e-posten kunne ikke leveres. */
         const val Email_Failed = "Email_Failed"
+
+        /** Endelig. Mottaker har reservert seg mot elektronisk kommunikasjon i KRR. */
         const val Email_Failed_RecipientReserved = "Email_Failed_RecipientReserved"
+
+        /** Endelig. Mottaker kunne ikke identifiseres (f.eks. oppslag i kontaktregister feilet). */
         const val Email_Failed_RecipientNotIdentified = "Email_Failed_RecipientNotIdentified"
+
+        /** Endelig. E-postadressen har ugyldig format. */
         const val Email_Failed_InvalidFormat = "Email_Failed_InvalidFormat"
+
+        /** Endelig. Mottaker er undertrykt (suppressed) – e-posttjenesten nekter levering pga. tidligere feil/klager. */
         const val Email_Failed_SuppressedRecipient = "Email_Failed_SuppressedRecipient"
+
+        /** Endelig. Midlertidig feil under sending – e-posttjenesten kunne ikke levere etter gjentatte forsøk. */
         const val Email_Failed_TransientError = "Email_Failed_TransientError"
+
+        /** Endelig. E-posten returnerte (bounced) fra mottakers e-postserver. */
         const val Email_Failed_Bounced = "Email_Failed_Bounced"
+
+        /** Endelig. E-posten ble filtrert som spam av mottakers e-postserver. */
         const val Email_Failed_FilteredSpam = "Email_Failed_FilteredSpam"
+
+        /** Endelig. E-posten ble satt i karantene av mottakers e-postsystem. */
         const val Email_Failed_Quarantined = "Email_Failed_Quarantined"
+
+        /** Endelig. E-posten overskred time-to-live og ble ikke levert innen tidsfristen. */
         const val Email_Failed_TTL = "Email_Failed_TTL"
     }
 }
