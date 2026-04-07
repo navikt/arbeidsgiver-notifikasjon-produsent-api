@@ -269,7 +269,7 @@ val FRITAKAGP = Produsent(
         other = { listOf("dev-gcp:helsearbeidsgiver:fritakagp") },
     ),
     tillatteMerkelapper = listOf("Fritak arbeidsgiverperiode"),
-    tillatteMottakere =             listOf(
+    tillatteMottakere = listOf(
         ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
         RessursIdDefinisjon(ressursId = "nav_sykepenger_fritak-arbeidsgiverperiode")
     )
@@ -295,18 +295,9 @@ val HELSEARBEIDSGIVER = Produsent(
         "Inntektsmelding",
         "Inntektsmelding sykepenger"
     ),
-    tillatteMottakere = basedOnEnv(
-        prod = {
-            listOf(
-                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
-            )
-        },
-        other = {
-            listOf(
-                ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
-                RessursIdDefinisjon(ressursId = "nav_sykepenger_inntektsmelding")
-            )
-        }
+    tillatteMottakere = listOf(
+        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
+        RessursIdDefinisjon(ressursId = "nav_sykepenger_inntektsmelding")
     )
 )
 
