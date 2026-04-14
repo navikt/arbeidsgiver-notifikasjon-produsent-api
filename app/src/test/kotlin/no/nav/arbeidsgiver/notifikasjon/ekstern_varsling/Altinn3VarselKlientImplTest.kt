@@ -157,7 +157,7 @@ class Altinn3VarselKlientImplTest {
                             "recipientOrganization": {
                               "orgNumber": "42",
                               "channelSchema": "EmailPreferred",
-                              "resourceId": "nav_foo-bar",
+                              "resourceId": "urn:altinn:resource:nav_foo-bar",
                               "resourceAction": "access",
                               "emailSettings": {
                                 "fromAddress": "ikke-svar@nav.no",
