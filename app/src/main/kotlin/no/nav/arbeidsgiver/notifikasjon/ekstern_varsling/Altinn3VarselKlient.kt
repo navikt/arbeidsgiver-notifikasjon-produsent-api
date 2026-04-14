@@ -19,6 +19,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformToke
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.teamLogger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
 import java.time.OffsetDateTime
@@ -47,7 +48,7 @@ open class Altinn3VarselKlientImpl(
     ),
 ) : Altinn3VarselKlient {
     companion object {
-        private val teamLogger = logger()
+        private val teamLogger = teamLogger()
     }
 
     private val log = logger()
