@@ -12,6 +12,7 @@ import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.IdentityProvider

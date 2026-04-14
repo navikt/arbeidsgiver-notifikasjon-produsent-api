@@ -3,12 +3,10 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
-import ch.qos.logback.classic.PatternLayout
 import ch.qos.logback.classic.spi.Configurator
 import ch.qos.logback.classic.spi.Configurator.ExecutionStatus
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.ConsoleAppender
-import ch.qos.logback.core.encoder.LayoutWrappingEncoder
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.core.spi.ContextAware
 import ch.qos.logback.core.spi.ContextAwareBase
@@ -41,14 +39,14 @@ class LogConfig : ContextAwareBase(), Configurator {
                         else -> FilterReply.NEUTRAL
                     }
                 })
-                if (naisCluster != null) {
-                    encoder = LogstashEncoder().setup(lc)
-                } else {
-                    encoder = LayoutWrappingEncoder<ILoggingEvent>().setup(lc).apply {
-                        layout = PatternLayout().also {
-                            it.pattern = "%d %-5level [%thread] %logger: %msg %mdc%n"
-                        }.setup(lc)
+                addFilter(object : Filter<ILoggingEvent>() {
+                    override fun decide(event: ILoggingEvent) = when {
+                        (event.markerList ?: emptyList()).contains(TEAM_LOG_MARKER) -> FilterReply.DENY
+                        else -> FilterReply.NEUTRAL
                     }
+                })
+                encoder = LogstashEncoder().setup(lc) {
+                    isIncludeMdc = true
                 }
             }
         }

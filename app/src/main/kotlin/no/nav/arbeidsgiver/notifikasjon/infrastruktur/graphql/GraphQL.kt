@@ -19,9 +19,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.slf4j.MDCContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.findCause
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.getTimer
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.isCausedBy
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ProdusentAPI
 import org.intellij.lang.annotations.Language
 import kotlin.coroutines.cancellation.CancellationException
