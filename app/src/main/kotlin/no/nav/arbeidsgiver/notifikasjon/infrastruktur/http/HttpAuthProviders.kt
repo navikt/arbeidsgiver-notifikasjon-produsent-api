@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.http
 import io.ktor.server.auth.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzurePreAuthorizedApps
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread.AzurePreAuthorizedAppsImpl
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.*
 import org.slf4j.MDC
 

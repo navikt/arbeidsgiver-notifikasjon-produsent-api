@@ -116,6 +116,11 @@
             <artifactId>ktor-serialization-jackson-jvm</artifactId>
             <version>${ktor.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-logging-jvm</artifactId>
+            <version>${ktor.version}</version>
+        </dependency>
 
         <!-- altinn-ws -->
         <dependency>

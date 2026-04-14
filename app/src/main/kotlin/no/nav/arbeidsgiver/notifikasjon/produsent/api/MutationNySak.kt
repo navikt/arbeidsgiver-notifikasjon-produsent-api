@@ -10,7 +10,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NyStatusSak
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SakOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository.AggregateType

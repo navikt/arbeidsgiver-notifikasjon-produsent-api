@@ -35,8 +35,13 @@ spec:
     bigQueryDatasets:
       - name: debughendelse
         permission: READWRITE
+  accessPolicy:
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
   env:
     - name: BIGQUERY_DATASET_ID
-      value: debughendelse 
+      value: debughendelse
     - name: BIGQUERY_TABLE_NAME
       value: notifikasjon

@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTid
 import no.nav.arbeidsgiver.notifikasjon.tid.OsloTidImpl

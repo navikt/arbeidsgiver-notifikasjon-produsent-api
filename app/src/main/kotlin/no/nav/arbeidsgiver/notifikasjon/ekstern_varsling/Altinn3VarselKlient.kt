@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -17,7 +18,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformToke
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
 import java.time.OffsetDateTime
@@ -33,12 +34,21 @@ open class Altinn3VarselKlientImpl(
     val altinnBaseUrl: String = System.getenv("ALTINN_3_API_BASE_URL"),
     val altinnPlattformTokenClient: AltinnPlattformTokenClient = AltinnPlattformTokenClientImpl(),
     val httpClient: HttpClient = defaultHttpClient(
+        customizeLogging = {
+        logger = object : Logger {
+            override fun log(message: String) = teamLogger.info(message)
+        }
+        level = LogLevel.ALL
+    },
         customizeMetrics = {
             clientName = "altinn3-varsel-client"
             canonicalizer = { path -> path.replace(Regex("[0-9a-fA-F-]{36}"), "{id}") }
         }
     ),
 ) : Altinn3VarselKlient {
+    companion object {
+        private val teamLogger = logger()
+    }
 
     private val log = logger()
 
@@ -208,10 +218,11 @@ interface Altinn3VarselKlient {
                 val orgNumber: String,
                 val channelSchema: String,
                 val resourceId: String,
-                val resourceAction: String = "access",
                 val emailSettings: EmailSettings,
                 val smsSettings: SmsSettings,
-            )
+            ) {
+                val resourceAction: String = "access"
+            }
 
             data class EmailSettings(
                 val subject: String,

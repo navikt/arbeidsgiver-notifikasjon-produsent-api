@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.dataprodukt.Dataprodukt
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.EksternVarsling
 import no.nav.arbeidsgiver.notifikasjon.hendelse_transformer.HendelseTransformer
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.kafka_backup.KafkaBackup
 import no.nav.arbeidsgiver.notifikasjon.kafka_bq.KafkaBQ
 import no.nav.arbeidsgiver.notifikasjon.kafka_reaper.KafkaReaper

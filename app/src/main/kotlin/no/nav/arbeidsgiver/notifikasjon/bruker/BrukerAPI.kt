@@ -15,7 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.NaisEnvironment
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnTilgangerService
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.tid.atOsloAsOffsetDateTime
 import java.time.LocalDate
 import java.time.OffsetDateTime

@@ -37,6 +37,10 @@ spec:
     min: 2
     max: 8
   accessPolicy:
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
     inbound:
       rules:
         - application: tiltaksgjennomforing-api

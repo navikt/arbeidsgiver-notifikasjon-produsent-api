@@ -63,6 +63,8 @@ spec:
           namespace: toi
     outbound:
       rules:
+        - application: logging
+          namespace: nais-system
         - application: arbeidsgiver-altinn-tilganger
       external:
         - host: ereg-services.prod-fss-pub.nais.io # ereg brukes i bruker-api

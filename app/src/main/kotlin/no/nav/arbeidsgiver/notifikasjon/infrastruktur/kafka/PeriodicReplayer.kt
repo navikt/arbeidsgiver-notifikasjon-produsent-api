@@ -1,6 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import org.apache.kafka.clients.consumer.Consumer
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit

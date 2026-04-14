@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.infrastruktur.azuread
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 
 typealias AppName = String
 typealias ClientId = String

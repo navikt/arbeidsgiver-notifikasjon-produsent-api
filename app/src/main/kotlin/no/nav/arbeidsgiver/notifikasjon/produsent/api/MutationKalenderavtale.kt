@@ -7,7 +7,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOppdatert
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.KalenderavtaleOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Sak
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository

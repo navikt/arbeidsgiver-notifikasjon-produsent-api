@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.util
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
 import java.util.*

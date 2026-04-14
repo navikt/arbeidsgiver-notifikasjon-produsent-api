@@ -1,8 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur
 
 import kotlinx.coroutines.delay
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.pow
@@ -19,11 +17,6 @@ fun <T> basedOnEnv(
         "dev-gcp" -> dev()
         else -> other()
     }
-
-
-/** Get logger for enclosing class. */
-inline fun <reified T : Any> T.logger(): Logger =
-    LoggerFactory.getLogger(this::class.java)
 
 fun Int.toThePowerOf(exponent: Int): Long = toDouble().pow(exponent).toLong()
 

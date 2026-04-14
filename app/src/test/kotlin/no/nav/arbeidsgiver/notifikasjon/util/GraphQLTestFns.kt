@@ -6,7 +6,7 @@ import com.jayway.jsonpath.JsonPath
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
 
 data class GraphQLError(

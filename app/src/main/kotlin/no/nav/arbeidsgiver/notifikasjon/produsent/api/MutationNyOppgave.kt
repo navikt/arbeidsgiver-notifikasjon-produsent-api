@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import graphql.schema.idl.RuntimeWiring
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.OppgaveOpprettet
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.*
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentModel.Sak
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository

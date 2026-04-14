@@ -6,7 +6,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionHendelseMetadata
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.PartitionProcessor
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*

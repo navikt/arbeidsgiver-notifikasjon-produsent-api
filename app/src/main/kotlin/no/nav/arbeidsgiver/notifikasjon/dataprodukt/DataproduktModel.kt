@@ -31,7 +31,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SoftDelete
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.TilleggsinformasjonSak
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ParameterSetters
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.skedulert_harddelete.ScheduledTime
 import java.time.Instant
 import java.util.*
