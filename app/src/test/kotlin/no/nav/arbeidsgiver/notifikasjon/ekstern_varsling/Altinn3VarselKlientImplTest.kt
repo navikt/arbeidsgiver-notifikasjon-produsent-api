@@ -383,6 +383,44 @@ class Altinn3VarselKlientImplTest {
     }
 
     @Test
+    fun `Altinn3VarselKlientImpl#order returns error due to missing contact info KOFUVI`() = runTest {
+        // returns error when http call fails
+        val client = Altinn3VarselKlientImpl(
+            altinnBaseUrl = "http://altinn",
+            httpClient = HttpClient(MockEngine {
+                respondError(
+                    status = HttpStatusCode.UnprocessableEntity,
+                    content = """
+                        {
+                          "type": "urn:altinn:error:NOT-00001",
+                          "title": "Missing contact information for recipient(s)",
+                          "status": 422,
+                          "code": "NOT-00001",
+                          "traceId": "00-b291127285024130cd8420758f373c2f-4959c5217011cd13-00",
+                          "statusDescription": "Unprocessable Entity"
+                        }
+                        """.trimIndent(),
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }) {
+                expectSuccess = true
+                install(ContentNegotiation) {
+                    jackson()
+                }
+            },
+            altinnPlattformTokenClient = object : AltinnPlattformTokenClient {
+                override suspend fun token(scope: String) = "fake-token"
+            },
+        )
+        client.order(eksternVarselSms, "123").let {
+            it as Altinn3VarselKlient.ErrorResponse
+            assertEquals("422", it.code)
+            assertTrue(it.message.contains("Unprocessable Entity"))
+            assertTrue(it.message.contains("NOT-00001"))
+        }
+    }
+
+    @Test
     fun `Altinn3VarselKlientImpl#shipment returns delivery manifest`() = runTest {
         val shipmentId = "shipment-42"
         //language=json
