@@ -41,6 +41,7 @@ class EksternVarslingStatusEksportService(
         val varslingStatus = when (event) {
             is HendelseModel.EksterntVarselFeilet -> {
                 val status = when (event.altinnFeilkode) {
+                    "422",
                     "30304",
                     "30307",
                     "30308" -> Status.MANGLER_KOFUVI
