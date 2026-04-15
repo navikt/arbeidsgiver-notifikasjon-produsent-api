@@ -308,7 +308,8 @@ interface Altinn3VarselKlient {
     ) : OrderResponse, ShipmentResponse {
         fun isRetryable() =
             when (code) {
-                "400" -> false
+                "400",
+                "422" -> false
 
                 else -> true
             }
