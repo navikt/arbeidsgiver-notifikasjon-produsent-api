@@ -234,7 +234,10 @@ class EksternVarslingService(
                                 log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
                                 eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
                             } else {
-                                log.error("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
+                                log.atLevel(
+                                    if (response.isSupressable()) WARN
+                                    else ERROR
+                                ).log("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
                                 eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
                             }
                         }

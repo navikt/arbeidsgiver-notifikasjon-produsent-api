@@ -301,6 +301,9 @@ interface Altinn3VarselKlient {
         }
     }
 
+    /**
+     * https://docs.altinn.studio/nb/notifications/reference/error-codes
+     */
     data class ErrorResponse(
         override val rå: JsonNode,
         val message: String,
@@ -312,6 +315,13 @@ interface Altinn3VarselKlient {
                 "422" -> false
 
                 else -> true
+            }
+
+        fun isSupressable() =
+            when (code) {
+                "422" -> true // én eller flere mottakere ikke har nødvendig kontaktinformasjon tilgjengelig for Altinn.
+
+                else -> false
             }
 
         override fun toString(): String {
