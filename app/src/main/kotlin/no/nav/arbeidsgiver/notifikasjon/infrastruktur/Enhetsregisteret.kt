@@ -7,6 +7,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 
 interface Enhetsregisteret {
     @JsonIgnoreProperties(ignoreUnknown = true)

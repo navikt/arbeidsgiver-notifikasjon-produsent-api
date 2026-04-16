@@ -44,6 +44,8 @@ spec:
   accessPolicy:
     outbound:
       rules:
+        - application: logging
+          namespace: nais-system
         - application: altinn-varsel-firewall
       external:
         - host: platform.altinn.no

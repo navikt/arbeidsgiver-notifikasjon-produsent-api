@@ -15,6 +15,7 @@ import no.altinn.services.serviceengine.notification._2010._10.INotificationAgen
 import no.altinn.services.serviceengine.notification._2010._10.INotificationAgencyExternalBasicSendStandaloneNotificationBasicV3AltinnFaultFaultFaultMessage
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.IdentityProvider

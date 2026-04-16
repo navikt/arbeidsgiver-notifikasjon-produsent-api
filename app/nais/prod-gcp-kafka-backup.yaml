@@ -42,3 +42,8 @@ spec:
         databases:
           - name: kafka-backup-model
             envVarPrefix: DB
+  accessPolicy:
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system

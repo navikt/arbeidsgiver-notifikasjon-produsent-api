@@ -40,3 +40,8 @@ spec:
         databases:
           - name: skedulert-utgatt-model
             envVarPrefix: DB
+  accessPolicy:
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system

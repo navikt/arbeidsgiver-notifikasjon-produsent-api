@@ -30,7 +30,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Tilleggsinformasj
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Transaction
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import java.sql.ResultSet
 import java.time.Duration
 import java.time.LocalDateTime
@@ -876,7 +876,7 @@ class EksternVarslingRepository(
             ) {
                 nullableText(
                     when (response) {
-                        is Altinn3VarselKlient.OrderResponse.Success -> response.orderId
+                        is Altinn3VarselKlient.OrderResponse.Success -> response.shipmentId
                         is Altinn3VarselKlient.ErrorResponse -> null
                     }
                 )

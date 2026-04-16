@@ -61,8 +61,10 @@ private val retryableErrorIds = listOf(
 /**
  *
  * https://altinn.github.io/docs/api/tjenesteeiere/soap/grensesnitt/varseltjeneste/#feilsituasjoner
+ * https://docs.altinn.studio/nb/notifications/reference/error-codes/#not-00001-manglende-kontaktinformasjon
  */
 private val supressableErrorIds = listOf(
+    422, // én eller flere mottakere ikke har nødvendig kontaktinformasjon tilgjengelig for Altinn.
     30304, // Avgiver av typen organisasjon har ikke registrert noen varslingsadresse som kan benyttes i varsel på angitt kanal.
     30307, // Feil opplevd under generering av EMailPreferred mottaker endepunkt, klarte ikke generere Email eller SMS endepunkt
     30308, // Feil opplevd under generering av SMSPreferred endepunkt, klarte ikke generere Email eller SMS endepunkt

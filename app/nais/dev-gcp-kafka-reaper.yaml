@@ -41,3 +41,8 @@ spec:
         databases:
           - name: kafka-reaper-model
             envVarPrefix: DB
+  accessPolicy:
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system

@@ -37,6 +37,11 @@ spec:
           apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
           kind: Project
         role: roles/cloudsql.client
+  accessPolicy:
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
   envFrom:
     - secret: google-sql-notifikasjon-bruker-api
   filesFrom:

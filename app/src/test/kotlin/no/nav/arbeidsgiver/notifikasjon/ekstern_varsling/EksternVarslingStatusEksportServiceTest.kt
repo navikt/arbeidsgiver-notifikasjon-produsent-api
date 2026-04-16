@@ -27,6 +27,7 @@ class EksternVarslingStatusEksportServiceTest {
     @Test
     fun `når hendelse er EksterntVarselFeilet med feilkode`() = runTest {
         listOf(
+            "422",
             "30304",
             "30307",
             "30308",

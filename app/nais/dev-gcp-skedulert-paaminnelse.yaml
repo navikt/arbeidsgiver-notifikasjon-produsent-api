@@ -41,3 +41,8 @@ spec:
         databases:
           - name: skedulert-paaminnelse-model
             envVarPrefix: DB
+  accessPolicy:
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system

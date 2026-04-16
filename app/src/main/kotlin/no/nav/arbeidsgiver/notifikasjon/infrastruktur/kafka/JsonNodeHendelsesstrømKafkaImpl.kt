@@ -1,7 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import org.apache.kafka.common.serialization.StringDeserializer
 
 class JsonNodeValueDeserializer : JsonDeserializer<JsonNode>(JsonNode::class.java)

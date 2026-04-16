@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import io.micrometer.core.instrument.Tags
@@ -31,6 +32,7 @@ val defaultCanonicalizer: (String) -> String = { path ->
 
 
 fun defaultHttpClient(
+    customizeLogging: LoggingConfig.() -> Unit = { },
     customizeMetrics: HttpClientMetricsFeature.Config.() -> Unit = {
         canonicalizer = defaultCanonicalizer
     },
@@ -68,6 +70,15 @@ fun defaultHttpClient(
         }
 
         delayMillis { 250L }
+    }
+
+
+
+    install(Logging) {
+        customizeLogging()
+        sanitizeHeader {
+            true
+        }
     }
 
     configure()

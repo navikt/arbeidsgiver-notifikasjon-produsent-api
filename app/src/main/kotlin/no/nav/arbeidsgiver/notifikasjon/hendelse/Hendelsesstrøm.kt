@@ -2,7 +2,7 @@ package no.nav.arbeidsgiver.notifikasjon.hendelse
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Hendelse
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.HendelseMetadata
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logger
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
