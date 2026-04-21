@@ -19,19 +19,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: https://npm.pkg.github.com/
-          cache: 'npm'
-          cache-dependency-path: test-produsent/server/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: test-produsent/pnpm-lock.yaml
 
-      - run: npm ci
-        working-directory: test-produsent/server
-
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
         working-directory: test-produsent
-      - run: npm run build
+
+      - run: pnpm build
+        working-directory: test-produsent
+
+      - name: Create self-contained server deployment
+        run: |
+          pnpm --filter=server deploy --prod server-deploy
         working-directory: test-produsent
 
       - uses: nais/docker-build-push@v0

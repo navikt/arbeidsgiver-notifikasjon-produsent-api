@@ -16,8 +16,8 @@
     "**/*.css"
   ],
   "scripts": {
-    "setup": "npm run setup:mock",
-    "setup:mock": "cd mock && npm install && npm run setup",
+    "setup": "pnpm run setup:mock",
+    "setup:mock": "cd mock && pnpm install && pnpm run setup",
     "dev": "vite",
     "build": "tsc --p ./tsconfig-build.json && vite build",
     "lint": "eslint . --ext ts,tsx",

@@ -43,18 +43,18 @@ const BannerMedVirksomhetsVelgerOgWidget: FunctionComponent<RouteComponentProps 
 To run the demo app locally, you need to run the following scripts.
 
 ```bash
-cd component/mock && npm i && cd ..
-npm i
-npm run setup
-npm run dev
+cd component/mock && pnpm install && cd ..
+pnpm install
+pnpm run setup
+pnpm run dev
 ```
 
 ## Oppdatere kode ved graphql-skjemaendring
 ````bash
 cd component
-npm run gql:cp_schema
-npm run gql:generate
-npm run setup
+pnpm run gql:cp_schema
+pnpm run gql:generate
+pnpm run setup
 ````
 
 ## License
