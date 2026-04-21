@@ -36,6 +36,11 @@ jobs:
       - run: pnpm build
         working-directory: test-produsent
 
+      - name: Create self-contained server deployment
+        run: |
+          pnpm --filter=server deploy --prod server-deploy
+        working-directory: test-produsent
+
       - uses: nais/docker-build-push@v0
         id: docker-push
         with:
