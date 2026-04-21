@@ -14,35 +14,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
-          cache: 'npm'
-          cache-dependency-path: widget/component/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: widget/component/pnpm-lock.yaml
 
       - name: install dependencies
-        run: |
-          cd widget/component
-          npm ci
+        run: pnpm install --frozen-lockfile
+        working-directory: widget/component
         env:
           NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
 
       - name: build
         run: |
-          cd widget/component
-          npm run setup
-          npm run build
+          pnpm run setup
+          pnpm run build
+        working-directory: widget/component
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
 
       - name: test
-        run: |
-          cd widget/component
-          npm test
+        run: pnpm test
+        working-directory: widget/component
 
       - if: github.ref == 'refs/heads/main'
         name: publish on github
         run: |
-          cd widget/component
           if jq --null-input --exit-status \
               --argjson local "$(jq .version package.json)" \
               --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjon-widget versions)" \
@@ -50,8 +53,9 @@ jobs:
           then
               echo "Version already published. Nothing to do."
           else
-              npm publish --access public
+              pnpm publish --access public --no-git-checks
           fi
+        working-directory: widget/component
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,20 +67,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
+          cache: 'pnpm'
+          cache-dependency-path: widget/component/mock/pnpm-lock.yaml
 
       - name: build
-        run: |
-          cd widget/component/mock
-          npm run setup
+        run: pnpm run setup
+        working-directory: widget/component/mock
 
       - if: github.ref == 'refs/heads/main'
         name: publish on github
         run: |
-          cd widget/component/mock
           if jq --null-input --exit-status \
               --argjson local "$(jq .version package.json)" \
               --argjson published "$(npm view --json @navikt/arbeidsgiver-notifikasjoner-brukerapi-mock versions)" \
@@ -84,8 +92,9 @@ jobs:
           then
               echo "Version already published. Nothing to do."
           else
-              npm publish --access public
+              pnpm publish --access public --no-git-checks
           fi
+        working-directory: widget/component/mock
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
