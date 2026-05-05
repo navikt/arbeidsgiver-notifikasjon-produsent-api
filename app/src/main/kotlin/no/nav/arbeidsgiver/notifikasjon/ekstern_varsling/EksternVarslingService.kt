@@ -335,15 +335,19 @@ class EksternVarslingService(
                     return Pair(Altinn3VarselStatus.Prosesserer, shipment.rå)
                 }
 
+                if (shipment.allRecipientsDelivered)
+                    return Pair(Altinn3VarselStatus.Kvittert, shipment.rå)
+
+                if (shipment.allRecipientsFailed) {
+                    return Pair(Altinn3VarselStatus.KvittertMedFeil, shipment.rå)
+                }
+
                 if (shipment.hasFailedRecipients) {
                     val failedCount = shipment.recipients.count { it.isFailed }
                     log.warn("Eksternt varsel med shipment id $shipmentId er fullført, men har ikke klart å sende ut alle notifikasjoner. antall feilet: $failedCount, totalt: ${shipment.recipients.size}")
                 }
 
-                if (shipment.allRecipientsDelivered)
-                    return Pair(Altinn3VarselStatus.Kvittert, shipment.rå)
-
-                Pair(Altinn3VarselStatus.KvittertMedFeil, shipment.rå)
+                Pair(Altinn3VarselStatus.Kvittert, shipment.rå)
             }
 
             else -> {
@@ -431,9 +435,9 @@ private fun JsonNode.extractStatusAndDescription(): Pair<String, String> {
     val recipients = at("/recipients")
     if (!shipmentStatus.isMissingNode && recipients.isArray) {
         val failedRecipients = recipients.filter { it.at("/status").asText().contains("Failed") }
+            .map { it.at("/status").asText() to (it.at("/destination")?.asText("ukjent") ?: "ukjent") }
         return if (failedRecipients.isNotEmpty()) {
-            failedRecipients.map { it.at("/status").asText() }.joinToString(",") to
-                failedRecipients.map { it.at("/destination")?.asText("ukjent") ?: "ukjent" }.joinToString(",")
+            failedRecipients.map { it.first }.toSortedSet().joinToString(",") to failedRecipients.joinToString(",") { "Destinasjon: ${it.second}, Status: ${it.first}" }
         } else {
             shipmentStatus.asText() to ""
         }
