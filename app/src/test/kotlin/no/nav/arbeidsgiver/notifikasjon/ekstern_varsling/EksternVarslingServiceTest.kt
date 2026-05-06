@@ -32,14 +32,15 @@ import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 
 private class ÅpningstiderMock : Åpningstider {
     val nesteNksÅpningstid = mutableListOf<LocalDateTime>()
     val nesteDagtidIkkeSøndag = mutableListOf<LocalDateTime>()
-    override fun nesteNksÅpningstid(start: LocalDateTime) = nesteNksÅpningstid.removeLast()
-    override fun nesteDagtidIkkeSøndag(start: LocalDateTime) = nesteDagtidIkkeSøndag.removeLast()
+    override fun nesteNksÅpningstid(start: LocalDateTime): LocalDateTime = nesteNksÅpningstid.removeLast()
+    override fun nesteDagtidIkkeSøndag(start: LocalDateTime): LocalDateTime = nesteDagtidIkkeSøndag.removeLast()
 }
 
 private enum class MeldingsType {
@@ -685,7 +686,7 @@ class EksternVarslingServiceTest {
             // gammel varsel er fortsatt i wait_queue
             eventually(10.seconds) {
                 assertFalse(
-                    database.nonTransactionalExecuteQuery<Map<String, Any>>(
+                    database.nonTransactionalExecuteQuery(
                         """
                             select * from wait_queue where varsel_id = '$gammelVarselId'
                         """
@@ -1076,6 +1077,194 @@ class EksternVarslingServiceTest {
             serviceJob.cancel()
         }
     }
+
+    @Test
+    fun `Altinn3 varsel - alle mottakere levert gir EksterntVarselVellykket`() = runBlocking {
+        //language=JSON
+        val shipmentAllDelivered = """
+            {
+              "shipmentId": "all-delivered-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Completed",
+              "lastUpdate": "2025-03-31T16:21:04.126885Z",
+              "recipients": [
+                {
+                  "status": "Email_Delivered",
+                  "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                  "destination": "abc@a.no"
+                },
+                {
+                  "status": "SMS_Delivered",
+                  "lastUpdate": "2025-03-31T16:22:00.000Z",
+                  "destination": "+4712345678"
+                }
+              ]
+            }
+        """.trimIndent()
+        val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) =
+                Altinn3VarselKlient.OrderResponse.Success(
+                    orderId = "all-delivered-123",
+                    shipmentId = "shipment-all-delivered",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", "all-delivered-123")
+                        putObject("notification").put("shipmentId", "shipment-all-delivered")
+                    }
+                )
+
+            override suspend fun shipment(shipmentId: String) =
+                Altinn3VarselKlient.ShipmentResponse.Success.fromJson(
+                    laxObjectMapper.readValue<JsonNode>(shipmentAllDelivered)
+                )
+        }
+
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent) = setupService(
+                database,
+                altinn3VarselKlient = altinn3VarselKlient
+            )
+            repository.oppdaterModellEtterHendelse(oppgave)
+            database.nonTransactionalExecuteUpdate(
+                "update emergency_break set stop_processing = false where id = 0"
+            )
+            val job = service.start(this)
+            eventually(5.seconds) {
+                val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                assertEquals(1, vellykket.size)
+                val feilet = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
+                assertEquals(0, feilet.size)
+            }
+            job.cancel()
+        }
+    }
+
+    @Test
+    fun `Altinn3 varsel - alle mottakere feilet gir EksterntVarselFeilet`() = runBlocking {
+        //language=JSON
+        val shipmentAllFailed = """
+            {
+              "shipmentId": "all-failed-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Completed",
+              "lastUpdate": "2025-03-31T16:21:04.126885Z",
+              "recipients": [
+                {
+                  "status": "Email_Failed",
+                  "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                  "destination": "abc@a.no"
+                },
+                {
+                  "status": "SMS_Failed_InvalidRecipient",
+                  "lastUpdate": "2025-03-31T16:22:00.000Z",
+                  "destination": "+4712345678"
+                }
+              ]
+            }
+        """.trimIndent()
+        val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) =
+                Altinn3VarselKlient.OrderResponse.Success(
+                    orderId = "all-failed-123",
+                    shipmentId = "shipment-all-failed",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", "all-failed-123")
+                        putObject("notification").put("shipmentId", "shipment-all-failed")
+                    }
+                )
+
+            override suspend fun shipment(shipmentId: String) =
+                Altinn3VarselKlient.ShipmentResponse.Success.fromJson(
+                    laxObjectMapper.readValue<JsonNode>(shipmentAllFailed)
+                )
+        }
+
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent) = setupService(
+                database,
+                altinn3VarselKlient = altinn3VarselKlient
+            )
+            repository.oppdaterModellEtterHendelse(oppgave)
+            database.nonTransactionalExecuteUpdate(
+                "update emergency_break set stop_processing = false where id = 0"
+            )
+            val job = service.start(this)
+            eventually(5.seconds) {
+                val feilet = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
+                assertEquals(1, feilet.size)
+                // feilkode should be deduplicated and sorted
+                assertEquals("Email_Failed,SMS_Failed_InvalidRecipient", feilet.first().altinnFeilkode)
+                // feilmelding should contain destination and status info
+                assertTrue(feilet.first().feilmelding.contains("Destinasjon:"))
+                assertTrue(feilet.first().feilmelding.contains("abc@a.no"))
+                assertTrue(feilet.first().feilmelding.contains("+4712345678"))
+            }
+            job.cancel()
+        }
+    }
+
+    @Test
+    fun `Altinn3 varsel - delvis feilet gir EksterntVarselVellykket`() = runBlocking {
+        //language=JSON
+        val shipmentPartialFailure = """
+            {
+              "shipmentId": "partial-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Completed",
+              "lastUpdate": "2025-03-31T16:21:04.126885Z",
+              "recipients": [
+                {
+                  "status": "Email_Delivered",
+                  "lastUpdate": "2025-03-31T16:21:04.12234Z",
+                  "destination": "abc@a.no"
+                },
+                {
+                  "status": "SMS_Failed_InvalidRecipient",
+                  "lastUpdate": "2025-03-31T16:22:00.000Z",
+                  "destination": "+4712345678"
+                }
+              ]
+            }
+        """.trimIndent()
+        val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) =
+                Altinn3VarselKlient.OrderResponse.Success(
+                    orderId = "partial-123",
+                    shipmentId = "shipment-partial",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", "partial-123")
+                        putObject("notification").put("shipmentId", "shipment-partial")
+                    }
+                )
+
+            override suspend fun shipment(shipmentId: String) =
+                Altinn3VarselKlient.ShipmentResponse.Success.fromJson(
+                    laxObjectMapper.readValue<JsonNode>(shipmentPartialFailure)
+                )
+        }
+
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent) = setupService(
+                database,
+                altinn3VarselKlient = altinn3VarselKlient
+            )
+            repository.oppdaterModellEtterHendelse(oppgave)
+            database.nonTransactionalExecuteUpdate(
+                "update emergency_break set stop_processing = false where id = 0"
+            )
+            val job = service.start(this)
+            eventually(5.seconds) {
+                // Partial failure should be treated as successful (Kvittert, not KvittertMedFeil)
+                val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                assertEquals(1, vellykket.size, "Partial failure should produce EksterntVarselVellykket")
+                val feilet = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
+                assertEquals(0, feilet.size, "Partial failure should NOT produce EksterntVarselFeilet")
+            }
+            job.cancel()
+        }
+    }
 }
 
 private val oppgave = OppgaveOpprettet(
@@ -1127,7 +1316,7 @@ suspend fun eventually(duration: kotlin.time.Duration, block: suspend () -> Unit
         } catch (_: Throwable) {
             // ignore
         }
-        delay(50)
+        delay(50.milliseconds)
     }
     block()
 }

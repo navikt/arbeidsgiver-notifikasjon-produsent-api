@@ -408,6 +408,9 @@ interface Altinn3VarselKlient {
             val allRecipientsDelivered
                 get() = recipients.all { it.isDelivered }
 
+            val allRecipientsFailed
+                get() = recipients.all { it.isFailed }
+
             val hasFailedRecipients
                 get() = recipients.any { it.isFailed }
 
