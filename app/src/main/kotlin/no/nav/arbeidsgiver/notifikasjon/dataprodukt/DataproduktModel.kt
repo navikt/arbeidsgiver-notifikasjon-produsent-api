@@ -320,15 +320,7 @@ class DataproduktModel(
                            values (?, ?, ?, ?)
                            on conflict do nothing 
                         """,
-                    hendelse.råRespons.at("/notificationResult/0/endPoints/value/endPointResult").elements()
-                        .asSequence()
-                        .map {
-                            mapOf(
-                                "resultat_name" to it.at("/name/value").asText(),
-                                "resultat_receiver" to it.at("/receiverAddress/value").asText(),
-                                "resultat_type" to it.at("/transportType").asText(),
-                            )
-                        }.toList()
+                    hendelse.extractVarselResultater()
                 ) {
                     uuid(hendelse.varselId)
                     text(it["resultat_name"]!!)
@@ -697,6 +689,53 @@ class DataproduktModel(
                 }
             }
         }
+    }
+
+    private fun EksterntVarselVellykket.extractVarselResultater(): List<Map<String, String>> {
+        val råRespons = this.råRespons
+
+        // Altinn 2 SOAP response: { "notificationResult": [ { "endPoints": { "value": { "endPointResult": [...] } } } ] }
+        val altinn2Results = råRespons.at("/notificationResult/0/endPoints/value/endPointResult")
+        if (altinn2Results.isArray && altinn2Results.size() > 0) {
+            return altinn2Results.elements().asSequence().map {
+                mapOf(
+                    "resultat_name" to it.at("/name/value").asText(),
+                    "resultat_receiver" to it.at("/receiverAddress/value").asText(),
+                    "resultat_type" to it.at("/transportType").asText().uppercase(),
+                )
+            }.toList()
+        }
+
+        // Altinn 3 future response: { "recipients": [ { "destination": "...", "status": "...", "type": "..." } ] }
+        val altinn3Recipients = råRespons.at("/recipients")
+        if (altinn3Recipients.isArray && altinn3Recipients.size() > 0) {
+            return altinn3Recipients.elements().asSequence().map {
+                mapOf(
+                    "resultat_name" to it.at("/status").asText(),
+                    "resultat_receiver" to it.at("/destination").asText(),
+                    "resultat_type" to it.at("/type").asText().uppercase(),
+                )
+            }.toList()
+        }
+
+        // Altinn 3 legacy notifications response: [ { "notifications": [ { "recipient": {...}, "sendStatus": {...} } ] } ]
+        if (råRespons.isArray) {
+            return råRespons.elements().asSequence().flatMap { order ->
+                order.at("/notifications").elements().asSequence().map { notification ->
+                    val recipient = notification.at("/recipient")
+                    val receiverAddress = recipient.at("/emailAddress").asText("")
+                        .ifEmpty { recipient.at("/mobileNumber").asText("") }
+                    val transportType = if (recipient.has("emailAddress")) "EMAIL" else "SMS"
+                    mapOf(
+                        "resultat_name" to notification.at("/sendStatus/status").asText(),
+                        "resultat_receiver" to receiverAddress,
+                        "resultat_type" to transportType,
+                    )
+                }
+            }.toList()
+        }
+
+        return emptyList()
     }
 
     private fun ParameterSetters.setPåminnelseFelter(
