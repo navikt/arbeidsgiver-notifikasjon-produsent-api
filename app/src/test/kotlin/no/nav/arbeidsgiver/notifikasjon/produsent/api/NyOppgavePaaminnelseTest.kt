@@ -3,10 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
-import no.nav.arbeidsgiver.notifikasjon.util.FakeHendelseProdusent
-import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
-import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
-import no.nav.arbeidsgiver.notifikasjon.util.withTestDatabase
+import no.nav.arbeidsgiver.notifikasjon.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -282,7 +279,7 @@ class NyOppgavePaaminnelseTest {
             with(stubbedKafkaProducer.hendelser[0]) {
                 this as HendelseModel.OppgaveOpprettet
                 assertNotNull(påminnelse)
-                assertTrue(påminnelse!!.eksterneVarsler.isEmpty())
+                assertTrue(påminnelse.eksterneVarsler.isEmpty())
             }
         }
     }
@@ -479,7 +476,7 @@ class NyOppgavePaaminnelseTest {
     }
 
     @Test
-    fun `ekstern varlser med 1 tjeneste`() = withTestDatabase(Produsent.databaseConfig) { database ->
+    fun `ekstern varlser med 1 tjeneste gir feil`() = withTestDatabase(Produsent.databaseConfig) { database ->
         val stubbedKafkaProducer = FakeHendelseProdusent()
         ktorProdusentTestServer(
             kafkaProducer = stubbedKafkaProducer,
@@ -513,24 +510,10 @@ class NyOppgavePaaminnelseTest {
                     )
                 )
             ) {
-                // opprettelse ok, med en tjeneste
-                val r = getTypedContent<MutationNyOppgave.NyOppgaveVellykket>("nyOppgave")
-                val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
-                assertEquals(1, hendelse.påminnelse?.eksterneVarsler?.size)
-                val varsel = hendelse.påminnelse!!.eksterneVarsler[0]
-                assertEquals(
-                    HendelseModel.AltinntjenesteVarselKontaktinfo(
-                        varselId = r.paaminnelse!!.eksterneVarsler[0].id,
-                        virksomhetsnummer = "0",
-                        serviceCode = "1234",
-                        serviceEdition = "1",
-                        tittel = "hei. ",
-                        innhold = "body",
-                        sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
-                        sendeTidspunkt = null,
-                    ),
-                    varsel
-                )
+                // Altinn 2 altinntjeneste gives validation error
+                val errors = getGraphqlErrors()
+                assertTrue(errors.isNotEmpty())
+                assertTrue(errors[0].message.contains("altinntjeneste er ikke lenger støttet"))
             }
         }
     }
@@ -592,7 +575,7 @@ class NyOppgavePaaminnelseTest {
     }
 
     @Test
-    fun `ekstern varlser med epost og sms og tjeneste og ressurs`() = withTestDatabase(Produsent.databaseConfig) { database ->
+    fun `ekstern varlser med epost og sms og ressurs`() = withTestDatabase(Produsent.databaseConfig) { database ->
         val stubbedKafkaProducer = FakeHendelseProdusent()
         ktorProdusentTestServer(
             kafkaProducer = stubbedKafkaProducer,
@@ -633,17 +616,6 @@ class NyOppgavePaaminnelseTest {
                                 }
                             }
                             { 
-                                altinntjeneste: {
-                                    mottaker: {
-                                        serviceCode: "1234"
-                                        serviceEdition: "1"
-                                    }
-                                    tittel: "hei"
-                                    innhold: "body"
-                                    sendevindu: NKS_AAPNINGSTID
-                                }
-                            }
-                            { 
                                 altinnressurs: {
                                     mottaker: {
                                         ressursId: "nav_foo"
@@ -666,7 +638,7 @@ class NyOppgavePaaminnelseTest {
                     .paaminnelse!!
                     .eksterneVarsler
                 val hendelse = (stubbedKafkaProducer.hendelser[0] as HendelseModel.OppgaveOpprettet)
-                assertEquals(4, hendelse.påminnelse?.eksterneVarsler?.size)
+                assertEquals(3, hendelse.påminnelse?.eksterneVarsler?.size)
                 assertEquals(
                     setOf(
                         HendelseModel.EpostVarselKontaktinfo(
@@ -686,18 +658,8 @@ class NyOppgavePaaminnelseTest {
                             sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
                             sendeTidspunkt = null,
                         ),
-                        HendelseModel.AltinntjenesteVarselKontaktinfo(
-                            varselId = varsler[2].id,
-                            virksomhetsnummer = "0",
-                            serviceCode = "1234",
-                            serviceEdition = "1",
-                            tittel = "hei. ",
-                            innhold = "body",
-                            sendevindu = HendelseModel.EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
-                            sendeTidspunkt = null,
-                        ),
                         HendelseModel.AltinnressursVarselKontaktinfo(
-                            varselId = varsler[3].id,
+                            varselId = varsler[2].id,
                             virksomhetsnummer = "0",
                             ressursId = "nav_foo",
                             epostTittel = "hei. ",

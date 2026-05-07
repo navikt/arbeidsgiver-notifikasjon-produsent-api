@@ -42,7 +42,7 @@ class ProdusentModelIdempotensTest {
             1,
             database.nonTransactionalExecuteQuery(
                 """
-            select * from mottaker_altinn_enkeltrettighet
+            select * from mottaker_altinn_ressurs
             where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'
         """
             ) { }.size

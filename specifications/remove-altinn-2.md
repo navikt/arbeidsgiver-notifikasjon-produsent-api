@@ -100,13 +100,13 @@ type AltinnMottaker {
 
 ## Task 2: Reject Altinn 2 Inputs at Runtime
 
-### 2a. Remove `altinn` from `MottakerInput` validation and resolution
+### 2a. Reject `altinn` in `MottakerInput` with explicit error
 
 **File:** `app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/produsent/api/NyNotifikasjonFelles.kt`
 
-Follow the existing check pattern — simply stop recognizing `altinn` in the validation and resolution logic. The `altinn` field stays on the data class (it's still in the GraphQL schema), but the `init` validator and `tilHendelseModel()` no longer consider it.
+The `altinn` field stays on the data class (it's still in the GraphQL schema), but the `init` block now explicitly throws a `ValideringsFeil` if `altinn` is provided, before running the normal validator. The `tilHendelseModel()` method no longer considers `altinn`.
 
-**Current code (line 268):**
+**Current code (line 255):**
 ```kotlin
 internal data class MottakerInput(
     val altinn: AltinnMottakerInput?,
@@ -137,7 +137,7 @@ internal data class MottakerInput(
 }
 ```
 
-**New code — remove `altinn` from validator, check, and resolution chain:**
+**New code — explicitly throw validation error if altinn is present in input:**
 ```kotlin
 internal data class MottakerInput(
     val altinn: AltinnMottakerInput?,
@@ -145,6 +145,9 @@ internal data class MottakerInput(
     val altinnRessurs: AltinnRessursMottakerInput?
 ) {
     init {
+        if (altinn != null) {
+            throw ValideringsFeil("MottakerInput: altinn er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnRessurs i stedet.")
+        }
         Validators.ExactlyOneFieldGiven("MottakerInput")(
             mapOf(
                 "naermesteLeder" to naermesteLeder,
@@ -167,17 +170,17 @@ internal data class MottakerInput(
 ```
 
 This means:
-- If a consumer sends only `altinn: {...}`, the `ExactlyOneFieldGiven` validator sees 0 valid fields and throws a validation error.
-- If they send `altinn` alongside a valid field, the validator sees 1 valid field and proceeds — the `altinn` field is simply ignored.
-- No special exception type or mutation-level handling needed. The existing validation pattern handles it naturally.
+- If a consumer sends `altinn: {...}` (with or without other fields), the `ValideringsFeil` is thrown immediately with a clear message directing them to use `altinnRessurs` instead.
+- The `ValideringsFeil` exception is caught by the GraphQL error handling layer and returned as a user-facing validation error.
+- If `altinn` is null, the normal `ExactlyOneFieldGiven` validator runs on the remaining fields (`naermesteLeder`, `altinnRessurs`).
 
-### 2b. Remove `altinntjeneste` from `EksterntVarselInput` validation and resolution
+### 2b. Reject `altinntjeneste` in `EksterntVarselInput` with explicit error
 
 **File:** `app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/produsent/api/NyNotifikasjonFelles.kt`
 
-Same pattern as 2a. The `altinntjeneste` field stays on the data class but is removed from the validator and resolution logic.
+Same pattern as 2a. The `altinntjeneste` field stays on the data class but the `init` block explicitly throws `ValideringsFeil` if it is provided, before running the normal validator. The `tilHendelseModel()` method no longer considers `altinntjeneste`.
 
-**Current code (line 21):**
+**code:**
 ```kotlin
 internal data class EksterntVarselInput(
     val sms: Sms?,
@@ -186,90 +189,38 @@ internal data class EksterntVarselInput(
     val altinnressurs: Altinnressurs?,
 ) {
     init {
-        Validators.ExactlyOneFieldGiven("EksterntVarselInput")(
-            mapOf(
-                "sms" to sms,
-                "epost" to epost,
-                "altinntjeneste" to altinntjeneste,
-                "altinnressurs" to altinnressurs
-            )
-        )
-    }
-
-    fun tilHendelseModel(virksomhetsnummer: String): EksterntVarsel {
-        if (sms != null) { return sms.tilHendelseModel(virksomhetsnummer) }
-        if (epost != null) { return epost.tilHendelseModel(virksomhetsnummer) }
-        if (altinntjeneste != null) { return altinntjeneste.tilHendelseModel(virksomhetsnummer) }
-        if (altinnressurs != null) { return altinnressurs.tilHendelseModel(virksomhetsnummer) }
-        ...
-    }
-}
-```
-
-**New code — remove `altinntjeneste` from validator and resolution:**
-```kotlin
-internal data class EksterntVarselInput(
-    val sms: Sms?,
-    val epost: Epost?,
-    val altinntjeneste: Altinntjeneste?,
-    val altinnressurs: Altinnressurs?,
-) {
-    init {
-        Validators.ExactlyOneFieldGiven("EksterntVarselInput")(
-            mapOf(
-                "sms" to sms,
-                "epost" to epost,
-                "altinnressurs" to altinnressurs
-            )
-        )
-    }
-
-    fun tilHendelseModel(virksomhetsnummer: String): EksterntVarsel {
-        if (sms != null) { return sms.tilHendelseModel(virksomhetsnummer) }
-        if (epost != null) { return epost.tilHendelseModel(virksomhetsnummer) }
-        if (altinnressurs != null) { return altinnressurs.tilHendelseModel(virksomhetsnummer) }
-        ...
-    }
-}
-```
-
-### 2c. Remove `altinntjeneste` from `PaaminnelseEksterntVarselInput` validation and resolution
-
-**File:** `app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/produsent/api/NyNotifikasjonFelles.kt`
-
-Same pattern again.
-
-**Current code (line 395):**
-```kotlin
-internal class PaaminnelseEksterntVarselInput(
-    val sms: Sms?,
-    val epost: Epost?,
-    val altinntjeneste: Altinntjeneste?,
-    val altinnressurs: Altinnressurs?,
-) {
-    init {
-        Validators.ExactlyOneFieldGiven("PaaminnelseEksterntVarselInput")(
-            mapOf(
-                "sms" to sms,
-                "epost" to epost,
-                "altinntjeneste" to altinntjeneste,
-                "altinnressurs" to altinnressurs,
-            )
-        )
-    }
-
-    fun tilDomene(virksomhetsnummer: String): EksterntVarsel =
-        when {
-            sms != null -> sms.tilDomene(virksomhetsnummer)
-            epost != null -> epost.tilDomene(virksomhetsnummer)
-            altinntjeneste != null -> altinntjeneste.tilDomene(virksomhetsnummer)
-            altinnressurs != null -> altinnressurs.tilDomene(virksomhetsnummer)
-            else -> error("...")
+        if (altinntjeneste != null) {
+            throw ValideringsFeil("EksterntVarselInput: altinntjeneste er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnressurs i stedet.")
         }
+        Validators.ExactlyOneFieldGiven("EksterntVarselInput")(
+            mapOf(
+                "sms" to sms,
+                "epost" to epost,
+                "altinnressurs" to altinnressurs
+            )
+        )
+    }
+
+    fun tilHendelseModel(virksomhetsnummer: String): EksterntVarsel {
+        if (sms != null) { return sms.tilHendelseModel(virksomhetsnummer) }
+        if (epost != null) { return epost.tilHendelseModel(virksomhetsnummer) }
+        if (altinnressurs != null) { return altinnressurs.tilHendelseModel(virksomhetsnummer) }
+        throw RuntimeException("Feil format")
+    }
 }
 ```
 
-**New code — remove `altinntjeneste` from validator and resolution:**
+This means:
+- If a consumer sends `altinntjeneste: {...}`, the `ValideringsFeil` is thrown immediately with a clear message directing them to use `altinnressurs` instead.
+- If `altinntjeneste` is null, the normal `ExactlyOneFieldGiven` validator runs on the remaining fields (`sms`, `epost`, `altinnressurs`).
+
+### 2c. Reject `altinntjeneste` in `PaaminnelseEksterntVarselInput` with explicit error
+
+**File:** `app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/produsent/api/NyNotifikasjonFelles.kt`
+
+Same pattern as 2a and 2b.
+
+**code:**
 ```kotlin
 internal class PaaminnelseEksterntVarselInput(
     val sms: Sms?,
@@ -278,6 +229,9 @@ internal class PaaminnelseEksterntVarselInput(
     val altinnressurs: Altinnressurs?,
 ) {
     init {
+        if (altinntjeneste != null) {
+            throw ValideringsFeil("PaaminnelseEksterntVarselInput: altinntjeneste er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnressurs i stedet.")
+        }
         Validators.ExactlyOneFieldGiven("PaaminnelseEksterntVarselInput")(
             mapOf(
                 "sms" to sms,
@@ -292,10 +246,14 @@ internal class PaaminnelseEksterntVarselInput(
             sms != null -> sms.tilDomene(virksomhetsnummer)
             epost != null -> epost.tilDomene(virksomhetsnummer)
             altinnressurs != null -> altinnressurs.tilDomene(virksomhetsnummer)
-            else -> error("...")
+            else -> error("graphql-validation failed, neither sms nor epost nor altinnressurs defined")
         }
 }
 ```
+
+This means:
+- If a consumer sends `altinntjeneste: {...}` in a påminnelse, the `ValideringsFeil` is thrown immediately with a clear message directing them to use `altinnressurs` instead.
+- If `altinntjeneste` is null, the normal `ExactlyOneFieldGiven` validator runs on the remaining fields (`sms`, `epost`, `altinnressurs`).
 
 ---
 

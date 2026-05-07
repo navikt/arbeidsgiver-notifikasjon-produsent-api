@@ -3,10 +3,13 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import io.ktor.client.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.NærmesteLederDefinisjon
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.ProdusentRegister
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.RessursIdDefinisjon
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepository
-import no.nav.arbeidsgiver.notifikasjon.util.fakeProdusentApiOboToken
 import no.nav.arbeidsgiver.notifikasjon.util.PRODUSENT_HOST
+import no.nav.arbeidsgiver.notifikasjon.util.fakeProdusentApiOboToken
 import no.nav.arbeidsgiver.notifikasjon.util.post
 import org.intellij.lang.annotations.Language
 import java.time.Instant
@@ -30,9 +33,8 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
             accessPolicy = listOf("someproducer"),
             tillatteMerkelapper = listOf("tag", "tag2"),
             tillatteMottakere = listOf(
-                ServicecodeDefinisjon(code = "5441", version = "1"),
-                ServicecodeDefinisjon(code = "1", version = "1"),
                 RessursIdDefinisjon(ressursId = "test-fager"),
+                RessursIdDefinisjon(ressursId = "nav_foo_bar"),
                 NærmesteLederDefinisjon,
             )
         )

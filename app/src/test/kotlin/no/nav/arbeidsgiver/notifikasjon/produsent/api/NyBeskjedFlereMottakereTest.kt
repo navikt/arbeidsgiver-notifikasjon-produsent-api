@@ -41,12 +41,11 @@ class NyBeskjedFlereMottakereTest {
             val response = client.produsentApi(
                 nyBeskjed(
                     """
-            mottaker: {
-                altinn: {
-                    serviceCode: "5441"
-                    serviceEdition: "1"
-                }
-            }
+             mottaker: {
+                 altinnRessurs: {
+                     ressursId: "test-fager"
+                 }
+             }
         """
                 )
             )
@@ -61,9 +60,8 @@ class NyBeskjedFlereMottakereTest {
             val mottakere = client.hentMottakere(id)
             assertEquals(
                 setOf(
-                    QueryNotifikasjoner.AltinnMottaker(
-                        serviceCode = "5441",
-                        serviceEdition = "1",
+                    QueryNotifikasjoner.AltinnRessursMottaker(
+                        ressursId = "test-fager",
                         virksomhetsnummer = "0"
                     )
                 ), mottakere.toSet()
@@ -80,14 +78,13 @@ class NyBeskjedFlereMottakereTest {
             val response = client.produsentApi(
                 nyBeskjed(
                     """
-            mottakere: [
-                {
-                    altinn: {
-                        serviceCode: "5441"
-                        serviceEdition: "1"
-                    }
-                }
-            ]
+             mottakere: [
+                 {
+                     altinnRessurs: {
+                         ressursId: "test-fager"
+                     }
+                 }
+             ]
         """
                 )
             )
@@ -102,9 +99,8 @@ class NyBeskjedFlereMottakereTest {
             val mottakere = client.hentMottakere(id)
             assertEquals(
                 setOf(
-                    QueryNotifikasjoner.AltinnMottaker(
-                        serviceCode = "5441",
-                        serviceEdition = "1",
+                    QueryNotifikasjoner.AltinnRessursMottaker(
+                        ressursId = "test-fager",
                         virksomhetsnummer = "0"
                     )
                 ), mottakere.toSet()
@@ -122,25 +118,24 @@ class NyBeskjedFlereMottakereTest {
             val response = client.produsentApi(
                 nyBeskjed(
                     """
-            mottakere: [
-                {
-                    altinn: {
-                        serviceCode: "5441"
-                        serviceEdition: "1"
-                    }
-                },
-                {
-                    naermesteLeder: {
-                        naermesteLederFnr: "2"
-                        ansattFnr: "3"
-                    }
-                },
-                {
-                    altinnRessurs: {
-                        ressursId: "test-fager"
-                    }
-                }
-            ]
+             mottakere: [
+                 {
+                     altinnRessurs: {
+                         ressursId: "test-fager"
+                     }
+                 },
+                 {
+                     naermesteLeder: {
+                         naermesteLederFnr: "2"
+                         ansattFnr: "3"
+                     }
+                 },
+                 {
+                     altinnRessurs: {
+                         ressursId: "nav_foo_bar"
+                     }
+                 }
+             ]
         """
                 )
             )
@@ -155,9 +150,8 @@ class NyBeskjedFlereMottakereTest {
             val mottakere = client.hentMottakere(id)
             assertEquals(
                 setOf(
-                    QueryNotifikasjoner.AltinnMottaker(
-                        serviceCode = "5441",
-                        serviceEdition = "1",
+                    QueryNotifikasjoner.AltinnRessursMottaker(
+                        ressursId = "test-fager",
                         virksomhetsnummer = "0"
                     ),
                     QueryNotifikasjoner.NærmesteLederMottaker(
@@ -165,15 +159,14 @@ class NyBeskjedFlereMottakereTest {
                         naermesteLederFnr = "2",
                         virksomhetsnummer = "0"
                     ),
-                    QueryNotifikasjoner.AltinnRessursMottaker(ressursId = "test-fager", virksomhetsnummer = "0")
+                    QueryNotifikasjoner.AltinnRessursMottaker(ressursId = "nav_foo_bar", virksomhetsnummer = "0")
                 ), mottakere.toSet()
             )
             // sender hendelse med korrekt mottakere til kafka
             kafkaProducer.hendelser.filterIsInstance<HendelseModel.BeskjedOpprettet>().first().let {
                 assertEquals(3, it.mottakere.size)
-                assertEquals(1, it.mottakere.filterIsInstance<HendelseModel.AltinnMottaker>().size)
+                assertEquals(2, it.mottakere.filterIsInstance<HendelseModel.AltinnRessursMottaker>().size)
                 assertEquals(1, it.mottakere.filterIsInstance<HendelseModel.NærmesteLederMottaker>().size)
-                assertEquals(1, it.mottakere.filterIsInstance<HendelseModel.AltinnRessursMottaker>().size)
             }
         }
     }
@@ -188,9 +181,8 @@ class NyBeskjedFlereMottakereTest {
                     nyBeskjed(
                         """
                         mottaker: {
-                            altinn: {
-                                serviceCode: "5441"
-                                serviceEdition: "1"
+                            altinnRessurs: {
+                                ressursId: "test-fager"
                             }
                         }
                         mottakere: [
@@ -214,9 +206,8 @@ class NyBeskjedFlereMottakereTest {
                 val mottakere = client.hentMottakere(id)
                 assertEquals(
                     setOf(
-                        QueryNotifikasjoner.AltinnMottaker(
-                            serviceCode = "5441",
-                            serviceEdition = "1",
+                        QueryNotifikasjoner.AltinnRessursMottaker(
+                            ressursId = "test-fager",
                             virksomhetsnummer = "0"
                         ),
                         QueryNotifikasjoner.NærmesteLederMottaker(

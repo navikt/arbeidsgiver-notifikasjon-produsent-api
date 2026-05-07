@@ -347,9 +347,8 @@ class KalenderavtaleTest {
                     virksomhetsnummer = "42",
                     eksternId = "2",
                     mottaker =
-                        """altinn: {
-                        serviceCode: "1",
-                        serviceEdition: "1"
+                        """altinnRessurs: {
+                        ressursId: "test-fager"
                     }"""
                 )
             ) {
@@ -392,16 +391,16 @@ private suspend fun HttpClient.nyKalenderavtale(
                 erDigitalt: true
                 virksomhetsnummer: "42"
                 eksterneVarsler: [{
-                    altinntjeneste: {
+                    altinnressurs: {
                         sendetidspunkt: {
                             sendevindu: LOEPENDE
                         }
                         mottaker: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                            ressursId: "test-fager"
                         }
-                        innhold: "foo"
-                        tittel: "bar"
+                        epostTittel: "bar"
+                        epostHtmlBody: "foo"
+                        smsTekst: "foo"
                     }
                 }]
                 paaminnelse: {
@@ -409,14 +408,14 @@ private suspend fun HttpClient.nyKalenderavtale(
                         foerStartTidspunkt: "PT24H"
                     }
                     eksterneVarsler: [{
-                        altinntjeneste: {
+                        altinnressurs: {
                             sendevindu: LOEPENDE
                             mottaker: {
-                                serviceCode: "5441"
-                                serviceEdition: "1"
+                                ressursId: "test-fager"
                             }
-                            innhold: "baz"
-                            tittel: "buz"
+                            epostTittel: "buz"
+                            epostHtmlBody: "baz"
+                            smsTekst: "baz"
                         }
                     }]
                 }
@@ -465,16 +464,16 @@ private suspend fun HttpClient.oppdaterKalenderavtale(
                   strategi: OVERSKRIV
                 }
                 eksterneVarsler: [{
-                    altinntjeneste: {
+                    altinnressurs: {
                         sendetidspunkt: {
                             sendevindu: LOEPENDE
                         }
                         mottaker: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                            ressursId: "test-fager"
                         }
-                        innhold: "foo"
-                        tittel: "bar"
+                        epostTittel: "bar"
+                        epostHtmlBody: "foo"
+                        smsTekst: "foo"
                     }
                 }]
                 paaminnelse: {
@@ -482,14 +481,14 @@ private suspend fun HttpClient.oppdaterKalenderavtale(
                         foerStartTidspunkt: "PT24H"
                     }
                     eksterneVarsler: [{
-                        altinntjeneste: {
+                        altinnressurs: {
                             sendevindu: LOEPENDE
                             mottaker: {
-                                serviceCode: "5441"
-                                serviceEdition: "1"
+                                ressursId: "test-fager"
                             }
-                            innhold: "baz"
-                            tittel: "buz"
+                            epostTittel: "buz"
+                            epostHtmlBody: "baz"
+                            smsTekst: "baz"
                         }
                     }]
                 }
@@ -534,16 +533,16 @@ private suspend fun HttpClient.oppdaterKalenderavtaleByEksternId(
                   strategi: OVERSKRIV
                 }
                 eksterneVarsler: [{
-                    altinntjeneste: {
+                    altinnressurs: {
                         sendetidspunkt: {
                             sendevindu: LOEPENDE
                         }
                         mottaker: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                            ressursId: "test-fager"
                         }
-                        innhold: "foo"
-                        tittel: "bar"
+                        epostTittel: "bar"
+                        epostHtmlBody: "foo"
+                        smsTekst: "foo"
                     }
                 }]
                 paaminnelse: {
@@ -551,14 +550,14 @@ private suspend fun HttpClient.oppdaterKalenderavtaleByEksternId(
                         foerStartTidspunkt: "PT24H"
                     }
                     eksterneVarsler: [{
-                        altinntjeneste: {
+                        altinnressurs: {
                             sendevindu: LOEPENDE
                             mottaker: {
-                                serviceCode: "5441"
-                                serviceEdition: "1"
+                                ressursId: "test-fager"
                             }
-                            innhold: "baz"
-                            tittel: "buz"
+                            epostTittel: "buz"
+                            epostHtmlBody: "baz"
+                            smsTekst: "baz"
                         }
                     }]
                 }
@@ -607,16 +606,16 @@ private suspend fun HttpClient.opprettKalenderavtaleMedMottaker(
                 erDigitalt: true
                 virksomhetsnummer: "$virksomhetsnummer"
                 eksterneVarsler: [{
-                    altinntjeneste: {
+                    altinnressurs: {
                         sendetidspunkt: {
                             sendevindu: LOEPENDE
                         }
                         mottaker: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                            ressursId: "test-fager"
                         }
-                        innhold: "foo"
-                        tittel: "bar"
+                        epostTittel: "bar"
+                        epostHtmlBody: "foo"
+                        smsTekst: "foo"
                     }
                 }]
                 hardDelete: {

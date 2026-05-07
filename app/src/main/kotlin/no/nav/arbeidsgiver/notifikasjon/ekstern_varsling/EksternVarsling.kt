@@ -12,7 +12,6 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Database.Companion.openDat
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.configureRouting
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.registerShutdownListener
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.HendelsesstrømKafkaImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.NOTIFIKASJON_TOPIC
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka.lagKafkaHendelseProdusent
@@ -53,17 +52,6 @@ object EksternVarsling {
             launch {
                 val service = EksternVarslingService(
                     eksternVarslingRepository = eksternVarslingRepository,
-                    altinn2VarselKlient = basedOnEnv(
-                        prod = { Altinn2VarselKlientImpl() },
-                        dev = {
-                            Altinn2VarselKlientMedFilter(
-                                eksternVarslingRepository,
-                                Altinn2VarselKlientImpl(),
-                                Altinn2VarselKlientLogging()
-                            )
-                        },
-                        other = { Altinn2VarselKlientLogging() },
-                    ),
                     altinn3VarselKlient = basedOnEnv(
                         prod = { Altinn3VarselKlientImpl() },
                         dev = {
@@ -88,17 +76,6 @@ object EksternVarsling {
             }
 
             configureRouting {
-                val internalTestClient = basedOnEnv(
-                    prod = { Altinn2VarselKlientImpl() },
-                    dev = { Altinn2VarselKlientImpl() },
-                    other = { Altinn2VarselKlientLogging() }
-                )
-                get("/internal/send_sms") {
-                    testSms(internalTestClient)
-                }
-                get("/internal/send_epost") {
-                    testEpost(internalTestClient)
-                }
                 post("/internal/update_emergency_brake") {
                     updateEmergencyBrake(eksternVarslingRepository)
                 }
@@ -108,67 +85,6 @@ object EksternVarsling {
     }
 }
 
-data class TestSmsRequestBody(
-    val reporteeNumber: String,
-    val tlf: String,
-    val tekst: String,
-)
-
-suspend fun RoutingContext.testSms(altinnVarselKlient: Altinn2VarselKlient) {
-    val varselRequest = call.receive<TestSmsRequestBody>()
-    testSend(altinnVarselKlient) {
-        sendSms(
-            mobilnummer = varselRequest.tlf,
-            reporteeNumber = varselRequest.reporteeNumber,
-            tekst = varselRequest.tekst,
-        )
-    }
-}
-
-data class TestEpostRequestBody(
-    val reporteeNumber: String,
-    val epost: String,
-    val subject: String,
-    val body: String,
-)
-
-suspend fun RoutingContext.testEpost(altinnVarselKlient: Altinn2VarselKlient) {
-    val varselRequest = call.receive<TestEpostRequestBody>()
-    this.testSend(altinnVarselKlient) {
-        sendEpost(
-            reporteeNumber = varselRequest.reporteeNumber,
-            epostadresse = varselRequest.epost,
-            tittel = varselRequest.subject,
-            tekst = varselRequest.body,
-        )
-    }
-}
-
-private suspend fun RoutingContext.testSend(
-    client: Altinn2VarselKlient,
-    action: suspend Altinn2VarselKlientImpl.() -> AltinnVarselKlientResponseOrException
-) {
-    if (client is Altinn2VarselKlientImpl) {
-        when (val response = client.action()) {
-            is AltinnVarselKlientResponse.Ok ->
-                call.respond(HttpStatusCode.OK, laxObjectMapper.writeValueAsString(response.rå))
-
-            is AltinnVarselKlientResponse.Feil ->
-                call.respond(HttpStatusCode.BadRequest, laxObjectMapper.writeValueAsString(response.rå))
-
-            is UkjentException ->
-                call.respond(
-                    HttpStatusCode.InternalServerError,
-                    laxObjectMapper.writeValueAsString(
-                        mapOf(
-                            "type" to response.exception.javaClass.canonicalName,
-                            "msg" to response.exception.message,
-                        )
-                    )
-                )
-        }
-    }
-}
 
 data class UpdateEmergencyBrakeRequestBody(
     val newState: Boolean

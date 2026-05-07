@@ -1,9 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode
-import jakarta.xml.bind.JAXBElement
 import kotlinx.coroutines.delay
-import no.altinn.services.common.fault._2009._10.AltinnFault
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
@@ -21,7 +20,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
-import javax.xml.namespace.QName
 import kotlin.test.*
 
 class EksternVarslingRepositoryTest {
@@ -245,8 +243,13 @@ class EksternVarslingRepositoryTest {
 
         repository.markerSomSendtAndReleaseJob(
             id1,
-            AltinnVarselKlientResponse.Ok(
-                rå = NullNode.instance
+            Altinn3VarselKlient.OrderResponse.Success(
+                rå = JsonNodeFactory.instance.objectNode().apply {
+                    put("notificationOrderId", "test-order")
+                    putObject("notification").put("shipmentId", "test-shipment")
+                },
+                orderId = "test-order",
+                shipmentId = "test-shipment",
             )
         )
 
@@ -287,12 +290,10 @@ class EksternVarslingRepositoryTest {
 
         repository.markerSomSendtAndReleaseJob(
             id1,
-            AltinnVarselKlientResponse.Feil(
+            Altinn3VarselKlient.ErrorResponse(
                 rå = NullNode.instance,
-                altinnFault = AltinnFault().apply {
-                    errorID = 1
-                    altinnErrorMessage = JAXBElement(QName(""), String::class.java, "hallo")
-                }
+                code = "1",
+                message = "hallo",
             )
         )
 

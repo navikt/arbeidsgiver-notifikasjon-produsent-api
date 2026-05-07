@@ -1,7 +1,6 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
@@ -13,6 +12,7 @@ import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMot
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.SmsVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.ISO8601Period
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.Validators
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.ValideringsFeil
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -25,11 +25,13 @@ internal data class EksterntVarselInput(
     val altinnressurs: Altinnressurs?,
 ) {
     init {
+        if (altinntjeneste != null) {
+            throw ValideringsFeil("EksterntVarselInput: altinntjeneste er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnressurs i stedet.")
+        }
         Validators.ExactlyOneFieldGiven("EksterntVarselInput")(
             mapOf(
                 "sms" to sms,
                 "epost" to epost,
-                "altinntjeneste" to altinntjeneste,
                 "altinnressurs" to altinnressurs
             )
         )
@@ -41,9 +43,6 @@ internal data class EksterntVarselInput(
         }
         if (epost != null) {
             return epost.tilHendelseModel(virksomhetsnummer)
-        }
-        if (altinntjeneste != null) {
-            return altinntjeneste.tilHendelseModel(virksomhetsnummer)
         }
         if (altinnressurs != null) {
             return altinnressurs.tilHendelseModel(virksomhetsnummer)
@@ -240,18 +239,6 @@ internal data class NaermesteLederMottakerInput(
         )
 }
 
-internal data class AltinnMottakerInput(
-    val serviceCode: String,
-    val serviceEdition: String,
-) {
-    fun tilDomene(virksomhetsnummer: String): Mottaker =
-        AltinnMottaker(
-            serviceCode = serviceCode,
-            serviceEdition = serviceEdition,
-            virksomhetsnummer = virksomhetsnummer
-        )
-}
-
 internal data class AltinnRessursMottakerInput(
     val ressursId: String,
 ) {
@@ -271,9 +258,11 @@ internal data class MottakerInput(
     val altinnRessurs: AltinnRessursMottakerInput?
 ) {
     init {
+        if (altinn != null) {
+            throw ValideringsFeil("MottakerInput: altinn er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnRessurs i stedet.")
+        }
         Validators.ExactlyOneFieldGiven("MottakerInput")(
             mapOf(
-                "altinn" to altinn,
                 "naermesteLeder" to naermesteLeder,
                 "altinnRessurs" to altinnRessurs,
             )
@@ -283,15 +272,23 @@ internal data class MottakerInput(
     fun tilHendelseModel(
         virksomhetsnummer: String,
     ): Mottaker {
-        check(listOfNotNull(altinn, naermesteLeder, altinnRessurs).size == 1) {
+        check(listOfNotNull(naermesteLeder, altinnRessurs).size == 1) {
             "Ugyldig mottaker"
         }
         return altinnRessurs?.tilDomene(virksomhetsnummer)
-            ?: altinn?.tilDomene(virksomhetsnummer)
             ?: naermesteLeder?.tilDomene(virksomhetsnummer)
             ?: throw IllegalArgumentException("Ugyldig mottaker")
     }
 }
+
+/**
+ * DEPRECATED: Altinn 2 er avviklet. Denne klassen beholdes kun fordi GraphQL-skjemaet
+ * fortsatt har AltinnMottakerInput (merket @deprecated). Feltet ignoreres ved validering.
+ */
+internal data class AltinnMottakerInput(
+    val serviceCode: String,
+    val serviceEdition: String,
+)
 
 internal data class MetadataInput(
     val grupperingsid: String?,
@@ -399,11 +396,13 @@ internal class PaaminnelseEksterntVarselInput(
     val altinnressurs: Altinnressurs?,
 ) {
     init {
+        if (altinntjeneste != null) {
+            throw ValideringsFeil("PaaminnelseEksterntVarselInput: altinntjeneste er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnressurs i stedet.")
+        }
         Validators.ExactlyOneFieldGiven("PaaminnelseEksterntVarselInput")(
             mapOf(
                 "sms" to sms,
                 "epost" to epost,
-                "altinntjeneste" to altinntjeneste,
                 "altinnressurs" to altinnressurs,
             )
         )
@@ -413,9 +412,8 @@ internal class PaaminnelseEksterntVarselInput(
         when {
             sms != null -> sms.tilDomene(virksomhetsnummer)
             epost != null -> epost.tilDomene(virksomhetsnummer)
-            altinntjeneste != null -> altinntjeneste.tilDomene(virksomhetsnummer)
             altinnressurs != null -> altinnressurs.tilDomene(virksomhetsnummer)
-            else -> error("graphql-validation failed, neither sms nor epost nor altinntjeneste defined")
+            else -> error("graphql-validation failed, neither sms nor epost nor altinnressurs defined")
         }
 
     class Sms(

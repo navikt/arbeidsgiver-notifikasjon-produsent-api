@@ -5,7 +5,10 @@ import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
 import no.nav.arbeidsgiver.notifikasjon.produsent.ProdusentRepositoryImpl
 import no.nav.arbeidsgiver.notifikasjon.util.*
 import java.util.*
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class TilleggsinformasjonTest {
     @Test
@@ -110,9 +113,8 @@ private suspend fun HttpClient.nySak(
                     merkelapp: "tag"
                     grupperingsid: "$grupperingsid"
                     mottakere: [{
-                        altinn: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                        altinnRessurs: {
+                            ressursId: "test-fager"
                         }
                     }]
                     initiellStatus: ${SaksStatus.MOTTATT}
