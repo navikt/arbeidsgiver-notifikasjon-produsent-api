@@ -638,6 +638,66 @@ EOF
   }
 }
 
+resource "google_bigquery_table" "notifikasjon_mottaker_view" {
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "notifikasjon_mottaker_view"
+
+  view {
+    query          = <<EOF
+SELECT
+  n.notifikasjon_id, notifikasjon_type, produsent_id, merkelapp,
+  opprettet_tidspunkt, soft_deleted_tidspunkt, utgaatt_tidspunkt, utfoert_tidspunkt,
+  frist, paaminnelse_bestilling_spesifikasjon_type,
+  paaminnelse_bestilling_spesifikasjon_tid, paaminnelse_bestilling_utregnet_tid,
+  m.mottaker_type, m.service_code, m.service_edition, m.ressursid
+FROM `notifikasjon_platform_dataset.notifikasjon` n
+JOIN (
+  SELECT notifikasjon_id, 'naermeste_leder' as mottaker_type,
+    CAST(NULL AS STRING) as service_code, CAST(NULL AS STRING) as service_edition, CAST(NULL AS STRING) as ressursid
+  FROM `notifikasjon_platform_dataset.mottaker_naermeste_leder`
+  UNION ALL
+  SELECT notifikasjon_id, 'altinn_tjeneste' as mottaker_type,
+    service_code, service_edition, CAST(NULL AS STRING) as ressursid
+  FROM `notifikasjon_platform_dataset.mottaker_enkeltrettighet`
+  UNION ALL
+  SELECT notifikasjon_id, 'altinn_ressurs' as mottaker_type,
+    CAST(NULL AS STRING) as service_code, CAST(NULL AS STRING) as service_edition, ressursid
+  FROM `notifikasjon_platform_dataset.mottaker_altinn_ressurs`
+) m USING (notifikasjon_id)
+EOF
+    use_legacy_sql = false
+  }
+}
+
+resource "google_bigquery_table" "sak_mottaker_view" {
+  dataset_id = google_bigquery_dataset.this.dataset_id
+  table_id   = "sak_mottaker_view"
+
+  view {
+    query          = <<EOF
+SELECT
+  s.sak_id, produsent_id, merkelapp,
+  oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt,
+  m.mottaker_type, m.service_code, m.service_edition, m.ressursid
+FROM `notifikasjon_platform_dataset.sak` s
+JOIN (
+  SELECT sak_id, 'naermeste_leder' as mottaker_type,
+    CAST(NULL AS STRING) as service_code, CAST(NULL AS STRING) as service_edition, CAST(NULL AS STRING) as ressursid
+  FROM `notifikasjon_platform_dataset.mottaker_naermeste_leder`
+  UNION ALL
+  SELECT sak_id, 'altinn_tjeneste' as mottaker_type,
+    service_code, service_edition, CAST(NULL AS STRING) as ressursid
+  FROM `notifikasjon_platform_dataset.mottaker_enkeltrettighet`
+  UNION ALL
+  SELECT sak_id, 'altinn_ressurs' as mottaker_type,
+    CAST(NULL AS STRING) as service_code, CAST(NULL AS STRING) as service_edition, ressursid
+  FROM `notifikasjon_platform_dataset.mottaker_altinn_ressurs`
+) m USING (sak_id)
+EOF
+    use_legacy_sql = false
+  }
+}
+
 resource "google_bigquery_table" "hard_delete_notifikasjon_view" {
   dataset_id = google_bigquery_dataset.this.dataset_id
   table_id   = "hard_delete_notifikasjon_view"
