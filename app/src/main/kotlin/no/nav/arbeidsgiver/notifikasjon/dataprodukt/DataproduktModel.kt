@@ -918,10 +918,11 @@ class DataproduktModel(
                 tjeneste_tittel,
                 tjeneste_innhold,
                 opprinnelse,
-                status_utsending
+                status_utsending,
+                mottaker
             )
             values
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             on conflict do nothing;
             """,
             eksterneVarsler
@@ -943,6 +944,7 @@ class DataproduktModel(
                         nullableText(null)
                         text(opprinnelse)
                         text(statusUtsending)
+                        nullableText(null)
                     }
                 }
 
@@ -962,6 +964,7 @@ class DataproduktModel(
                         nullableText(null)
                         text(opprinnelse)
                         text(statusUtsending)
+                        nullableText(null)
                     }
                 }
 
@@ -980,6 +983,7 @@ class DataproduktModel(
                     nullableText(innhold)
                     text(opprinnelse)
                     text(statusUtsending)
+                    nullableText("${serviceCode}:${serviceEdition}")
                 }
 
                 is HendelseModel.AltinnressursVarselKontaktinfo -> with(eksterntVarsel) {
@@ -997,6 +1001,7 @@ class DataproduktModel(
                     nullableText(null)
                     text(opprinnelse)
                     text(statusUtsending)
+                    nullableText(ressursId)
                 }
             }
         }
