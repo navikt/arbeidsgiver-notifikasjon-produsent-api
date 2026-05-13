@@ -444,8 +444,9 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel" {
         produsent_id,
         merkelapp,
         sendevindu,
-        case sendetidspunkt
-            when "-999999999-01-01T00:00" then DATETIME("1970-01-01 00:00:00")
+        case
+            when sendetidspunkt = "-999999999-01-01T00:00" then DATETIME("1970-01-01 00:00:00")
+            when LENGTH(sendetidspunkt) = 16 then PARSE_DATETIME("%FT%R", sendetidspunkt)
             else PARSE_DATETIME("%FT%R:%E*S", sendetidspunkt)
             end
             as sendetidspunkt,
@@ -628,7 +629,7 @@ SELECT
  frist, paaminnelse_bestilling_spesifikasjon_type,
  paaminnelse_bestilling_spesifikasjon_tid, paaminnelse_bestilling_utregnet_tid,
  epost_pseud, tlf_pseud, tjenestekode, tjenesteversjon, resultat_name_pseud,
- resultat_receiver_pseud, resultat_type
+ resultat_receiver_pseud, resultat_type, mottaker
  FROM `notifikasjon_platform_dataset.ekstern_varsel`
   join `notifikasjon_platform_dataset.notifikasjon` n using (notifikasjon_id)
   left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_epost` using (varsel_id)
