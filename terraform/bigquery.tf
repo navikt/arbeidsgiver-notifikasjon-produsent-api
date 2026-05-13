@@ -444,7 +444,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel" {
         produsent_id,
         merkelapp,
         sendevindu,
-        case sendetidspunkt
+        case
             when sendetidspunkt = "-999999999-01-01T00:00" then DATETIME("1970-01-01 00:00:00")
             when LENGTH(sendetidspunkt) = 16 then PARSE_DATETIME("%FT%R", sendetidspunkt)
             else PARSE_DATETIME("%FT%R:%E*S", sendetidspunkt)
