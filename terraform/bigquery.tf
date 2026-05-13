@@ -431,7 +431,7 @@ resource "google_bigquery_data_transfer_config" "ekstern_varsel" {
   data_source_id         = "scheduled_query"
   display_name           = "ekstern_varsel"
   location               = var.region
-  schedule               = "every 60 mins"
+  schedule               = "every 5 mins"
   destination_dataset_id = google_bigquery_dataset.this.dataset_id
   params = {
     destination_table_name_template = google_bigquery_table.ekstern_varsel.table_id
@@ -628,8 +628,8 @@ SELECT
  frist, paaminnelse_bestilling_spesifikasjon_type,
  paaminnelse_bestilling_spesifikasjon_tid, paaminnelse_bestilling_utregnet_tid,
  epost_pseud, tlf_pseud, tjenestekode, tjenesteversjon, resultat_name_pseud,
- resultat_receiver_pseud, resultat_type, ev.mottaker
- FROM `notifikasjon_platform_dataset.ekstern_varsel` ev
+ resultat_receiver_pseud, resultat_type
+ FROM `notifikasjon_platform_dataset.ekstern_varsel`
   join `notifikasjon_platform_dataset.notifikasjon` n using (notifikasjon_id)
   left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_epost` using (varsel_id)
   left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_tjeneste` using (varsel_id)
