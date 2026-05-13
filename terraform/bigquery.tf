@@ -628,8 +628,8 @@ SELECT
  frist, paaminnelse_bestilling_spesifikasjon_type,
  paaminnelse_bestilling_spesifikasjon_tid, paaminnelse_bestilling_utregnet_tid,
  epost_pseud, tlf_pseud, tjenestekode, tjenesteversjon, resultat_name_pseud,
- resultat_receiver_pseud, resultat_type, mottaker
- FROM `notifikasjon_platform_dataset.ekstern_varsel`
+ resultat_receiver_pseud, resultat_type, ev.mottaker
+ FROM `notifikasjon_platform_dataset.ekstern_varsel` ev
   join `notifikasjon_platform_dataset.notifikasjon` n using (notifikasjon_id)
   left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_epost` using (varsel_id)
   left join `notifikasjon_platform_dataset.ekstern_varsel_mottaker_tjeneste` using (varsel_id)
