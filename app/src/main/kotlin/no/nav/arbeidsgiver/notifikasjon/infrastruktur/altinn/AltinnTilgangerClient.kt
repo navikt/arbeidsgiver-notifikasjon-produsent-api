@@ -11,6 +11,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClient
@@ -18,6 +19,9 @@ import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.AuthClientImpl
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.IdentityProvider
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.texas.TexasAuthConfig
 import org.apache.http.ConnectionClosedException
+import java.io.EOFException
+import java.net.SocketException
+import java.nio.channels.UnresolvedAddressException
 import javax.net.ssl.SSLHandshakeException
 
 class AltinnTilgangerClient(
@@ -46,13 +50,21 @@ class AltinnTilgangerClient(
             requestTimeoutMillis = 30_000
         }
         install(HttpRequestRetry) {
-            maxRetries = 3
-            retryOnExceptionIf { _, cause ->
-                cause is ConnectionClosedException ||
-                        cause is SocketTimeoutException ||
-                        cause is SSLHandshakeException ||
-                        cause is HttpRequestTimeoutException ||
-                        cause is java.nio.channels.UnresolvedAddressException
+            retryOnServerErrors(3)
+            retryOnExceptionIf(3) { _, cause ->
+                when (cause) {
+                    is SocketException,
+                    is SocketTimeoutException,
+                    is ConnectionClosedException,
+                    is HttpRequestTimeoutException,
+                    is UnresolvedAddressException,
+                    is EOFException,
+                    is SSLHandshakeException,
+                    is ClosedReceiveChannelException,
+                        -> true
+
+                    else -> false
+                }
             }
             delayMillis { 250L }
         }
@@ -131,7 +143,7 @@ private data class AltinnTilgangerClientResponse(
 }
 
 private fun <T> flatten(
-    altinnTilgang:AltinnTilgangerClientResponse.AltinnTilgang,
+    altinnTilgang: AltinnTilgangerClientResponse.AltinnTilgang,
     mapFn: (AltinnTilgangerClientResponse.AltinnTilgang) -> T
 ): Set<T> {
     val children = altinnTilgang.underenheter.flatMap { flatten(it, mapFn) }
