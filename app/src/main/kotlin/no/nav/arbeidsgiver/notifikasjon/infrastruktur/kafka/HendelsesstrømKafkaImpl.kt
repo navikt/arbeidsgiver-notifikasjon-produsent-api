@@ -39,6 +39,10 @@ class HendelsesstrømKafkaImpl(
         // soft delete rett etter opprettelse gjør at partisjon er stuck i prod.
         // se også https://github.com/navikt/arbeidsgiver-notifikasjon-produsent-api/pull/800
         UUID.fromString("34a375aa-d967-4327-911b-177afcce9d6e"),
+
+        UUID.fromString("20d2bbb3-a6b8-4c24-9753-d0e41b7a1d38"), // duplikat som følge av kafka outage 15.5.2026-17.5.2026
+        UUID.fromString("93f96dbf-7af6-40d7-b46d-1de67a50831a"), // duplikat som følge av kafka outage 15.5.2026-17.5.2026
+
     )
 
     override suspend fun forEach(
