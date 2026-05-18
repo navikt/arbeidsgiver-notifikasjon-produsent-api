@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "update-gqldoc": "spectaql config.yml && mv gql/index.html api.html"
+  },
+  "packageManager": "pnpm@10.12.4",
+  "dependencies": {
+    "spectaql": "3.0.9"
+  }
+}

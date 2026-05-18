@@ -1,55 +1,48 @@
-name: "Platform: generate docs"
+name: "Platform: verify docs"
 on:
   push:
     branches:
       - main
     paths:
       - app/src/main/resources/produsent.graphql
-  workflow_dispatch:
+      - docs/**
+  pull_request:
+    paths:
+      - app/src/main/resources/produsent.graphql
+      - docs/**
 
 jobs:
-  gendoc:
+  verify-docs:
     runs-on: 'ubuntu-latest'
     permissions:
-      contents: "write"
-      pull-requests: "write"
+      contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: docs/pnpm-lock.yaml
 
       - working-directory: ./docs
-        run: >-
-          npx spectaql config.yml
+        run: pnpm install --frozen-lockfile
 
       - working-directory: ./docs
-        run: mv gql/index.html api.html
+        run: pnpm run update-gqldoc
 
-      - run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git checkout -b docs/$GITHUB_SHA
-          git add -A
-          git commit -m "Autoupdate docs"
-          git push -u origin docs/$GITHUB_SHA
-
-      - name: Create Pull Request
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { repo, owner } = context.repo;
-            const result = await github.rest.pulls.create({
-              title: '[bot] update api documentation for github pages',
-              owner,
-              repo,
-              head: 'docs/${{github.sha}}',
-              base: 'main',
-              body: [
-                'Change in produsent-api graphql schema detected.',
-                'Automatically generated PR for new github pages.',
-                'plz accept.',
-                '![Gif found on CodeReviewGifs.com hosted on Giphy.com](https://media.giphy.com/media/R4uJVLXbOVDBS/giphy.gif)'
-              ].join('\n')
-            });
+      - name: Verify docs are up to date
+        working-directory: ./docs
+        run: |
+          if ! git diff --exit-code api.html; then
+            echo ""
+            echo "========================================="
+            echo "ERROR: api.html is out of date."
+            echo "Run 'pnpm run update-gqldoc' in the docs/ directory and commit the result."
+            echo "========================================="
+            exit 1
+          fi
