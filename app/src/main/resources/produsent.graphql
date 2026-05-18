@@ -434,6 +434,7 @@ type Mutation {
 
         """
         Her bestemmer dere hvem som skal få se kalenderavtalen.
+        Mottaker må være gyldig iht det dere står registrert med i produsent-registeret. Mottakere må også samsvare med saken denne notifikasjonen er knyttet til.
         """
         mottakere: [MottakerInput!]!
 
@@ -495,10 +496,7 @@ type Mutation {
         virksomhetsnummer: String!
 
         """
-        Hvem som skal få se saken.
-
-        NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang
-        til en notifikasjon. De tilgangsstyres hver for seg.
+        Hvem som skal få se saken. Mottaker må være gyldig iht det dere står registrert med i produsent-registeret.
         """
         mottakere: [MottakerInput!]!
 
@@ -1338,6 +1336,7 @@ input NyBeskjedInput {
     i denne listen over mottakere.
 
     Dere må gi oss minst 1 mottaker.
+    Mottaker må være gyldig iht det dere står registrert med i produsent-registeret. Mottakere må også samsvare med saken denne notifikasjonen er knyttet til.
     """
     mottakere: [MottakerInput!]! = []
 
@@ -1359,6 +1358,7 @@ input NyOppgaveInput {
     i denne listen over mottakere.
 
     Dere må gi oss minst 1 mottaker.
+    Mottaker må være gyldig iht det dere står registrert med i produsent-registeret. Mottakere må også samsvare med saken denne notifikasjonen er knyttet til.
     """
     mottakere: [MottakerInput!]! = []
     notifikasjon: NotifikasjonInput!
@@ -1942,6 +1942,8 @@ type UgyldigMerkelapp implements Error {
 
 """
 Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.
+Den kan også returneres dersom man angir mottaker på notifikasjon som ikke stemmer overens med mottaker på saken.
+Mottaker på sak og notifikasjon må samsvare.
 """
 type UgyldigMottaker implements Error {
     feilmelding: String!

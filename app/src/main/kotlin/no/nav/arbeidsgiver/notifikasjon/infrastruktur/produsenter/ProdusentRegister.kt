@@ -168,7 +168,19 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         "Inkluderingstilskudd",
         "Varig tilrettelagt arbeid"
     ),
-    tillatteMottakere = listOf()
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "nav_tiltak_arbeidstrening"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_tiltaksrefusjon"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_midlertidig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_varig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_sommerjobb"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_mentor"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_inkluderingstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_varig-tilrettelagt-arbeid-ordinaer"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_adressesperre"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_firearig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_tilskuddsbrev"),
+    )
 )
 
 val ESYFO = Produsent(
@@ -262,7 +274,9 @@ val TOI = Produsent(
     tillatteMerkelapper = listOf(
         "Kandidater",
     ),
-    tillatteMottakere = listOf()
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "nav_rekruttering_kandidater"),
+    )
 )
 
 val ARBEIDSGIVERDIALOG = Produsent(
@@ -285,7 +299,10 @@ val ARBEIDSGIVERDIALOG = Produsent(
         "Lønnstilskudd",
         "Arbeidstrening",
     ),
-    tillatteMottakere = listOf()
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "nav_tiltak_midlertidig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_arbeidstrening"),
+    )
 )
 
 val YRKESSKADE = Produsent(
@@ -307,7 +324,9 @@ val YRKESSKADE = Produsent(
     tillatteMerkelapper = listOf(
         "Skademelding",
     ),
-    tillatteMottakere = listOf()
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "nav_yrkesskade_skademelding"),
+    )
 )
 
 val FORELDREPENGER = Produsent(
@@ -374,6 +393,7 @@ val MELOSYS = Produsent(
     ),
     tillatteMottakere = listOf(
         RessursIdDefinisjon(ressursId = "test-fager"),
+        RessursIdDefinisjon(ressursId = "nav_medlemskap-lovvalg_soknad"),
     )
 )
 

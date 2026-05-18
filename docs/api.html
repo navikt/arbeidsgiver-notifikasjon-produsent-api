@@ -1538,7 +1538,7 @@
                         <td>
                           <span class="property-name"><code>mottakere</code></span> - <span class="property-type"><a href="#definition-MottakerInput"><code>[MottakerInput!]!</code></a></span>
                         </td>
-                        <td> Her bestemmer dere hvem som skal få se kalenderavtalen. </td>
+                        <td> Her bestemmer dere hvem som skal få se kalenderavtalen. Mottaker må være gyldig iht det dere står registrert med i produsent-registeret. Mottakere må også samsvare med saken denne notifikasjonen er knyttet til. </td>
                       </tr>
                       <tr>
                         <td>
@@ -1835,10 +1835,7 @@
                         <td>
                           <span class="property-name"><code>mottakere</code></span> - <span class="property-type"><a href="#definition-MottakerInput"><code>[MottakerInput!]!</code></a></span>
                         </td>
-                        <td>
-                          <p>Hvem som skal få se saken.</p>
-                          <p>NB. At en bruker har tilgang til en sak påvirker ikke om de har tilgang til en notifikasjon. De tilgangsstyres hver for seg.</p>
-                        </td>
+                        <td> Hvem som skal få se saken. Mottaker må være gyldig iht det dere står registrert med i produsent-registeret. </td>
                       </tr>
                       <tr>
                         <td>
@@ -7160,7 +7157,7 @@
                         <td>
                           <p>Her bestemmer dere hvem som skal få se notifikasjonen.</p>
                           <p>Hvis dere oppgir en mottaker i <code>mottaker</code>-feltet, så tolker vi det som om det var et element i denne listen over mottakere.</p>
-                          <p>Dere må gi oss minst 1 mottaker. Default = <code>[]</code></p>
+                          <p>Dere må gi oss minst 1 mottaker. Mottaker må være gyldig iht det dere står registrert med i produsent-registeret. Mottakere må også samsvare med saken denne notifikasjonen er knyttet til. Default = <code>[]</code></p>
                         </td>
                       </tr>
                       <tr>
@@ -7491,7 +7488,7 @@
                         <td>
                           <p>Her bestemmer dere hvem som skal få se notifikasjonen.</p>
                           <p>Hvis dere oppgir en mottaker i <code>mottaker</code>-feltet, så tolker vi det som om det var et element i denne listen over mottakere.</p>
-                          <p>Dere må gi oss minst 1 mottaker. Default = <code>[]</code></p>
+                          <p>Dere må gi oss minst 1 mottaker. Mottaker må være gyldig iht det dere står registrert med i produsent-registeret. Mottakere må også samsvare med saken denne notifikasjonen er knyttet til. Default = <code>[]</code></p>
                         </td>
                       </tr>
                       <tr>
@@ -9885,7 +9882,7 @@
               <div class="doc-copy">
                 <div class="definition-description doc-copy-section">
                   <h5>Description</h5>
-                  <p>Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til.</p>
+                  <p>Denne feilen returneres dersom en produsent forsøker å benytte en mottaker som den ikke har tilgang til. Den kan også returneres dersom man angir mottaker på notifikasjon som ikke stemmer overens med mottaker på saken. Mottaker på sak og notifikasjon må samsvare.</p>
                 </div>
                 <div class="definition-properties doc-copy-section">
                   <h5>Fields</h5>

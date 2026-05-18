@@ -12,6 +12,7 @@ import ch.qos.logback.core.spi.ContextAware
 import ch.qos.logback.core.spi.ContextAwareBase
 import ch.qos.logback.core.spi.FilterReply
 import ch.qos.logback.core.spi.LifeCycle
+import ch.qos.logback.core.util.Duration
 import net.logstash.logback.appender.LogstashTcpSocketAppender
 import net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider
 import net.logstash.logback.encoder.LogstashEncoder
@@ -63,6 +64,15 @@ class LogConfig : ContextAwareBase(), Configurator {
                 addAppender(LogstashTcpSocketAppender().setup(lc) {
                     this.name = "TEAMLOGS"
                     addDestination("team-logs.nais-system:5170")
+
+                    // --- hardening: bound queue, never block caller, no busy spin ---
+                    this.ringBufferSize = 1024                              // default 8192
+                    this.appendTimeout = Duration.buildByMilliseconds(0.0)  // drop on full instead of blocking
+                    setWaitStrategyType("sleeping")                         // method (no getter → no synthetic property); no CPU burn on idle
+                    this.reconnectionDelay = Duration.buildByMinutes(1.0)   // default 30s
+                    this.keepAliveDuration = Duration.buildByMinutes(5.0)   // keep socket warm
+                    // --- end hardening ---
+
                     this.encoder = LogstashEncoder().setup(lc) {
                         this.customFields = """{
                         |"google_cloud_project":"${System.getenv("GOOGLE_CLOUD_PROJECT")}",
@@ -73,7 +83,7 @@ class LogConfig : ContextAwareBase(), Configurator {
                         this.isIncludeContext = false
                         addProvider(LoggingEventPatternJsonProvider().apply {
                             this.pattern =
-                                """{"message":"%replace(%message){'^(.{200000}).+$', '$1...truncated'}"}"""
+                                """{"message":"%replace(%message){'^(.{125000}).+$', '$1...truncated'}"}"""
                         })
                     }
                     addFilter(object : Filter<ILoggingEvent>() {
