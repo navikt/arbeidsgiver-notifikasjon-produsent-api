@@ -217,6 +217,18 @@ val ARBEIDSGIVER_TILTAK = Produsent(
             version = "6",
             description = "Varig tilrettelagt arbeid i ordinær virksomhet"
         ),
+
+        RessursIdDefinisjon(ressursId = "nav_tiltak_arbeidstrening"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_tiltaksrefusjon"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_midlertidig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_varig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_sommerjobb"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_mentor"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_inkluderingstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_varig-tilrettelagt-arbeid-ordinaer"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_adressesperre"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_firearig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_tilskuddsbrev"),
     )
 )
 
@@ -319,7 +331,8 @@ val TOI = Produsent(
         "Kandidater",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "5078", version = "1", description = "Rekruttering")
+        ServicecodeDefinisjon(code = "5078", version = "1", description = "Rekruttering"),
+        RessursIdDefinisjon(ressursId = "nav_rekruttering_kandidater"),
     )
 )
 
@@ -352,7 +365,9 @@ val ARBEIDSGIVERDIALOG = Produsent(
                 other = { "1" }
             ),
             description = "Arbeidstrening"
-        )
+        ),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_midlertidig-lonnstilskudd"),
+        RessursIdDefinisjon(ressursId = "nav_tiltak_arbeidstrening"),
     )
 )
 
@@ -380,7 +395,8 @@ val YRKESSKADE = Produsent(
             code = "5902",
             version = "1",
             description = "Skademelding ved arbeidsulykke eller yrkessykdom"
-        )
+        ),
+        RessursIdDefinisjon(ressursId = "nav_yrkesskade_skademelding"),
     )
 )
 
@@ -450,6 +466,7 @@ val MELOSYS = Produsent(
     ),
     tillatteMottakere = listOf(
         RessursIdDefinisjon(ressursId = "test-fager"),
+        RessursIdDefinisjon(ressursId = "nav_medlemskap-lovvalg_soknad"),
     )
 )
 
