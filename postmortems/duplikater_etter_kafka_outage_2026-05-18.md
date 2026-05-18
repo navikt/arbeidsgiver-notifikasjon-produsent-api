@@ -27,7 +27,7 @@ Under en planlagt oppgradering av Kafka-clusteret over helgen 15.–17. mai 2026
 
 To saker ble berørt med duplikate notifikasjoner:
 
-1. **eksternId `08aa9de0-b1f5-466b-a12d-594a8b26f76d`** (im-notifikasjon / Inntektsmelding sykepenger, virksomhet 974542277):
+1. **eksternId `08aa9de0-b1f5-466b-a12d-594a8b26f76d`** (im-notifikasjon / Inntektsmelding sykepenger):
    - 3 duplikate saker
    - 3 duplikate oppgaver (én av oppgavene er utført korrekt)
 
