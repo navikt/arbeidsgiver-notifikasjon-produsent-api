@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "update-gqldoc": "spectaql config.yml && mv gql/index.html api.html"
+    "update-gqldoc": "spectaql config.yml > /dev/null && mv gql/index.html api.html"
   },
   "packageManager": "pnpm@10.12.4",
   "pnpm": {
