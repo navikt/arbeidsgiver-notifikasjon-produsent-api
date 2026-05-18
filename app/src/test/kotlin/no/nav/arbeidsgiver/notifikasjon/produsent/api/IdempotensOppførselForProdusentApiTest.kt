@@ -3,7 +3,7 @@ package no.nav.arbeidsgiver.notifikasjon.produsent.api
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.graphql.GraphQLRequest
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.produsent.Produsent
@@ -22,7 +22,7 @@ class IdempotensOppførselForProdusentApiTest {
 
     private val virksomhetsnummer = "1"
     private val mottaker =
-        AltinnMottaker(serviceCode = "1", serviceEdition = "1", virksomhetsnummer = virksomhetsnummer)
+        AltinnRessursMottaker(virksomhetsnummer = virksomhetsnummer, ressursId = "test-fager")
     private val eksternId = "42"
     private val grupperingsid = "42"
 
@@ -40,9 +40,8 @@ class IdempotensOppførselForProdusentApiTest {
                         merkelapp: "tag"
                         lenke: "#bar"
                     }
-                    mottaker: {altinn: {
-                        serviceCode: "${mottaker.serviceCode}"
-                        serviceEdition: "${mottaker.serviceEdition}"
+                    mottaker: {altinnRessurs: {
+                        ressursId: "${mottaker.ressursId}"
                     }}
                     eksterneVarsler: ${'$'}eksterneVarsler
                 }) {
@@ -67,9 +66,8 @@ class IdempotensOppførselForProdusentApiTest {
                         merkelapp: "tag"
                         lenke: "#bar"
                     }
-                    mottaker: {altinn: {
-                        serviceCode: "${mottaker.serviceCode}"
-                        serviceEdition: "${mottaker.serviceEdition}"
+                    mottaker: {altinnRessurs: {
+                        ressursId: "${mottaker.ressursId}"
                     }}
                     eksterneVarsler: ${'$'}eksterneVarsler
                 }) {
@@ -98,9 +96,8 @@ class IdempotensOppførselForProdusentApiTest {
                     tekst: "$tekst"
                     merkelapp: "tag"
                     lenke: "#bar"
-                    mottakere: [{altinn: {
-                        serviceCode: "${mottaker.serviceCode}"
-                        serviceEdition: "${mottaker.serviceEdition}"
+                    mottakere: [{altinnRessurs: {
+                        ressursId: "${mottaker.ressursId}"
                     }}]
                     startTidspunkt: ${'$'}startTidspunkt
                     sluttTidspunkt: ${'$'}sluttTidspunkt
@@ -454,9 +451,8 @@ class IdempotensOppførselForProdusentApiTest {
                         merkelapp: "tag"
                         lenke: "#bar"
                     }
-                    mottaker: {altinn: {
-                        serviceCode: "${mottaker.serviceCode}"
-                        serviceEdition: "${mottaker.serviceEdition}"
+                    mottaker: {altinnRessurs: {
+                        ressursId: "${mottaker.ressursId}"
                     }}
                     paaminnelse: {
                         tidspunkt: {
@@ -519,13 +515,13 @@ private val varlser1 = """
       }
     },
     {
-      "altinntjeneste": {
+      "altinnressurs": {
         "mottaker": {
-          "serviceCode": "1337",
-          "serviceEdition": "42"
+          "ressursId": "test-fager"
         },
-        "tittel": "Følg med, du har nye følgere å følge opp",
-        "innhold": "Gå inn på Nav sine nettsider og følg veiledningen",
+        "epostTittel": "Følg med, du har nye følgere å følge opp",
+        "epostHtmlBody": "<body><h1>Gå inn på Nav sine nettsider og følg veiledningen</h1></body>",
+        "smsTekst": "Følg med, du har nye følgere å følge opp",
         "sendetidspunkt": {
           "sendevindu": "LOEPENDE"
         }
@@ -569,13 +565,13 @@ private val varlser2 = """
       }
     },
     {
-      "altinntjeneste": {
+      "altinnressurs": {
         "mottaker": {
-          "serviceCode": "1337",
-          "serviceEdition": "42"
+          "ressursId": "test-fager"
         },
-        "tittel": "Følg med, du har nye følgere å følge opp",
-        "innhold": "Gå inn på Nav sine nettsider og følg veiledningen",
+        "epostTittel": "Følg med, du har nye følgere å følge opp",
+        "epostHtmlBody": "<body><h1>Gå inn på Nav sine nettsider og følg veiledningen</h1></body>",
+        "smsTekst": "Følg med, du har nye følgere å følge opp",
         "sendetidspunkt": {
           "sendevindu": "LOEPENDE"
         }
@@ -615,13 +611,13 @@ private val påminnelseVarsler = """
       }
     },
     {
-      "altinntjeneste": {
+      "altinnressurs": {
         "mottaker": {
-          "serviceCode": "1337",
-          "serviceEdition": "42"
+          "ressursId": "test-fager"
         },
-        "tittel": "Følg med, du har nye følgere å følge opp",
-        "innhold": "Gå inn på Nav sine nettsider og følg veiledningen",
+        "epostTittel": "Følg med, du har nye følgere å følge opp",
+        "epostHtmlBody": "<body><h1>Gå inn på Nav sine nettsider og følg veiledningen</h1></body>",
+        "smsTekst": "Følg med, du har nye følgere å følge opp",
         "sendevindu": "LOEPENDE"
       }
     }

@@ -117,9 +117,8 @@ mutation OpprettNySak(
     merkelapp: "Tiltak"
     virksomhetsnummer: $virksomhetsnummer
     mottakere: [{
-      altinn: {
-        serviceCode: "4321"
-        serviceEdition: "1"
+      altinnRessurs: {
+        ressursId: "nav_tiltak_avtale"
       }
     }]
     tittel: $tittel
@@ -212,9 +211,8 @@ mutation OpprettNyBeskjed(
       virksomhetsnummer: $virksomhetsnummer
     }
     mottakere: [{
-      altinn: {
-        serviceCode: "1234"
-        serviceEdition: "1"
+      altinnRessurs: {
+        ressursId: "nav_eksempel_sakssystem"
       }
     }]
     notifikasjon: {
@@ -262,9 +260,8 @@ mutation OpprettNyOppgave(
     }
     mottakere: [
       {
-        altinn: {
-          serviceCode: "4321"
-          serviceEdition: "1"
+        altinnRessurs: {
+          ressursId: "nav_pensjon_soknad"
         }
       }
     ]
@@ -382,7 +379,6 @@ mutation OpprettNyBeskjed(
     $eksternId: String!
     $virksomhetsnummer: String!
     $lenke: String!
-    $reporteeFnr: String!
     $ansattFnr: String!
     $naermesteLederFnr: String!
 ) {
@@ -391,9 +387,8 @@ nyBeskjed: {
             metadata: { eksternId: $eksternId, virksomhetsnummer: $virksomhetsnummer }
             mottakere: [
                 {
-                    altinn: {
-                        serviceCode: "1234",
-                        serviceEdition: "1"
+                    altinnRessurs: {
+                        ressursId: "nav_eksempel_sakssystem"
                     }
                 }
                 {
@@ -437,7 +432,7 @@ nyBeskjed: {
                     skal varsles.
                 </p>
                 <p>
-                    Vil dere sende sms/epost til arbeidsgivere basert på tjenestekode
+                    Vil dere sende sms/epost til arbeidsgivere basert på ressurs
                     i Altinn se neste avsnitt
                 </p>
 <pre><code class="language-graphql">
@@ -522,55 +517,34 @@ mutation OpprettNyBeskjed(
 </code></pre>
                 <h2 id="hvordan-opprette-beskjed-med-varsling-mot-tjenestekode-i-altinn-enkelttjeneste">
                     <a href="#hvordan-opprette-beskjed-med-varsling-mot-tjenestekode-i-altinn-enkelttjeneste">
-                    Hvordan opprette beskjed med varsling mot tjenestekode i Altinn
-                    (enkelttjeneste)
+                    Hvordan opprette beskjed med varsling mot ressurs i Altinn
                     </a>
                 </h2>
                 <p>
                     Vi støtter også ekstern varsling der dere som produsent ønsker å
-                    varsle alle med tilgang til en enkeltrettighet på en virksomhet.
+                    varsle alle med tilgang til en ressurs på en virksomhet.
                     Her gjelder samme retningslinjer og bruksvilkår hva gjelder
                     personopplysninger.
                 </p>
                 <p>
-                    Når dere bruker denne varslingsmekanismen så kan ikke vi garantere
-                    om det er SMS eller Epost som blir sendt, men vi vil si til Altinn
-                    at de skal velge Epost dersom den er tilgjengelig. Hvis en bruker
-                    i Altinn har oppgitt SMS og ikke Epost i tilknytning til tjenesten
-                    på den gitte virksomheten så vil de motta SMS. Det er derfor
-                    viktig at man tenker over tittel og innhold slik at den blir
-                    forståelig uavhengig av medium. Dvs samme tittel og innhold blir
-                    brukt i begge tilfeller i altinn, og reglene for hvordan
-                    formatering blir er definert der som følger:
-                </p>
-                <pre>
-type   | subject  | notificationText
-SMS    |          | {tittel}{innhold}
-EMAIL  | {tittel} | {innhold}
-</pre
->
-                <p>
-                    De som har registrert sin kontaktadresse på underenheten (enten
-                    uten filter eller hvor filteret stemmer med tjenestekoden som
-                    oppgis) vil bli varslet. Den offisielle kontaktinformasjonen til
-                    overenheten vil bli varslet.
+                    De som har registrert sin kontaktadresse på underenheten vil bli
+                    varslet. Den offisielle kontaktinformasjonen til overenheten vil
+                    bli varslet.
                 </p>
 <pre><code class="language-graphql">
 mutation OpprettNyBeskjed(
   $eksternId: String!
   $virksomhetsnummer: String!
-  $serviceCode: String!
-  $serviceEdition: String!
   $lenke: String!
-  $innhold: String!
+  $epostHtmlBody: String!
+  $smsTekst: String!
 ) {
   nyBeskjed(
     nyBeskjed: {
       metadata: { eksternId: $eksternId, virksomhetsnummer: $virksomhetsnummer }
       mottakere: [{
-        altinn: {
-          serviceCode: $serviceCode
-          serviceEdition: $serviceEdition
+        altinnRessurs: {
+          ressursId: "nav_sykmelding"
         }
       }]
       notifikasjon: {
@@ -580,13 +554,13 @@ mutation OpprettNyBeskjed(
       }
       eksterneVarsler: [
         {
-          altinntjeneste: {
+          altinnressurs: {
             mottaker: {
-              serviceCode: $serviceCode
-              serviceEdition: $serviceEdition
+              ressursId: "nav_sykmelding"
             }
-            tittel: "Du har mottatt en ny sykemelding."
-            innhold: $innhold
+            epostTittel: "Du har mottatt en ny sykemelding."
+            epostHtmlBody: $epostHtmlBody
+            smsTekst: $smsTekst
             sendetidspunkt: {
               sendevindu: NKS_AAPNINGSTID
             }
@@ -610,10 +584,9 @@ mutation OpprettNyBeskjed(
 {
   "eksternId": "1234556",
   "virksomhetsnummer":"012345678",
-  "serviceCode": "4936",
-  "serviceEdition": "1",
   "lenke": "https://dev.nav.no/sykemelding/12345",
-  "innhold": "Logg inn på NAV sin hjemmeside som arbeidsgiver. Hilsen NAV"
+  "epostHtmlBody": "&lt;h1&gt;Du har en ny sykemelding.&lt;/h1&gt;&lt;br&gt;Logg inn p&aring; NAV sin hjemmeside som arbeidsgiver. &lt;br&gt; Hilsen NAV",
+  "smsTekst": "Du har en ny sykemelding. Logg inn på NAV på Min side – arbeidsgiver for å finne den"
 }
 </code></pre>
 
@@ -682,9 +655,8 @@ mutation OpprettNyOppgaveMedFristOgPaaMinnelse(
     }
     mottakere: [
       {
-        altinn: {
-          serviceCode: "4321"
-          serviceEdition: "1"
+        altinnRessurs: {
+          ressursId: "nav_pensjon_soknad"
         }
       }
     ]
@@ -875,9 +847,8 @@ mutation OpprettSakMedAutomatiskSletting {
     virksomhetsnummer: "000000000"
     initiellStatus: MOTTATT
     mottakere: [{
-      altinn: {
-        serviceEdition: "1"
-        serviceCode: "1"
+      altinnRessurs: {
+        ressursId: "nav_tiltak_avtale"
       }
     }]
     tittel: "Du har en ny avtale"
@@ -1055,9 +1026,8 @@ mutation OpprettNySak(
         nesteSteg: null
         virksomhetsnummer: $virksomhetsnummer
         mottakere: [{
-            altinn: {
-                serviceCode: "1234"
-                serviceEdition: "1"
+            altinnRessurs: {
+                ressursId: "nav_skademelding"
             }
         }]
         tittel: $tittel
@@ -1099,9 +1069,8 @@ mutation OpprettNyBeskjed(
       grupperingsid: $grupperingsid
     }
     mottakere: [{
-      altinn: {
-        serviceCode: "1234"
-        serviceEdition: "1"
+      altinnRessurs: {
+        ressursId: "nav_skademelding"
       }
     }]
     notifikasjon: {

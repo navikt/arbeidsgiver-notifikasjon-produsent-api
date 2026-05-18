@@ -46,7 +46,6 @@ spec:
       rules:
         - application: logging
           namespace: nais-system
-        - application: altinn-varsel-firewall
       external:
         - host: platform.altinn.no
   gcp:
@@ -61,5 +60,3 @@ spec:
   env:
     - name: ALTINN_3_API_BASE_URL
       value: https://platform.altinn.no
-  envFrom:
-    - secret: altinn-basic-ws

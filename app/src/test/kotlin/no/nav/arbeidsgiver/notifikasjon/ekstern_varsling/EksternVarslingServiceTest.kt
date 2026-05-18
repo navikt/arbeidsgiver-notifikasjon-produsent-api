@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -45,7 +44,6 @@ private class ÅpningstiderMock : Åpningstider {
 
 private enum class MeldingsType {
     None,
-    Altinn2,
     Altinn3,
 }
 
@@ -73,14 +71,6 @@ class EksternVarslingServiceTest {
             åpningstider = åpningstider,
             osloTid = osloTid,
             eksternVarslingRepository = repository,
-            altinn2VarselKlient = object : Altinn2VarselKlient {
-                override suspend fun send(
-                    eksternVarsel: EksternVarsel
-                ): AltinnVarselKlientResponseOrException {
-                    meldingSendt.set(MeldingsType.Altinn2)
-                    return AltinnVarselKlientResponse.Ok(rå = NullNode.instance)
-                }
-            },
             altinn3VarselKlient = altinn3VarselKlient ?: object : Altinn3VarselKlient {
                 override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): Altinn3VarselKlient.OrderResponse {
                     meldingSendt.set(MeldingsType.Altinn3)
@@ -279,13 +269,13 @@ class EksternVarslingServiceTest {
                     lenke = "",
                     opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
                     eksterneVarsler = listOf(
-                        AltinntjenesteVarselKontaktinfo(
+                        AltinnressursVarselKontaktinfo(
                             varselId = uuid("2"),
-                            serviceCode = "1337",
-                            serviceEdition = "1",
+                            ressursId = "test-fager",
                             virksomhetsnummer = "",
-                            tittel = "",
-                            innhold = "",
+                            epostTittel = "",
+                            epostHtmlBody = "",
+                            smsTekst = "",
                             sendevindu = EksterntVarselSendingsvindu.NKS_ÅPNINGSTID,
                             sendeTidspunkt = null,
                         )
@@ -350,13 +340,13 @@ class EksternVarslingServiceTest {
                     lenke = "",
                     opprettetTidspunkt = OffsetDateTime.parse("2020-01-01T01:01+00"),
                     eksterneVarsler = listOf(
-                        AltinntjenesteVarselKontaktinfo(
+                        AltinnressursVarselKontaktinfo(
                             varselId = uuid("2"),
-                            serviceCode = "1337",
-                            serviceEdition = "1",
+                            ressursId = "test-fager",
                             virksomhetsnummer = "",
-                            tittel = "",
-                            innhold = "",
+                            epostTittel = "",
+                            epostHtmlBody = "",
+                            smsTekst = "",
                             sendevindu = EksterntVarselSendingsvindu.DAGTID_IKKE_SØNDAG,
                             sendeTidspunkt = null,
                         )
@@ -379,7 +369,7 @@ class EksternVarslingServiceTest {
 
             // sends message eventually
             eventually(10.seconds) {
-                assertEquals(MeldingsType.Altinn2, meldingSendt.get())
+                assertEquals(MeldingsType.Altinn3, meldingSendt.get())
             }
 
             serviceJob.cancel()

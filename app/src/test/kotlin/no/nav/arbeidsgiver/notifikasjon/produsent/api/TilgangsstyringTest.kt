@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.util.ProdusentRepositoryStub
 import no.nav.arbeidsgiver.notifikasjon.util.getTypedContent
 import no.nav.arbeidsgiver.notifikasjon.util.ktorProdusentTestServer
@@ -53,20 +52,15 @@ class TilgangsstyringTest {
     fun `når produsent mangler tilgang til mottaker`() = ktorProdusentTestServer(
         produsentRepository = ProdusentRepositoryStub()
     ) {
-        val mottaker = AltinnMottaker(
-            serviceCode = "1337",
-            serviceEdition = "3",
-            virksomhetsnummer = "42"
-        )
+        val ressursId = "unauthorized-ressurs"
 
         val resultat = client.produsentApi(
             """
                         mutation {
                             nyBeskjed(nyBeskjed: {
                                 mottaker: {
-                                    altinn: {
-                                        serviceCode: "${mottaker.serviceCode}",
-                                        serviceEdition: "${mottaker.serviceEdition}"
+                                    altinnRessurs: {
+                                        ressursId: "$ressursId"
                                     } 
                                 }
                                 notifikasjon: {
@@ -77,7 +71,7 @@ class TilgangsstyringTest {
                                 metadata: {
                                     eksternId: "heu"
                                     opprettetTidspunkt: "2019-10-12T07:20:50.52Z"
-                                    virksomhetsnummer: "${mottaker.virksomhetsnummer}"
+                                    virksomhetsnummer: "42"
 
                                 }
                             }) {
@@ -92,8 +86,7 @@ class TilgangsstyringTest {
 
         // errors har forklarende feilmelding
         resultat as Error.UgyldigMottaker
-        assertTrue(resultat.feilmelding.contains(mottaker.serviceCode))
-        assertTrue(resultat.feilmelding.contains(mottaker.serviceEdition))
+        assertTrue(resultat.feilmelding.contains(ressursId))
     }
 }
 
