@@ -1,6 +1,8 @@
 package no.nav.arbeidsgiver.notifikasjon.produsent.api
 
+import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Merkelapp
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter.Produsent
@@ -127,7 +129,7 @@ internal inline fun tilgangsstyrProdusent(
     context: ProdusentAPI.Context,
     merkelapp: String,
     onError: (error: Error.TilgangsstyringError) -> Nothing
-): Produsent  {
+): Produsent {
     val produsent = hentProdusent(context) { error -> onError(error) }
     tilgangsstyrMerkelapp(produsent, merkelapp) { error -> onError(error) }
     return produsent
@@ -139,8 +141,8 @@ private inline fun validerMottakerMotSak(
     mottakerInput: MottakerInput,
     onError: (Error.UgyldigMottaker) -> Nothing
 ) {
-    var mottaker = mottakerInput.tilHendelseModel(virksomhetsnummer)
-    if (mottaker !in sak.mottakere) {
+    val mottaker = mottakerInput.tilHendelseModel(virksomhetsnummer)
+    if (mottaker !in sak.mottakere.berikMedFallback()) {
         onError(
             Error.UgyldigMottaker(
                 """
@@ -169,3 +171,52 @@ fun String.ensurePrefix(prefix: String) =
 
 fun String.ensureSuffix(suffix: String) =
     removeSuffix(suffix) + suffix
+
+
+
+private val serviceCodeEditionTilRessursMap = mapOf(
+    "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" to ("5810" to "1"),
+    "nav_sosialtjenester_digisos-avtale" to ("5867" to "1"),
+    "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk" to ("3403" to basedOnEnv(
+        prod = { "2" },
+        other = { "1" })),
+    "nav_tiltak_arbeidstrening" to ("5332" to basedOnEnv(prod = { "2" }, other = { "1" })),
+    "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver" to ("2896" to "87"),
+    "nav_tiltak_midlertidig-lonnstilskudd" to ("5516" to "1"),
+    "nav_tiltak_varig-lonnstilskudd" to ("5516" to "2"),
+    "nav_tiltak_sommerjobb" to ("5516" to "3"),
+    "nav_tiltak_mentor" to ("5516" to "4"),
+    "nav_tiltak_inkluderingstilskudd" to ("5516" to "5"),
+    "nav_tiltak_varig-tilrettelagt-arbeid-ordinaer" to ("5516" to "6"),
+    "nav_tiltak_adressesperre" to ("5516" to "7"),
+    "nav_tiltak_tilskuddsbrev" to ("5278" to "1"),
+    "nav_tiltak_ekspertbistand" to ("5384" to "1"),
+    "nav_foreldrepenger_inntektsmelding" to ("4936" to "1"),
+    "nav_sykepenger_inntektsmelding" to ("4936" to "1"),
+    "nav_sykepenger_fritak-arbeidsgiverperiode" to ("4936" to "1"),
+    "nav_sykdom-i-familien_inntektsmelding" to ("4936" to "1"),
+    "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver" to ("5441" to "1"),
+    "nav_arbeidsforhold_aa-registeret-brukerstotte" to ("5441" to "2"),
+    "nav_arbeidsforhold_aa-registeret-sok-tilgang" to ("5719" to "1"),
+    "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere" to ("5723" to "1"),
+    "nav_rekruttering_kandidater" to ("5078" to "1"),
+    "nav_yrkesskade_skademelding" to ("5902" to "1"),
+).entries.groupBy({ it.value }, { it.key })
+
+/**
+ * midlertidig workaround at produsenter oppretter notifikasjoner på altinn ressurs mens sak er opprettet på altinn 2 tjeneste
+ * Nødvendig så lenge det finnes aktive saker på altinn 2 tjenester
+ */
+private fun List<Mottaker>.berikMedFallback() = flatMap {
+    when (it) {
+        is HendelseModel.AltinnMottaker ->
+            listOf(it) + (serviceCodeEditionTilRessursMap[it.serviceCode to it.serviceEdition]?.map { ressursId ->
+                HendelseModel.AltinnRessursMottaker(
+                    virksomhetsnummer = it.virksomhetsnummer,
+                    ressursId = ressursId,
+                )
+            } ?: listOf())
+
+        else -> listOf(it)
+    }
+}
