@@ -232,6 +232,78 @@ class NyBeskjedTest {
             nyBeskjed as MutationNyBeskjed.NyBeskjedVellykket
         }
     }
+
+    @Test
+    fun `Flere ressurs-mottakere mappet til samme servicecode er gyldige mot sak`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentRepository = ProdusentRepositoryImpl(database)
+        ktorProdusentTestServer(
+            kafkaProducer = FakeHendelseProdusent(),
+            produsentRepository = produsentRepository,
+        ) {
+            // Sak opprettet med AltinnMottaker serviceCode 4936/1 (inntektsmelding)
+            HendelseModel.SakOpprettet(
+                virksomhetsnummer = "42",
+                merkelapp = "tag",
+                grupperingsid = "g42",
+                mottakere = listOf(
+                    HendelseModel.AltinnMottaker(
+                        serviceCode = "4936",
+                        serviceEdition = "1",
+                        virksomhetsnummer = "42"
+                    )
+                ),
+                hendelseId = uuid("11"),
+                sakId = uuid("11"),
+                tittel = "test",
+                lenke = "https://nav.no",
+                oppgittTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                mottattTidspunkt = OffsetDateTime.parse("2020-01-01T01:01Z"),
+                kildeAppNavn = "",
+                produsentId = "",
+                nesteSteg = null,
+                hardDelete = null,
+                tilleggsinformasjon = null
+            ).also {
+                produsentRepository.oppdaterModellEtterHendelse(it)
+            }
+
+            // nav_foreldrepenger_inntektsmelding er mappet til 4936/1 — skal være gyldig
+            val beskjed1 = client.opprettBeskjedMedMottaker(
+                grupperingsId = "g42",
+                virksomhetsnummer = "42",
+                eksternId = "1",
+                mottaker =
+                    """altinnRessurs: {
+                        ressursId: "nav_foreldrepenger_inntektsmelding"
+                    }"""
+            )
+            beskjed1 as MutationNyBeskjed.NyBeskjedVellykket
+
+            // nav_sykepenger_inntektsmelding er også mappet til 4936/1 — skal være gyldig
+            val beskjed2 = client.opprettBeskjedMedMottaker(
+                grupperingsId = "g42",
+                virksomhetsnummer = "42",
+                eksternId = "2",
+                mottaker =
+                    """altinnRessurs: {
+                        ressursId: "nav_sykepenger_inntektsmelding"
+                    }"""
+            )
+            beskjed2 as MutationNyBeskjed.NyBeskjedVellykket
+
+            // nav_sykdom-i-familien_inntektsmelding er også mappet til 4936/1 — skal være gyldig
+            val beskjed3 = client.opprettBeskjedMedMottaker(
+                grupperingsId = "g42",
+                virksomhetsnummer = "42",
+                eksternId = "3",
+                mottaker =
+                    """altinnRessurs: {
+                        ressursId: "nav_sykdom-i-familien_inntektsmelding"
+                    }"""
+            )
+            beskjed3 as MutationNyBeskjed.NyBeskjedVellykket
+        }
+    }
 }
 
 
