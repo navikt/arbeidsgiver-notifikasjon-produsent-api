@@ -250,7 +250,10 @@ val ESYFO = Produsent(
         "Dialogmøte",
         "Oppfølging",
     ),
-    tillatteMottakere = listOf(NærmesteLederDefinisjon)
+    tillatteMottakere = listOf(
+        NærmesteLederDefinisjon,
+        RessursIdDefinisjon(ressursId = "nav_syfo_dialogmote"),
+    )
 )
 
 val PERMITTERING = Produsent(
