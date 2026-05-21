@@ -34,7 +34,10 @@ val stubProdusentRegister: ProdusentRegister = object : ProdusentRegister {
             tillatteMerkelapper = listOf("tag", "tag2"),
             tillatteMottakere = listOf(
                 RessursIdDefinisjon(ressursId = "test-fager"),
-                RessursIdDefinisjon(ressursId = "nav_foo_bar"),
+                RessursIdDefinisjon(ressursId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver"),
+                RessursIdDefinisjon(ressursId = "nav_foreldrepenger_inntektsmelding"),
+                RessursIdDefinisjon(ressursId = "nav_sykepenger_inntektsmelding"),
+                RessursIdDefinisjon(ressursId = "nav_sykdom-i-familien_inntektsmelding"),
                 NærmesteLederDefinisjon,
             )
         )
