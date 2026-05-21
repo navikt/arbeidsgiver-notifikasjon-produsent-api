@@ -132,7 +132,7 @@ class NyBeskjedFlereMottakereTest {
                  },
                  {
                      altinnRessurs: {
-                         ressursId: "nav_foo_bar"
+                         ressursId: "nav_sykepenger_inntektsmelding"
                      }
                  }
              ]
@@ -159,7 +159,7 @@ class NyBeskjedFlereMottakereTest {
                         naermesteLederFnr = "2",
                         virksomhetsnummer = "0"
                     ),
-                    QueryNotifikasjoner.AltinnRessursMottaker(ressursId = "nav_foo_bar", virksomhetsnummer = "0")
+                    QueryNotifikasjoner.AltinnRessursMottaker(ressursId = "nav_sykepenger_inntektsmelding", virksomhetsnummer = "0")
                 ), mottakere.toSet()
             )
             // sender hendelse med korrekt mottakere til kafka
