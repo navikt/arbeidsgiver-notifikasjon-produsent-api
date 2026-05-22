@@ -504,7 +504,7 @@ class EksternVarslingService(
             val candidates = altinntjenesteToRessursMap[serviceCode to serviceEdition] ?: return null
             return when {
                 candidates.size == 1 -> candidates.single()
-                candidates.size > 1 -> produsentIdTilRessursForServiceCode4936[produsentId]
+                candidates.size > 1 -> produsentIdTilRessursForServiceCode4936[produsentId]?.takeIf { it in candidates }
                 else -> null
             }
         }
