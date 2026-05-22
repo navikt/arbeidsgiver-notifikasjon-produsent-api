@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.basedOnEnv
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.launchProcessingLoop
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
@@ -209,7 +210,39 @@ class EksternVarslingService(
 
         withContext(varsel.asMDCContext()) {
             when (varsel.data.eksternVarsel) {
-                is EksternVarsel.Altinntjeneste -> altinn2VarselHandler(varsel)
+                is EksternVarsel.Altinntjeneste -> {
+                    val altinntjeneste = varsel.data.eksternVarsel as EksternVarsel.Altinntjeneste
+                    if (!isMigrated(altinntjeneste.serviceCode, altinntjeneste.serviceEdition)) {
+                        altinn2VarselHandler(varsel)
+                        return@withContext
+                    }
+                    val ressursId = resolveRessursId(
+                        serviceCode = altinntjeneste.serviceCode,
+                        serviceEdition = altinntjeneste.serviceEdition,
+                        produsentId = varsel.data.produsentId,
+                    )
+                    if (ressursId != null) {
+                        log.info("Ruter Altinntjeneste-varsel ${varsel.data.varselId} til ressurs $ressursId")
+                        val convertedVarsel = varsel.withEksternVarsel(
+                            EksternVarsel.Altinnressurs(
+                                fnrEllerOrgnr = altinntjeneste.fnrEllerOrgnr,
+                                sendeVindu = altinntjeneste.sendeVindu,
+                                sendeTidspunkt = altinntjeneste.sendeTidspunkt,
+                                resourceId = ressursId,
+                                epostTittel = altinntjeneste.tittel,
+                                epostInnhold = altinntjeneste.innhold,
+                                smsInnhold = altinntjeneste.tittel,
+                                ordreId = null,
+                            )
+                        )
+                        altinn3VarselHandler(convertedVarsel)
+                    } else {
+                        log.error("Migrert serviceCode ${altinntjeneste.serviceCode}:${altinntjeneste.serviceEdition} " +
+                            "men kan ikke bestemme ressursId for produsentId=${varsel.data.produsentId}. " +
+                            "Faller tilbake til altinn2.")
+                        altinn2VarselHandler(varsel)
+                    }
+                }
                 is EksternVarsel.Sms,
                 is EksternVarsel.Epost,
                 is EksternVarsel.Altinnressurs -> altinn3VarselHandler(varsel)
@@ -419,6 +452,60 @@ class EksternVarslingService(
 
             is EksternVarselTilstand.Kvittert -> {
                 eksternVarslingRepository.deleteFromJobQueue(varselId)
+            }
+        }
+    }
+
+    companion object {
+        private val migratedServiceCodes: Set<Pair<String, String>> = setOf(
+            "4936" to "1",
+        )
+
+        private fun isMigrated(serviceCode: String, serviceEdition: String): Boolean =
+            (serviceCode to serviceEdition) in migratedServiceCodes
+
+        private val altinntjenesteToRessursMap: Map<Pair<String, String>, List<String>> = mapOf(
+            "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" to ("5810" to "1"),
+            "nav_sosialtjenester_digisos-avtale" to ("5867" to "1"),
+            "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk" to ("3403" to basedOnEnv(
+                prod = { "2" },
+                other = { "1" })),
+            "nav_tiltak_arbeidstrening" to ("5332" to basedOnEnv(prod = { "2" }, other = { "1" })),
+            "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver" to ("2896" to "87"),
+            "nav_tiltak_midlertidig-lonnstilskudd" to ("5516" to "1"),
+            "nav_tiltak_varig-lonnstilskudd" to ("5516" to "2"),
+            "nav_tiltak_sommerjobb" to ("5516" to "3"),
+            "nav_tiltak_mentor" to ("5516" to "4"),
+            "nav_tiltak_inkluderingstilskudd" to ("5516" to "5"),
+            "nav_tiltak_varig-tilrettelagt-arbeid-ordinaer" to ("5516" to "6"),
+            "nav_tiltak_adressesperre" to ("5516" to "7"),
+            "nav_tiltak_tilskuddsbrev" to ("5278" to "1"),
+            "nav_tiltak_ekspertbistand" to ("5384" to "1"),
+            "nav_foreldrepenger_inntektsmelding" to ("4936" to "1"),
+            "nav_sykepenger_inntektsmelding" to ("4936" to "1"),
+            "nav_sykepenger_fritak-arbeidsgiverperiode" to ("4936" to "1"),
+            "nav_sykdom-i-familien_inntektsmelding" to ("4936" to "1"),
+            "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver" to ("5441" to "1"),
+            "nav_arbeidsforhold_aa-registeret-brukerstotte" to ("5441" to "2"),
+            "nav_arbeidsforhold_aa-registeret-sok-tilgang" to ("5719" to "1"),
+            "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere" to ("5723" to "1"),
+            "nav_rekruttering_kandidater" to ("5078" to "1"),
+            "nav_yrkesskade_skademelding" to ("5902" to "1"),
+        ).entries.groupBy({ it.value }, { it.key })
+
+        private val produsentIdTilRessursForServiceCode4936 = mapOf(
+            "fritakagp" to "nav_sykepenger_fritak-arbeidsgiverperiode",
+            "im-notifikasjon" to "nav_sykepenger_inntektsmelding",
+            "fp-inntektsmelding-notifikasjon" to "nav_foreldrepenger_inntektsmelding",
+            "k9-inntektsmelding-notifikasjon" to "nav_sykdom-i-familien_inntektsmelding",
+        )
+
+        private fun resolveRessursId(serviceCode: String, serviceEdition: String, produsentId: String): String? {
+            val candidates = altinntjenesteToRessursMap[serviceCode to serviceEdition] ?: return null
+            return when {
+                candidates.size == 1 -> candidates.single()
+                candidates.size > 1 -> produsentIdTilRessursForServiceCode4936[produsentId]
+                else -> null
             }
         }
     }
