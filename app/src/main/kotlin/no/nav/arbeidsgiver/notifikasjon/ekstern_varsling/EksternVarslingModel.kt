@@ -169,3 +169,13 @@ fun EksternVarselTilstand.Kansellert.toHendelse() = EksterntVarselKansellert(
     kildeAppNavn = naisClientId,
     varselId = data.varselId,
 )
+
+fun EksternVarselTilstand.withEksternVarsel(newVarsel: EksternVarsel): EksternVarselTilstand {
+    val newData = data.copy(eksternVarsel = newVarsel)
+    return when (this) {
+        is EksternVarselTilstand.Ny -> copy(data = newData)
+        is EksternVarselTilstand.Sendt -> copy(data = newData)
+        is EksternVarselTilstand.Kansellert -> copy(data = newData)
+        is EksternVarselTilstand.Kvittert -> copy(data = newData)
+    }
+}
