@@ -46,6 +46,8 @@ class HendelsesstrømKafkaImpl(
 
         UUID.fromString("f438ddc3-8ec6-4556-9baf-a79486a70830"), // duplikat som følge av kafka outage 01.6.2026
         UUID.fromString("11684dd5-f073-4aec-8b53-b115f6b8ec30"), // duplikat som følge av kafka outage 01.6.2026
+        UUID.fromString("dcf8fecf-4970-4064-870d-c7bb35aca88a"), // duplikat som følge av kafka outage 01.6.2026
+        UUID.fromString("f726f7ae-ae7e-466e-a346-d9884389b9d2"), // duplikat som følge av kafka outage 01.6.2026
 
     )
 
