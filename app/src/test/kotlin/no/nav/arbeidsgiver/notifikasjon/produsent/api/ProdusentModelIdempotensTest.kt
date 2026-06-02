@@ -20,6 +20,37 @@ import kotlin.test.assertNull
 
 class ProdusentModelIdempotensTest {
 
+    /**
+     * Dette skjer når idempotens-sjekken ikke fungerer pga heng mot kafka —
+     * duplikat-hendelse med ny notifikasjonId men samme (merkelapp, eksternId).
+     */
+    @Test
+    fun `NyBeskjed to ganger ulik id`() = withTestDatabase(Produsent.databaseConfig) { database ->
+        val produsentModel = ProdusentRepositoryImpl(database)
+        val duplikatId = UUID.randomUUID()
+
+        produsentModel.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
+        produsentModel.oppdaterModellEtterHendelse(
+            EksempelHendelse.BeskjedOpprettet.copy(notifikasjonId = duplikatId, hendelseId = duplikatId)
+        )
+
+        // original mottaker skal finnes
+        assertEquals(
+            1,
+            database.nonTransactionalExecuteQuery(
+                "select * from mottaker_altinn_enkeltrettighet where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'"
+            ) {}.size
+        )
+
+        // duplikat-ID skal ikke ha fått noen mottaker
+        assertEquals(
+            0,
+            database.nonTransactionalExecuteQuery(
+                "select * from mottaker_altinn_enkeltrettighet where notifikasjon_id = '$duplikatId'"
+            ) {}.size
+        )
+    }
+
     @Test
     fun `alle hendelser to ganger`() = withTestDatabase(Produsent.databaseConfig) { database ->
         val produsentModel = ProdusentRepositoryImpl(database)
