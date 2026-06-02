@@ -632,12 +632,6 @@ class ProdusentRepositoryImpl(
             // annen notifikasjonId — da er notifikasjonId ikke i tabellen og FK på mottaker-tabeller
             // vil feile. Hopp over mottakere og varsler hvis ingen rad ble insertet.
             if (inserted == 0) {
-                log.error(
-                    "BeskjedOpprettet: notifikasjon ikke insertet (duplikat koordinat eller id), hopper over mottakere og varsler. notifikasjonId={} merkelapp={} eksternId={}",
-                    beskjedOpprettet.notifikasjonId,
-                    beskjedOpprettet.merkelapp,
-                    beskjedOpprettet.eksternId,
-                )
                 return@transaction
             }
 
@@ -702,12 +696,6 @@ class ProdusentRepositoryImpl(
             // annen notifikasjonId — da er notifikasjonId ikke i tabellen og FK på mottaker-tabeller
             // vil feile. Hopp over mottakere og varsler hvis ingen rad ble insertet.
             if (inserted == 0) {
-                log.error(
-                    "OppgaveOpprettet: notifikasjon ikke insertet (duplikat koordinat eller id), hopper over mottakere og varsler. notifikasjonId={} merkelapp={} eksternId={}",
-                    oppgaveOpprettet.notifikasjonId,
-                    oppgaveOpprettet.merkelapp,
-                    oppgaveOpprettet.eksternId,
-                )
                 return@transaction
             }
 
@@ -954,12 +942,6 @@ class ProdusentRepositoryImpl(
             // annen notifikasjonId — da er notifikasjonId ikke i tabellen og FK på mottaker-tabeller
             // vil feile. Hopp over mottakere og varsler hvis ingen rad ble insertet.
             if (inserted == 0) {
-                log.error(
-                    "KalenderavtaleOpprettet: notifikasjon ikke insertet (duplikat koordinat eller id), hopper over mottakere og varsler. notifikasjonId={} merkelapp={} eksternId={}",
-                    hendelse.notifikasjonId,
-                    hendelse.merkelapp,
-                    hendelse.eksternId,
-                )
                 return@transaction
             }
 
