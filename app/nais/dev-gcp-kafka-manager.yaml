@@ -56,12 +56,6 @@ spec:
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
-            },
-            {
-              "name": "fager.ekstern-varsling-status",
-              "location": "AIVEN",
-              "keyDeserializerType": "STRING",
-              "valueDeserializerType": "STRING"
             }
           ]
         }
