@@ -60,4 +60,4 @@ spec:
       access: read
     - application: fager-kafka-manager
       team: fager
-      access: read
+      access: readwrite
