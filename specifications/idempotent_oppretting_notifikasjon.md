@@ -1,193 +1,138 @@
-# Server-side idempotency for `nyOppgave` / `nyBeskjed` / `nySak`
+# Transactional outbox + idempotency for all produsent-api mutations
 
 **Status:** Design proposal — for team decision, no code written yet
-**Author:** drafted with Claude, 2026-06-01
-**Related:** [postmortem 2026-05-18](../postmortems/duplikater_etter_kafka_outage_2026-05-18.md), Kafka outage 2026-06-01
+**Author:** drafted with Claude, 2026-06-01 (rewritten 2026-06-02: outbox-only, all mutations)
+**Related:** [postmortem 2026-06-01](../postmortems/duplikater_etter_kafka_outage_2026-06-01.md), [robust rebalansering](robust_consumer_rebalance.md)
 
-## Background
+## Goal
 
-We have produced duplicate notifications after a Kafka cluster rebalance **four times** (7 Sep 2022, PR #800, 15–17 May 2026, 1 Jun 2026 — see the `brokenHendelseId` skip-list in `HendelsesstrømKafkaImpl`). The 18 May postmortem named two root causes but only fixed one:
+1. **Every event-producing mutation goes through a transactional outbox** — the GraphQL request never produces to Kafka synchronously.
+2. **Every mutation is idempotent** — a client retry (or any duplicate request) for the same logical operation never produces a second event.
 
-1. ✅ **Fixed:** `MAX_BLOCK_MS` lowered 30s → 5s so the producer fails inside the client's timeout window.
-2. ❌ **Deferred:** *"Manglende idempotens-håndtering ved mottak."* — no dedup that survives a client retry.
+This supersedes the earlier create-only framing (`nyOppgave`/`nyBeskjed`/`nySak`). The reservation alternative is dropped; the outbox is the chosen direction.
 
-This doc designs the deferred fix. Note the May change made (1) *worse* in one respect: failing faster means clients retry sooner, which produces *more* duplicates while (2) is unfixed. The June outage is a recurrence of the same unaddressed root cause.
+## Why (recap)
 
-## Problem statement
+Today `HendelseDispatcher.send` produces to Kafka first, then writes the read-model ([HendelseDispatcher.kt:12-20](../app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/produsent/api/HendelseDispatcher.kt)):
 
-Idempotency today is a **read-before-produce** check: `hentNotifikasjon(eksternId, merkelapp)` in `MutationNyOppgave.kt:132`. It is blind during this window:
-
-```
-[attempt-1 produces H1] ─────── blind window ─────► [H1 visible to hentNotifikasjon]
-```
-
-H1 only becomes visible via the inline write in `HendelseDispatcher` (**which runs only after a successful produce**) or via the `produsent-model-builder` consumer (which lags during an outage). During the window a retry reads `null`, generates a fresh `UUID.randomUUID()`, and produces a second event with a **different aggregateId** for the same `(merkelapp, eksternId)` coordinate.
-
-Two consequences:
-- **Duplicate notifications** — two `OppgaveOpprettet` for the same coordinate.
-- **Consumer poison pill** — the `notifikasjon` table has `constraint unikt_koordinat unique (merkelapp, ekstern_id)` (`V1__init.sql:14`). The consumer's `insert into notifikasjon ... on conflict do nothing` swallows the *coordinate* conflict for the second event, so the `notifikasjon` row with the new id is never inserted, then the unconditional `storeMottaker(...)` FK-violates and the partition retries forever.
-
-The core difficulty (correctly identified by the team): **we must write to both Postgres and Kafka, and there is no atomic commit across the two.** `HendelseDispatcher.send` does Kafka-first, then DB. Any ordering leaves a failure window; the design is about *which* window and *how we reconcile it.*
-
-## Constraints (decided)
-
-- **`hendelseId` / `notifikasjonId` generation must not change.** Still `UUID.randomUUID()`, still `notifikasjonId == hendelseId`.
-- **Poison-pill retry-forever stays.** We do *not* want to go unhealthy on a poison pill. (Both designs below remove the *source* of this particular poison pill, but the consumer retry loop is untouched.)
-- **We do** want to go unhealthy on the invisible synchronous `send()` throw — see [Cross-cutting fix](#cross-cutting-the-synchronous-send-throw).
-
-## The shared idea: persist and reuse the random id
-
-The constraint above is satisfied by both designs because neither *derives* the id from the coordinate. We keep `UUID.randomUUID()`, but **store the assigned id** in a DB row keyed by `(merkelapp, eksternId)` and **reuse it on retry** instead of minting a new one.
-
-Effect: a retry re-produces an event with the **same** id. If attempt-1's H1 actually landed, the consumer's `on conflict do nothing` dedupes the second copy cleanly on the **primary key** (and mottakere on their unique indexes) → no duplicate notification, no FK poison pill — without changing id generation. Re-delivering the same `hendelseId` is not a new hazard: consumers already get at-least-once redelivery today via the `commitSync` seek-back-and-reprocess path, so they must already be idempotent on `hendelseId`. *(Worth a quick audit of the BigQuery/eksternvarsling consumers to confirm.)*
-
----
-
-## Option A — Reservation (reserve → produce → confirm)
-
-Smaller change. Reverse the dispatcher order: claim the coordinate in Postgres first, then produce.
-
-### Schema
-
-```sql
--- V3x__notifikasjon_idempotens.sql
-create table notifikasjon_idempotens (
-    merkelapp   text not null,
-    ekstern_id  text not null,
-    hendelse_id uuid not null,          -- the assigned random UUID, reused on retry
-    status      text not null,          -- 'PENDING' | 'PRODUCED'
-    hendelse    jsonb not null,         -- full payload, needed to re-drive
-    opprettet   timestamptz not null default now(),
-    primary key (merkelapp, ekstern_id)
-);
+```kotlin
+internal suspend fun send(vararg hendelser: Hendelse) {
+    val metadatas = hendelser.map { kafkaProducer.sendOgHentMetadata(it) }   // Kafka first (can time out / hang)
+    hendelser.zip(metadatas).forEach { (h, m) -> produsentRepository.oppdaterModellEtterHendelse(h, m) }  // DB only after
+}
 ```
 
-### Flow (per create-mutation)
+Two structural problems fall out of this:
+
+- **Dual write, wrong order.** A produce timeout throws before the read-model is written, so the mutation's idempotency check (`hentNotifikasjon`, `notifikasjonOppdateringFinnes`, …) is **blind** to in-flight events. A retry then mints a new random `hendelseId` and creates a duplicate. (This is the root cause of the May and June duplicate incidents.)
+- **Kafka is on the request path.** A slow broker hangs the mutation up to `delivery.timeout.ms` (the observed 56 s span), and surfaces timeouts that *cause* the client retries that create duplicates.
+
+Idempotency today is also **partial and inconsistent**: creates dedupe on the `(merkelapp, eksternId)` coordinate; some updates accept an *optional* `idempotencyKey`; several updates have no idempotency at all. The goal makes it uniform.
+
+## Constraints / non-goals
+
+- **`hendelseId` / `notifikasjonId` generation is unchanged** — still `UUID.randomUUID()`. The outbox *stores* the generated id and the relay reuses it; the identity scheme is not touched.
+- **Consumer-side fixes stay as-is** — the 0-rows-skip (commit `d1a8609c`) and the [rebalance/commit fix](robust_consumer_rebalance.md) are independent and complementary.
+- **No `unikt_koordinat` relaxation** — that option was rejected; the constraint stays.
+- This spec covers the produsent-api **write path** only.
+
+## Core design
+
+### 1. One choke point: implement the outbox in `HendelseDispatcher`
+
+All ~17 event-producing call sites go through `hendelseDispatcher.send(...)` (every mutation: `nyOppgave`, `nyBeskjed`, `nyKalenderavtale`, `nySak`, `nyStatusSak`, `nesteStegSak`, `tilleggsinformasjonSak`, `oppgaveUtfoert`, `oppgaveUtgaatt`, `oppgaveUtsettFrist`, `oppgaveEndrePaaminnelse`, `oppdaterKalenderavtale`, `softDelete*`, `hardDelete*`, plus the `*ByEksternId`/`*ByGrupperingsid`/`_V2` variants that resolve an aggregate and then call the same `send`). Reworking `send` therefore upgrades **all** mutations at once.
+
+New `send` — a single DB transaction, no Kafka:
+
+```kotlin
+internal suspend fun send(idempotencyKey: IdempotencyKey, vararg hendelser: Hendelse): SendResult =
+    produsentRepository.transaction {
+        // 1. claim the operation; if already claimed, this is a retry → return the prior result
+        if (!claimIdempotencyKey(idempotencyKey)) return@transaction SendResult.AlreadyApplied(idempotencyKey)
+        // 2. enqueue the event(s) to the outbox (relay → Kafka), preserving order
+        hendelser.forEach { enqueueOutbox(it) }
+        // 3. update the read-model in the SAME tx (read-your-writes; consumer re-applies idempotently later)
+        hendelser.forEach { oppdaterModellEtterHendelse(it, mottattMetadata()) }
+        SendResult.Applied
+    }
+```
+
+The mutation no longer needs its own pre-produce `hentNotifikasjon` race check: the idempotency claim **is** the dedup, and it is atomic with the enqueue and the read-model write.
+
+### 2. Why this makes idempotency reliable
+
+The blind window existed because the read-model was only written *after* a Kafka round-trip. Here the **idempotency claim, the outbox enqueue, and the read-model update commit together in one local transaction**, with no Kafka in between. So a retry's claim always sees the prior claim (read-your-writes within Postgres), regardless of broker state or consumer lag. The duplicate can no longer be created.
+
+### 3. The relay
+
+A background loop (reuse `launchProcessingLoop`) drains the outbox to Kafka with the existing producer + `OrgnrPartitioner`:
 
 ```
-1. txn: insert into notifikasjon_idempotens(...PENDING...) on conflict do nothing;  read row back
-2. row.status == PRODUCED?
-     → compare content: identical → return Vellykket(row.hendelse_id) ("duplisert")
-                         differ    → DuplikatEksternIdOgMerkelapp(row.hendelse_id)
-3. row.status == PENDING (we won, or a prior attempt stalled):
-     → produce(hendelse with row.hendelse_id)        // reuse stored id
-     → on success: update status='PRODUCED'; inline oppdaterModellEtterHendelse
-     → return Vellykket(row.hendelse_id)
+select * from hendelse_outbox where status = 'UNSENT' order by id   -- per-partition ordering, see below
+  → producer.send(payload, key = hendelseId)   -- reuse stored hendelseId; at-least-once
+  → mark SENT
 ```
 
-### Failure modes
+- **At-least-once to Kafka.** A crash between produce and `mark SENT` re-produces the same `hendelseId`; the model-builder dedupes on PK (and the 0-rows-skip handles coordinate dupes). Consumers already tolerate redelivery.
+- **Ordering.** Events must reach Kafka in per-`virksomhetsnummer` (per-partition) order. The outbox `id` is monotonic; a single-threaded relay reading in `id` order is trivially correct. For throughput, shard by target partition / `virksomhetsnummer` and keep per-shard order. With multiple produsent pods, use `select … for update skip locked` partitioned by orgnr (or a single active relay via advisory lock) so two pods never reorder the same key.
+- **Kafka outage resilience.** Mutations keep succeeding against Postgres during a broker outage; the outbox backs up and the relay drains on recovery. **No produce timeouts on the request path, so no client retries, so no duplicates** — this is the property the reservation alternative lacked.
 
-| Failure point | State left | Recovery | Loss? |
-|---|---|---|---|
-| Crash after step 1 commit, before produce | PENDING, no event | retry re-produces (still PENDING); sweeper if client gives up | No* |
-| Produce times out (ambiguous) | PENDING | retry re-produces same id; if H1 landed → consumer PK-dedup | No |
-| Produce ok, crash before `PRODUCED` | PENDING, event landed | retry/sweeper re-produces same id → harmless dup delivery | No |
-| Two concurrent first calls | one wins the `on conflict` | loser reads winner's row, produces winner's id | No |
+## Idempotency key per mutation
 
-\* **Requires a sweeper** (a `launchProcessingLoop`) that re-drives `PENDING` rows older than N minutes, since a client that gives up leaves an orphan PENDING with no event. Confirm `PRODUCED` once `hentNotifikasjon` materializes.
+Every mutation resolves to a stable `IdempotencyKey` that is identical across retries of the same logical operation. Three buckets:
 
-### nySak (multi-event)
-`nySak` sends `SakOpprettet` + `NyStatusSak`. Reservation keys on `(merkelapp, grupperingsid)`; store both payloads (or re-derive the status event). Re-drive must re-produce both. Slightly awkward — the reservation row holds a list, or we reserve on the sak coordinate and store both events.
+| Bucket | Mutations | Key |
+|---|---|---|
+| **A. Coordinate creates** | `nyOppgave`, `nyBeskjed`, `nyKalenderavtale`, `nySak` | `(merkelapp, eksternId)` — or `(merkelapp, grupperingsid)` for sak. Already the natural key; backed by `unikt_koordinat` / `grupperingsid_unique`. |
+| **B. Producer-supplied key** | `nyStatusSak`, `nesteStegSak`, `tilleggsinformasjonSak`, `oppgaveEndrePaaminnelse`, `oppgaveUtsettFrist`, `oppdaterKalenderavtale` | The producer's `idempotencyKey` (already accepted by several of these, scoped to the aggregate). **Make it consistent across all repeatable updates**; today it is optional/missing on some. |
+| **C. Finalizing / delete** | `oppgaveUtfoert`, `oppgaveUtgaatt`, `softDelete*`, `hardDelete*` | Derived `(aggregateId, operation)` — at-most-once per aggregate+operation; naturally idempotent end-state. |
 
-### Pros / cons
-- ➕ Small, localized change; reuses `HendelseDispatcher` shape and existing idempotency-table precedent (`notifikasjon_oppdatering`, sak `idempotence_key`).
-- ➕ Closes the blind window; prevents duplicates and the FK poison pill at the source.
-- ➖ Kafka stays in the request path → produce timeouts still surface to clients → clients still retry (just safely now).
-- ➖ Needs a sweeper, and storing the payload to re-drive means we are *most* of the way to an outbox already.
+Notes:
+- Bucket B is where the gap is widest today. `nyStatusSak` already enforces `idempotence_key_unique (sak_id, idempotence_key)` (V11:33); `nesteStegSak`/`tilleggsinformasjonSak`/`oppgaveEndrePaaminnelse` accept an **optional** `idempotencyKey` and dedupe via `notifikasjon_oppdatering` (V24) only when present. The proposal is to require/derive a key for all of B so a retry is always safe. For value-changing updates with no producer key, fall back to a content-derived key (a retry with identical payload dedupes; a genuinely new value does not).
+- The outbox idempotency claim subsumes these per-aggregate checks at enqueue time, so the consumer-side `notifikasjon_oppdatering` / sak-idempotence tables become a redundant backstop rather than the primary guard.
 
----
-
-## Option B — Transactional outbox (DB authoritative for "intent to produce")
-
-Bigger change, cleaner end state. The mutation never touches Kafka synchronously.
-
-### Schema
+## Schema
 
 ```sql
 -- V3x__hendelse_outbox.sql
 create table hendelse_outbox (
-    id          bigserial primary key,   -- relay order
-    hendelse_id uuid not null,
-    merkelapp   text,
-    ekstern_id  text,
-    hendelse    jsonb not null,
-    status      text not null default 'UNSENT',   -- 'UNSENT' | 'SENT'
-    opprettet   timestamptz not null default now()
+    id            bigserial primary key,         -- relay order
+    hendelse_id   uuid not null,                 -- the (unchanged) random id; relay's Kafka key
+    virksomhetsnummer text,                       -- for per-partition ordering / sharding
+    hendelse      jsonb not null,
+    status        text not null default 'UNSENT',-- 'UNSENT' | 'SENT'
+    opprettet     timestamptz not null default now()
 );
--- coordinate dedup for create-events only:
-create unique index outbox_koordinat on hendelse_outbox(merkelapp, ekstern_id)
-    where merkelapp is not null and ekstern_id is not null;
+
+-- V3x__mutasjon_idempotens.sql
+create table mutasjon_idempotens (
+    idempotency_key text primary key,            -- e.g. 'OPPGAVE:<merkelapp>:<eksternId>' / 'STATUS:<sakId>:<key>' / 'UTFOERT:<aggregateId>'
+    hendelse_id     uuid not null,               -- the id assigned to the first attempt
+    opprettet       timestamptz not null default now()
+);
 ```
 
-### Flow
+The claim is `insert into mutasjon_idempotens(...) on conflict do nothing` → 1 row = claimed (proceed), 0 rows = retry (return prior result). For creates this is equivalent to today's coordinate check but reliable; for updates it makes idempotency uniform.
 
-```
-Mutation (one DB txn):
-  - (creates) claim coordinate via unique index — conflict → return duplisert/DuplikatEksternId
-  - insert outbox row(s) with assigned hendelse_id + payload
-  - inline oppdaterModellEtterHendelse (read-model immediately consistent)
-  - commit  → return Vellykket(id) immediately, regardless of Kafka state
+## Correctness
 
-Relay (launchProcessingLoop, single writer per partition):
-  - select * from hendelse_outbox where status='UNSENT' order by id
-  - produce(payload with stored hendelse_id) via the existing producer/OrgnrPartitioner
-  - mark SENT (at-least-once; consumer PK-dedupes a re-send)
-```
+- **Dual-write eliminated at the request boundary.** The mutation commits one local transaction; Kafka is reached only by the relay. The only residual ambiguity (relay produced but crashed before `mark SENT`) resolves to a harmless re-produce of the same `hendelseId`.
+- **Read-your-writes preserved.** The read-model is updated in the same tx, so the GraphQL response and immediate follow-up queries are consistent even though Kafka visibility is asynchronous.
+- **At-least-once, ordered.** Per-partition order preserved via outbox `id`; redelivery tolerated by idempotent consumers.
+- **No new poison pill.** The relay reuses the stored `hendelseId`, so the consumer dedupes redeliveries on PK.
 
-### Failure modes
+## Migration / rollout
 
-| Failure point | State | Recovery | Loss? |
-|---|---|---|---|
-| Crash after commit, before relay | UNSENT | relay produces next loop | No |
-| Relay produces, crash before SENT | UNSENT, event landed | re-produced same id → consumer PK-dedup | No |
-| **Kafka down entirely** | UNSENT accumulates | **mutation still succeeds**; relay drains on recovery | No |
-| Two concurrent first calls | unique index | one wins, other → duplisert/error | No |
-
-### nySak (multi-event)
-Write both outbox rows in the **same txn**; relay produces them in `id` order → atomic and correctly ordered. Cleanest of the two for multi-event.
-
-### Ordering note
-The relay must preserve per-partition (per-orgnr) order. A single-threaded relay reading by `id` is trivially correct (and likely fast enough); a per-partition relay parallelizes if needed. Reuse the existing producer so `OrgnrPartitioner` keeps events on the same partitions as today.
-
-### Pros / cons
-- ➕ Strongest idempotency; eliminates the dual-write window by construction.
-- ➕ **Removes produce timeouts from the client path entirely** → mutations survive a Kafka outage → removes the client-retry pressure that *creates* duplicates. Directly addresses the actual incident trigger.
-- ➕ Multi-event atomicity is natural.
-- ➖ New relay loop, ordering/backpressure to reason about.
-- ➖ Kafka visibility becomes asynchronous (read-model is still immediately consistent via the inline write).
-- ➖ The producer is no longer driven by the request thread — a behavioral shift to communicate to the team.
-
----
-
-## Side-by-side
-
-| Dimension | A — Reservation | B — Outbox |
-|---|---|---|
-| Change size / risk | Small | Medium |
-| Kafka in request path | Yes | **No** |
-| Mutations survive Kafka outage | No (fail/retry) | **Yes** |
-| Client-facing produce timeouts | Still happen | **Gone** |
-| Lost-write risk | None *with sweeper* | None |
-| Reconciliation infra | Sweeper loop | Relay loop |
-| Prevents duplicate notifikasjon | Yes | Yes |
-| Prevents FK poison pill (create) | Yes | Yes |
-| Kafka visibility latency | Synchronous | Async (ms–s) |
-| Multi-event (nySak) atomicity | Awkward | Natural |
-| Converges toward... | the outbox anyway | — |
-
-## Cross-cutting: the synchronous `send()` throw
-
-Independent of A/B and should ship regardless. In `HendelseProdusentKafkaImpl.suspendingSend`, `KafkaProducer.send()` can throw **synchronously** (metadata `TimeoutException` from `MAX_BLOCK_MS=5000`, `SerializationException`, etc.). That throw bypasses the callback, which is the only place that sets `Health.subsystemAlive[KAFKA] = false` — so the `not present in metadata after 5000 ms` path is invisible to liveness. Wrap the `send(...)` call in a `try/catch` that sets the flag and rethrows, symmetric with the async path.
-
-**Caveat:** during a broker rebalance all pods hit metadata timeouts at once → all flip unhealthy and restart together, and restart churn feeds consumer-group rebalancing. It is consistent with the existing async-path behavior (no debounce there either), so not a regression — but consider flipping unhealthy only after N consecutive synchronous failures if restart-storms-during-rebalance become a concern.
-
-## Recommendation
-
-**Target B (outbox); ship the synchronous-throw fix immediately and independently.** The outbox is the only option that removes the *trigger* of every recurrence — the client-facing produce timeout — instead of only making the retry safe. If a full outbox is too big for the current sprint, **Option A is a valid stepping stone** that closes the duplicate/poison-pill hole now; since a correct Option A already stores the payload and runs a reconciliation loop, it migrates into B later with little waste.
+1. Add `hendelse_outbox` + `mutasjon_idempotens` tables.
+2. Rework `HendelseDispatcher.send` to {claim → enqueue → update read-model} in one tx; thread an `IdempotencyKey` from each mutation (buckets A/B/C). Mutations stop calling the producer directly.
+3. Add the relay loop; reuse the existing producer/partitioner.
+4. Roll out behind the scenes — the GraphQL contract is unchanged except that previously-optional `idempotencyKey` inputs (bucket B) become recommended/required; coordinate-keyed creates (A) and finalizing ops (C) need no producer change.
+5. The `*ByEksternId` / `*ByGrupperingsid` / `_V2` variants resolve their aggregate first, then call the same reworked `send` — no per-variant work.
 
 ## Open questions
 
-- Audit: are all `fager.notifikasjon` consumers (BigQuery export, ekstern-varsling, skedulert-*) idempotent on a re-delivered `hendelseId`? (Required for "reuse the id" to be safe — though at-least-once already implies it.)
-- nySak: reserve on `(merkelapp, grupperingsid)` and carry both events — confirm the shape.
-- Outbox relay: single-threaded vs per-partition; where it lives (own process vs in `produsent`).
-- Cleanup of historical duplicates from the four incidents (still outstanding per the May postmortem).
+- **Relay topology:** single active relay (advisory lock / leader) vs. per-partition workers with `for update skip locked`. Throughput vs. simplicity.
+- **Bucket B keys:** require `idempotencyKey` on all repeatable updates, or derive a content-hash default when absent? (Required is cleaner but a producer-facing contract change.)
+- **Outbox retention:** prune `SENT` rows on a schedule, or keep for audit?
+- **`mottattTidspunkt` semantics:** today it comes from the Kafka record timestamp on consume; with the relay producing later, decide whether the event's logical timestamp is set at enqueue time (recommended) so it is stable regardless of relay delay.
+- Relationship to the consumer-side `notifikasjon_oppdatering` idempotence tables once the outbox claim is authoritative — keep as backstop or retire.
