@@ -38,11 +38,20 @@ If a commit failure instead flips `Health.subsystemAlive[KAFKA] = false`, the lo
 ## Design — three small changes
 
 ### 1. Bound the commit
-`commitSync(...)` (`CoroutineKafkaConsumer.kt:171`) is called with no timeout and blocks up to `default.api.timeout.ms` (60 s). Pass a short timeout so it fails fast instead of starving the poll loop:
+`commitSync(...)` (`CoroutineKafkaConsumer.kt:171`) is called with no timeout and blocks up to `default.api.timeout.ms` (60 s). Pass an explicit timeout so it fails fast instead of starving the poll loop:
 
 ```kotlin
-consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)), Duration.ofSeconds(5))
+consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)), commitTimeout)
 ```
+
+**Choosing `commitTimeout`.** It is bounded by three considerations, not a single magic number:
+- **Upper (hard):** we commit *per record*, up to `max.poll.records = 10` per batch, and the gap between `poll()` calls must stay under `max.poll.interval.ms = 300 s`. So `10 × commitTimeout` must sit well under 300 s → a per-commit budget of ~30 s. The unbounded 60 s default blew this (≈5 commits = eviction); anything ≤ ~10 s has comfortable margin.
+- **Lower:** a healthy commit is a single coordinator round-trip (milliseconds). The timeout only needs to clear transient blips (leader election, broker GC), so a few seconds suffices.
+- **vs `request.timeout.ms` (30 s default):** a `commitTimeout` shorter than this abandons the commit before the underlying RPC fully retries. That's fine for our "fail fast → restart" goal, but it means we *will* restart on a 5–30 s coordinator slowness that might have resolved.
+
+**Recommendation:** ~**10 s**, paired with the consecutive-failure threshold (#2 / open questions) so a *single* transient slow commit does not restart the pod, but several in a row do. The threshold decouples "how long per attempt" (this timeout) from "how long before we give up" (threshold × timeout), which is the behaviour we actually want — and it is the same knob that damps the restart-storm / benign-rebalance concern.
+
+**Deeper lever:** the `× 10` only bites because we commit per record. Committing **once per poll-batch** (one commit per `poll()`) removes the multiplier and relaxes the upper bound entirely. We left it out for simplicity, but it is the clean way to make `commitTimeout` a non-issue.
 
 ### 2. Commit failure → signal unhealthy (don't seek/pause/retry)
 Separate the commit from the record handler so a commit failure is handled as a Kafka problem, not a data error:
@@ -55,16 +64,19 @@ try {
     return@currentPartition
 }
 try {
-    consumer.commitSync(offsets, Duration.ofSeconds(5))
+    consumer.commitSync(offsets, commitTimeout)       // see #1 for commitTimeout
+    commitFailures = 0
     retries.set(0)
 } catch (e: Exception) {                              // TimeoutException, CommitFailedException, ...
-    log.error("commit failed; signalling unhealthy to force a clean rejoin on restart", e)
-    Health.subsystemAlive[Subsystem.KAFKA] = false    // → while(!Health.terminating) exits → consumer closes → pod restarts
+    log.error("commit failed (attempt ${++commitFailures})", e)
+    if (commitFailures >= COMMIT_FAILURE_THRESHOLD) { // damp transient blips / benign rebalances
+        Health.subsystemAlive[Subsystem.KAFKA] = false // → while(!Health.terminating) exits → consumer closes → pod restarts
+    }
     return
 }
 ```
 
-Setting the flag both **stops the loop** (`Health.terminating` becomes true) and **fails the liveness probe** so NAIS restarts the pod. The in-flight record (handled, not committed) is simply reprocessed after the restart — at-least-once, which the idempotent handlers already tolerate. No batch-abort logic, no rejoin bookkeeping.
+A commit failure short of the threshold just `return`s (re-poll → rejoin on the next loop). Once the threshold is crossed, setting the flag both **stops the loop** (`Health.terminating` becomes true) and **fails the liveness probe** so NAIS restarts the pod. The in-flight record (handled, not committed) is simply reprocessed after the restart — at-least-once, which the idempotent handlers already tolerate. No batch-abort logic, no rejoin bookkeeping. (Threshold = 1 reduces to "restart on first commit failure"; see open questions.)
 
 ### 3. Guard partition-scoped calls against the current assignment
 The observed crash was `consumer.resume(resumeQueue.pollAll())` (line 123) on a partition an unrelated rebalance had revoked. `resumeQueue` is populated by the poison-pill backoff path, so this can fire on any rebalance (e.g. a deploy) that lands while a partition is paused. Filter against the live assignment:
@@ -85,7 +97,7 @@ This is the one piece of rebalance-awareness still needed once restart handles t
 
 ## Why this avoids the cascade
 
-- **TimeoutException (step 1):** bounded commit fails in ~5 s instead of 60 s, and #2 turns it into a restart before the 60 s blocks can accumulate past `max.poll.interval.ms`.
+- **TimeoutException (step 1):** the bounded commit fails in `commitTimeout` (~10 s) instead of 60 s, and #2 turns sustained failure into a restart before the blocks can accumulate past `max.poll.interval.ms`.
 - **CommitFailedException (step 2):** the member is never self-evicted (poll loop no longer starved); if a commit still fails for any reason, #2 restarts cleanly instead of retrying a stale-generation offset.
 - **IllegalStateException (step 3):** commit failures no longer feed `resumeQueue` (they restart), and the #3 guard stops a `body()`-error-paused partition from crashing on an unrelated rebalance.
 
@@ -100,10 +112,11 @@ So your hypothesis holds: handling the commit failure (signal unhealthy) removes
 ## Rollout / risk
 
 - Confined to the commit path + two `assignment()` guards; poison-pill and happy paths unchanged. Much smaller than the original draft (no rebalance listener, no batch-abort control flow).
-- **Any commit failure restarts the pod.** This includes a benign rebalance (deploy/scale) where a partition is revoked just as we try to commit it — that pod will restart and rejoin. It's rare, cheap, and self-healing (restart = clean rejoin), so we accept it rather than adding logic to distinguish benign revokes from real failures. If it proves noisy, the consecutive-failure threshold (open question) damps it.
-- **Restart-storm caveat:** during a genuine broker outage, commits fail across pods → all go unhealthy → restart loop until the broker recovers. Same trade-off accepted for the producer synchronous-`send()` flip: noisy and visible (alerts) beats silent death, and it self-recovers.
+- **Sustained commit failure (≥ threshold) restarts the pod.** A one-off failure — e.g. a benign rebalance (deploy/scale) revoking a partition just as we commit it — just re-polls and rejoins, no restart. Only repeated failures restart, which is rare, cheap, and self-healing (restart = clean rejoin). The threshold is what keeps benign revokes from causing churn.
+- **Restart-storm caveat:** during a genuine broker outage, commits keep failing past the threshold across pods → all go unhealthy → restart loop until the broker recovers. Same trade-off accepted for the producer synchronous-`send()` flip: noisy and visible (alerts) beats silent death, and it self-recovers.
 
 ## Open questions
 
-- Should `commitSync` failure flip `KAFKA=false` directly, or go through a small consecutive-failure threshold to damp restart storms during a broker outage? (Same question as the producer flip.)
+- **`commitTimeout` and `COMMIT_FAILURE_THRESHOLD` values**, and the reset semantics of the failure counter (reset on any successful commit? per-partition vs. global?). Recommendation is ~10 s timeout × a small threshold (e.g. 3); tune against observed commit latency.
+- Whether to also commit **once per poll-batch** (relaxes the `× max.poll.records` starvation bound and makes `commitTimeout` far less sensitive) — deferred for simplicity.
 - Confirm the deployed `partition.assignment.strategy` (unset → client default) so the `assignment()` guards match production.
