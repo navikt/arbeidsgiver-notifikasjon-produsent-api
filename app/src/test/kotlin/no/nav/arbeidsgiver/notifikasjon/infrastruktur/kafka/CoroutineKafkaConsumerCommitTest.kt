@@ -1,26 +1,25 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.kafka
 
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.consumer.MockConsumer
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
-import org.apache.kafka.clients.consumer.OffsetResetStrategy
+import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.TimeoutException
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class CoroutineKafkaConsumerCommitTest {
 
     private val topic = "test.topic"
     private val tp = TopicPartition(topic, 0)
 
+    @BeforeEach
     @AfterEach
     fun resetHealth() {
         // Health er en global singleton; sett KAFKA tilbake til true så andre tester ikke påvirkes.
@@ -91,3 +90,23 @@ class CoroutineKafkaConsumerCommitTest {
         assertTrue(consumer.paused().contains(tp))
     }
 }
+
+
+
+/**
+ * Test-seam: bygg en konsument rundt en injisert [Consumer] (typisk en MockConsumer),
+ * slik at commit-/rebalance-stiene kan testes uten en ekte Kafka-broker.
+ */
+private fun CoroutineKafkaConsumer.Companion.forTest(
+    consumer: Consumer<String, String>,
+    topic: String = "test.topic",
+    groupId: String = "test-group",
+): CoroutineKafkaConsumer<String, String> = CoroutineKafkaConsumer.new(
+    topic = topic,
+    groupId = groupId,
+    keyDeserializer = org.apache.kafka.common.serialization.StringDeserializer::class.java,
+    valueDeserializer = org.apache.kafka.common.serialization.StringDeserializer::class.java,
+    onPartitionAssigned = null,
+    onPartitionRevoked = null,
+    consumerOverride = consumer,
+)

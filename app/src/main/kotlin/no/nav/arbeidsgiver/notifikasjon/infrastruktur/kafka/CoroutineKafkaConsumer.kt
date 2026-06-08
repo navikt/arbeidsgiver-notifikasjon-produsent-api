@@ -10,11 +10,8 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Health
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Subsystem
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.*
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.toThePowerOf
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.consumer.ConsumerConfig.*
 import org.apache.kafka.common.TopicPartition
@@ -72,6 +69,7 @@ private constructor(
             onPartitionAssigned: ((partition: TopicPartition, endOffset: Long) -> Unit)? = null,
             onPartitionRevoked: ((partition: TopicPartition) -> Unit)? = null,
             configOverrides: Map<String, Any> = emptyMap(),
+            consumerOverride: Consumer<K, V>? = null,
         ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
             topic,
             groupId,
@@ -81,25 +79,8 @@ private constructor(
             replayPeriodically,
             onPartitionAssigned,
             onPartitionRevoked,
-            configOverrides
-        )
-
-        /**
-         * Test-seam: bygg en konsument rundt en injisert [Consumer] (typisk en MockConsumer),
-         * slik at commit-/rebalance-stiene kan testes uten en ekte Kafka-broker.
-         */
-        internal fun <K, V> forTest(
-            consumer: Consumer<K, V>,
-            topic: String = "test.topic",
-            groupId: String = "test-group",
-        ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
-            topic = topic,
-            groupId = groupId,
-            keyDeserializer = org.apache.kafka.common.serialization.StringDeserializer::class.java,
-            valueDeserializer = org.apache.kafka.common.serialization.StringDeserializer::class.java,
-            onPartitionAssigned = null,
-            onPartitionRevoked = null,
-            consumerOverride = consumer,
+            configOverrides,
+            consumerOverride
         )
     }
 
@@ -112,6 +93,9 @@ private constructor(
     )
 
     init {
+        if (consumerOverride != null && NaisEnvironment.clusterName != "") {
+            throw IllegalArgumentException("Consumer override only available on local machine")
+        }
         if (consumerOverride == null) {
             KafkaClientMetrics(consumer).bindTo(Metrics.meterRegistry)
         }
