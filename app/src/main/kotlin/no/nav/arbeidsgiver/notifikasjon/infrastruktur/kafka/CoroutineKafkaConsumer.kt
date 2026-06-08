@@ -42,6 +42,7 @@ private constructor(
     private val onPartitionAssigned: ((partition: TopicPartition, maxOffset: Long) -> Unit)?,
     private val onPartitionRevoked: ((partition: TopicPartition) -> Unit)?,
     private val configOverrides: Map<String, Any> = emptyMap(),
+    consumerOverride: Consumer<K, V>? = null,
 ) {
     private val pollBodyTimer = Timer.builder("kafka.poll.body")
         .register(Metrics.meterRegistry)
@@ -52,6 +53,11 @@ private constructor(
     private val iterationExitCounter = Counter.builder("kafka.poll.body.iteration")
         .tag("point", "exit")
         .register(Metrics.meterRegistry)
+
+    private val commitFailureCounter = Counter.builder("kafka.commit.failures")
+        .register(Metrics.meterRegistry)
+
+    private val commitFailures = AtomicInteger(0)
 
     private val kafkaContext = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
@@ -77,9 +83,27 @@ private constructor(
             onPartitionRevoked,
             configOverrides
         )
+
+        /**
+         * Test-seam: bygg en konsument rundt en injisert [Consumer] (typisk en MockConsumer),
+         * slik at commit-/rebalance-stiene kan testes uten en ekte Kafka-broker.
+         */
+        internal fun <K, V> forTest(
+            consumer: Consumer<K, V>,
+            topic: String = "test.topic",
+            groupId: String = "test-group",
+        ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
+            topic = topic,
+            groupId = groupId,
+            keyDeserializer = org.apache.kafka.common.serialization.StringDeserializer::class.java,
+            valueDeserializer = org.apache.kafka.common.serialization.StringDeserializer::class.java,
+            onPartitionAssigned = null,
+            onPartitionRevoked = null,
+            consumerOverride = consumer,
+        )
     }
 
-    private val consumer: Consumer<K, V> = KafkaConsumer(
+    private val consumer: Consumer<K, V> = consumerOverride ?: KafkaConsumer(
         CONSUMER_PROPERTIES + mapOf<String, String>(
             KEY_DESERIALIZER_CLASS_CONFIG to keyDeserializer.canonicalName,
             VALUE_DESERIALIZER_CLASS_CONFIG to valueDeserializer.canonicalName,
@@ -88,7 +112,9 @@ private constructor(
     )
 
     init {
-        KafkaClientMetrics(consumer).bindTo(Metrics.meterRegistry)
+        if (consumerOverride == null) {
+            KafkaClientMetrics(consumer).bindTo(Metrics.meterRegistry)
+        }
         consumer.subscribe(listOf(topic))
         if (seekToBeginning) {
             seekToBeginningOnAssignment()
@@ -120,7 +146,7 @@ private constructor(
             try {
                 while (isActive && !stop.get() && !Health.terminating) {
                     replayer.replayWhenLeap()
-                    consumer.resume(resumeQueue.pollAll())
+                    consumer.resume(resumeQueue.pollAll().filter { it in consumer.assignment() })
 
                     val records = try {
                         consumer.poll(Duration.ofMillis(1000))
@@ -168,12 +194,8 @@ private constructor(
                     withContext(Dispatchers.IO) {
                         body(record)
                     }
-                    consumer.commitSync(mapOf(partition to OffsetAndMetadata(record.offset() + 1)))
-                    iterationExitCounter.increment()
-                    if (!seekToBeginning) log.info("successfully processed {}", record.loggableToString())
-                    retries.set(0)
-                    return@currentRecord
                 } catch (e: Exception) {
+                    // data plane: poison-pill -> seek + pause + capped backoff + retry forever
                     val attempt = retries.incrementAndGet()
                     val backoffMillis = capWithinMaxPollInterval(1000L * 2.toThePowerOf(attempt))
                     // log error if attempt is > 3 else just warn
@@ -190,10 +212,35 @@ private constructor(
                         e
                     )
                     val currentPartition = TopicPartition(record.topic(), record.partition())
-                    consumer.seek(currentPartition, record.offset())
-                    consumer.pause(listOf(currentPartition))
-                    retryTimer.schedule(backoffMillis) {
-                        resumeQueue.offer(currentPartition)
+                    if (currentPartition in consumer.assignment()) {
+                        consumer.seek(currentPartition, record.offset())
+                        consumer.pause(listOf(currentPartition))
+                        retryTimer.schedule(backoffMillis) {
+                            resumeQueue.offer(currentPartition)
+                        }
+                    }
+                    return@currentPartition
+                }
+
+                try {
+                    consumer.commitSync(
+                        mapOf(partition to OffsetAndMetadata(record.offset() + 1)),
+                        COMMIT_TIMEOUT
+                    )
+                    commitFailures.set(0)
+                    iterationExitCounter.increment()
+                    if (!seekToBeginning) log.info("successfully processed {}", record.loggableToString())
+                    retries.set(0)
+                    return@currentRecord
+                } catch (e: Exception) {
+                    // control plane: commit/membership problem, not a data error.
+                    val failures = commitFailures.incrementAndGet()
+                    commitFailureCounter.increment()
+                    log.error("commit failed (attempt {})", failures, e)
+                    if (failures >= COMMIT_FAILURE_THRESHOLD) {
+                        // -> while(!Health.terminating) exits -> consumer closes -> pod restarts (clean rejoin).
+                        // in-flight record is reprocessed after restart (at-least-once, handlers are idempotent).
+                        Health.subsystemAlive[Subsystem.KAFKA] = false
                     }
                     return@currentPartition
                 }
