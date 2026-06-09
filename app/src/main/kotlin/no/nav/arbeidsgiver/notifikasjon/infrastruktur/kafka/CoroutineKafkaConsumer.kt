@@ -39,6 +39,7 @@ private constructor(
     private val onPartitionAssigned: ((partition: TopicPartition, maxOffset: Long) -> Unit)?,
     private val onPartitionRevoked: ((partition: TopicPartition) -> Unit)?,
     private val configOverrides: Map<String, Any> = emptyMap(),
+    val onKafkaUnhealthy: (() -> Unit),
     consumerOverride: Consumer<K, V>? = null,
 ) {
     private val pollBodyTimer = Timer.builder("kafka.poll.body")
@@ -69,6 +70,9 @@ private constructor(
             onPartitionAssigned: ((partition: TopicPartition, endOffset: Long) -> Unit)? = null,
             onPartitionRevoked: ((partition: TopicPartition) -> Unit)? = null,
             configOverrides: Map<String, Any> = emptyMap(),
+            onKafkaUnhealthy: (() -> Unit) = {
+                Health.subsystemAlive[Subsystem.KAFKA]  = false
+            },
             consumerOverride: Consumer<K, V>? = null,
         ): CoroutineKafkaConsumer<K, V> = CoroutineKafkaConsumer(
             topic,
@@ -80,7 +84,8 @@ private constructor(
             onPartitionAssigned,
             onPartitionRevoked,
             configOverrides,
-            consumerOverride
+            onKafkaUnhealthy,
+            consumerOverride,
         )
     }
 
@@ -136,7 +141,7 @@ private constructor(
                         consumer.poll(Duration.ofMillis(1000))
                     } catch (e: Exception) {
                         log.error("Unrecoverable error during poll {}", consumer.assignment(), e)
-                        Health.subsystemAlive[Subsystem.KAFKA] = false
+                        onKafkaUnhealthy()
                         throw e
                     }
 
@@ -195,12 +200,12 @@ private constructor(
                         Duration.ofMillis(backoffMillis),
                         e
                     )
-                    val currentPartition = TopicPartition(record.topic(), record.partition())
-                    if (currentPartition in consumer.assignment()) {
-                        consumer.seek(currentPartition, record.offset())
-                        consumer.pause(listOf(currentPartition))
+                    val currentTopicPartition = TopicPartition(record.topic(), record.partition())
+                    if (currentTopicPartition in consumer.assignment()) {
+                        consumer.seek(currentTopicPartition, record.offset())
+                        consumer.pause(listOf(currentTopicPartition))
                         retryTimer.schedule(backoffMillis) {
-                            resumeQueue.offer(currentPartition)
+                            resumeQueue.offer(currentTopicPartition)
                         }
                     }
                     return@currentPartition
@@ -224,7 +229,7 @@ private constructor(
                     if (failures >= COMMIT_FAILURE_THRESHOLD) {
                         // -> while(!Health.terminating) exits -> consumer closes -> pod restarts (clean rejoin).
                         // in-flight record is reprocessed after restart (at-least-once, handlers are idempotent).
-                        Health.subsystemAlive[Subsystem.KAFKA] = false
+                        onKafkaUnhealthy()
                     }
                     return@currentPartition
                 }
