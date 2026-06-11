@@ -10,6 +10,7 @@ import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
 import org.apache.kafka.common.serialization.StringSerializer
 import java.lang.System.getenv
+import java.time.Duration
 import org.apache.kafka.clients.CommonClientConfigs as CommonProp
 import org.apache.kafka.clients.consumer.ConsumerConfig as ConsumerProp
 import org.apache.kafka.clients.producer.ProducerConfig as ProducerProp
@@ -74,6 +75,21 @@ val PRODUCER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
 )
 
 const val MAX_POLL_INTERVAL_MS = 300_000
+
+/**
+ * Eksplisitt timeout for commitSync, slik at en treg/hengende commit ikke sulter poll-loopen
+ * forbi max.poll.interval.ms (som ville selv-evicte medlemmet). Vi committer per record, opp til
+ * max.poll.records (10) per batch, så 10 × COMMIT_TIMEOUT må ligge godt under MAX_POLL_INTERVAL_MS.
+ */
+val COMMIT_TIMEOUT: Duration = Duration.ofSeconds(10)
+
+/**
+ * Antall påfølgende commit-feil før vi flagger KAFKA-subsystemet som unhealthy og lar pod-en restarte.
+ * Damper benigne rebalances (deploy/scale) som revokerer en partisjon akkurat idet vi committer den:
+ * en engangsfeil re-poller og rejoiner, mens vedvarende feil gir en ren restart.
+ */
+const val COMMIT_FAILURE_THRESHOLD = 3
+
 val CONSUMER_PROPERTIES = COMMON_PROPERTIES + SSL_PROPERTIES + mapOf(
     ConsumerProp.AUTO_OFFSET_RESET_CONFIG to "earliest",
     ConsumerProp.MAX_POLL_RECORDS_CONFIG to 10,
