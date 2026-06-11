@@ -4,7 +4,7 @@
 **Hendelsesperiode:** 2026-06-01 ~17:18 – ~20:02 (CEST)
 **Alvorlighetsgrad:** Moderat
 **Status:** Stoppet (skip-liste), permanent tiltak under design
-**Relatert:** [postmortem 2026-05-18](duplikater_etter_kafka_outage_2026-05-18.md), [spesifikasjon: idempotent oppretting](../specifications/idempotent_oppretting_notifikasjon.md)
+**Relatert:** [postmortem 2026-05-18](duplikater_etter_kafka_outage_2026-05-18.md), [spesifikasjon: idempotent oppretting](../specifications/DRAFT_idempotent_oppretting_notifikasjon.md)
 
 ## Sammendrag
 
@@ -92,7 +92,7 @@ Dette viser at problemet er **selvforsterkende og generisk** for alle konsumente
 
 | # | Tiltak | Spesifikasjon | Beskrivelse |
 |---|--------|---------------|-------------|
-| 3 | Transaksjonell outbox + idempotens for alle mutasjoner | [idempotent oppretting](../specifications/idempotent_oppretting_notifikasjon.md) | Alle event-produserende mutasjoner går via `HendelseDispatcher` til en outbox-tabell i én DB-transaksjon (claim idempotensnøkkel → enqueue → oppdater read-model); en relay drenerer outboxen til Kafka. Fjerner Kafka fra request-pathen (ingen produce-timeout/hang, ingen klient-retries → ingen duplikater) og gjør idempotens-sjekken pålitelig (ingen blind vindu). Hver mutasjon får en idempotensnøkkel (koordinat for creates, produsent-nøkkel for oppdateringer, avledet for finalizing/delete). `hendelseId`-generering endres ikke. Dette er årsaksfiksen; #2 er en symptomfiks (duplikatene produseres fortsatt). |
+| 3 | Transaksjonell outbox + idempotens for alle mutasjoner | [idempotent oppretting](../specifications/DRAFT_idempotent_oppretting_notifikasjon.md) | Alle event-produserende mutasjoner går via `HendelseDispatcher` til en outbox-tabell i én DB-transaksjon (claim idempotensnøkkel → enqueue → oppdater read-model); en relay drenerer outboxen til Kafka. Fjerner Kafka fra request-pathen (ingen produce-timeout/hang, ingen klient-retries → ingen duplikater) og gjør idempotens-sjekken pålitelig (ingen blind vindu). Hver mutasjon får en idempotensnøkkel (koordinat for creates, produsent-nøkkel for oppdateringer, avledet for finalizing/delete). `hendelseId`-generering endres ikke. Dette er årsaksfiksen; #2 er en symptomfiks (duplikatene produseres fortsatt). |
 | 4 | Helsesjekk på synkron `send()`-throw | — | Wrap `send(...)` i `suspendingSend` slik at `MAX_BLOCK_MS`-timeout også setter `KAFKA=false`, symmetrisk med async-pathen. NB: kan gi restart-storm under rebalansering — vurder terskel. |
 | 5 | Robust commit-feil-håndtering i consumer | [robust rebalansering](../specifications/robust_consumer_rebalance.md) | Tre små endringer: (1) bind `commitSync` med kort timeout (så den ikke blokkerer 60s og self-evicter), (2) ved commit-feil sett `Health.KAFKA=false` → loopen avsluttes og poden restarter (restart = ren rejoin; erstatter abort-batch/rebalance-listener-maskineriet), (3) guard `resume`/`seek`/`pause` mot gjeldende `assignment()` så en revokert partisjon ikke kaster `IllegalStateException` ut av loopen. Poison-pill-retry beholdes uendret. |
 

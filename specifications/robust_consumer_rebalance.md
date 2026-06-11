@@ -33,7 +33,7 @@ If a commit failure instead flips `Health.subsystemAlive[KAFKA] = false`, the lo
 
 **Non-goals**
 - **Poison-pill behavior is unchanged.** A `body(record)` failure still does seek + pause + capped exponential backoff + retry forever. We do *not* go unhealthy on a poison pill.
-- No producer idempotency changes (see [idempotent oppretting](idempotent_oppretting_notifikasjon.md)); the consumer-side 0-rows-skip (`d1a8609c`) is independent.
+- No producer idempotency changes (see [idempotent oppretting](DRAFT_idempotent_oppretting_notifikasjon.md)); the consumer-side 0-rows-skip (`d1a8609c`) is independent.
 
 ## Design — three small changes
 
