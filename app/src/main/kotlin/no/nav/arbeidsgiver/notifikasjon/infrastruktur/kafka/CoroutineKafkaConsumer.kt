@@ -225,8 +225,9 @@ private constructor(
                     // control plane: commit/membership problem, not a data error.
                     val failures = commitFailures.incrementAndGet()
                     commitFailureCounter.increment()
-                    log.error("commit failed (attempt {})", failures, e)
+                    log.warn("commit failed (attempt {} of $COMMIT_FAILURE_THRESHOLD)", failures, e)
                     if (failures >= COMMIT_FAILURE_THRESHOLD) {
+                        log.error("commit failed (attempt {} of $COMMIT_FAILURE_THRESHOLD)", failures, e)
                         // -> while(!Health.terminating) exits -> consumer closes -> pod restarts (clean rejoin).
                         // in-flight record is reprocessed after restart (at-least-once, handlers are idempotent).
                         onKafkaUnhealthy()
