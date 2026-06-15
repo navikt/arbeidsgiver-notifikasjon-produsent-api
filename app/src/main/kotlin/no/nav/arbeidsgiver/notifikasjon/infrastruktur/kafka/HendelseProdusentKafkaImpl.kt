@@ -56,15 +56,24 @@ private class HendelseProdusentKafkaImpl(
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun <K : Any?, V : Any?> Producer<K, V>.suspendingSend(record: ProducerRecord<K, V>): RecordMetadata =
     suspendCancellableCoroutine { continuation ->
-        val result = send(record) { recordMetadata, exception ->
-            if (exception != null) {
-                Health.subsystemAlive[Subsystem.KAFKA] = false
-                continuation.cancel(exception)
-            } else {
-                continuation.resume(recordMetadata) {
-                    /* nothing to close if canceled */
+        val result = try {
+            send(record) { recordMetadata, exception ->
+                if (exception != null) {
+                    // asynkron leveringsfeil (f.eks. delivery.timeout.ms utløpt)
+                    Health.subsystemAlive[Subsystem.KAFKA] = false
+                    continuation.cancel(exception)
+                } else {
+                    continuation.resume(recordMetadata) {
+                        /* nothing to close if canceled */
+                    }
                 }
             }
+        } catch (e: Exception) {
+            // send() kan kaste synkront før callbacken kjøres i det hele tatt
+            // (f.eks. TimeoutException fra max.block.ms ved henting av metadata,
+            // eller SerializationException). Denne pathen må også markere Kafka unhealthy.
+            Health.subsystemAlive[Subsystem.KAFKA] = false
+            throw e
         }
         continuation.invokeOnCancellation {
             result.cancel(true)

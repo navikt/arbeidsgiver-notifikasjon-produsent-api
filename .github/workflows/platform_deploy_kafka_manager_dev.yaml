@@ -1,0 +1,23 @@
+name: "Platform: deploy kafka-manager dev"
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - app/nais/dev-gcp-kafka-manager.yaml
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    permissions:
+      contents: "read"
+      id-token: "write"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: nais/deploy/actions/deploy@v2
+        name: "dev-gcp: deploy kafka-manager"
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: app/nais/dev-gcp-kafka-manager.yaml

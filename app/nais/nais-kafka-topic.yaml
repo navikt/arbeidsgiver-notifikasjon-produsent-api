@@ -58,3 +58,6 @@ spec:
     - application: notifikasjon-kafka-bq
       team: fager
       access: read
+    - application: fager-kafka-manager
+      team: fager
+      access: readwrite

@@ -600,7 +600,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: BeskjedOpprettet) {
         database.transaction {
-            executeUpdate(
+            val inserted = executeUpdate(
                 """
                 insert into notifikasjon(
                     type,
@@ -626,6 +626,13 @@ class ProdusentRepositoryImpl(
                 text(beskjedOpprettet.eksternId)
                 timestamp_with_timezone(beskjedOpprettet.opprettetTidspunkt)
                 text(beskjedOpprettet.virksomhetsnummer)
+            }
+
+            // on conflict do nothing kan trigges av unikt_koordinat (merkelapp, ekstern_id) med en
+            // annen notifikasjonId — da er notifikasjonId ikke i tabellen og FK på mottaker-tabeller
+            // vil feile. Hopp over mottakere og varsler hvis ingen rad ble insertet.
+            if (inserted == 0) {
+                return@transaction
             }
 
             for (mottaker in beskjedOpprettet.mottakere) {
@@ -655,7 +662,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
         database.transaction {
-            executeUpdate(
+            val inserted = executeUpdate(
                 """
                 insert into notifikasjon(
                     type,
@@ -683,6 +690,13 @@ class ProdusentRepositoryImpl(
                 timestamp_with_timezone(oppgaveOpprettet.opprettetTidspunkt)
                 text(oppgaveOpprettet.virksomhetsnummer)
                 nullableDate(oppgaveOpprettet.frist)
+            }
+
+            // on conflict do nothing kan trigges av unikt_koordinat (merkelapp, ekstern_id) med en
+            // annen notifikasjonId — da er notifikasjonId ikke i tabellen og FK på mottaker-tabeller
+            // vil feile. Hopp over mottakere og varsler hvis ingen rad ble insertet.
+            if (inserted == 0) {
+                return@transaction
             }
 
             for (mottaker in oppgaveOpprettet.mottakere) {
@@ -884,7 +898,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(hendelse: KalenderavtaleOpprettet) {
         database.transaction {
-            executeUpdate(
+            val inserted = executeUpdate(
                 """
                 insert into notifikasjon(
                     type,
@@ -922,6 +936,13 @@ class ProdusentRepositoryImpl(
                     nullableJsonb(lokasjon)
                     boolean(erDigitalt)
                 }
+            }
+
+            // on conflict do nothing kan trigges av unikt_koordinat (merkelapp, ekstern_id) med en
+            // annen notifikasjonId — da er notifikasjonId ikke i tabellen og FK på mottaker-tabeller
+            // vil feile. Hopp over mottakere og varsler hvis ingen rad ble insertet.
+            if (inserted == 0) {
+                return@transaction
             }
 
             for (mottaker in hendelse.mottakere) {

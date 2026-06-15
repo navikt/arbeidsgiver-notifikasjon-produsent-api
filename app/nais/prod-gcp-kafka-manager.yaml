@@ -1,0 +1,61 @@
+kind: Application
+apiVersion: nais.io/v1alpha1
+metadata:
+  name: fager-kafka-manager
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:2026.04.13-13.33-52e9b29
+  port: 8080
+  webproxy: true
+  ingresses:
+    - https://fager-kafka-manager.intern.nav.no
+  prometheus:
+    enabled: true
+    path: /internal/prometheus
+  readiness:
+    path: /internal/health/readiness
+    initialDelay: 20
+  liveness:
+    path: /internal/health/liveness
+    initialDelay: 20
+  replicas:
+    min: 1
+    max: 1  # 1 instance is required since in-memory session management is used
+    cpuThresholdPercentage: 75
+  resources:
+    limits:
+      memory: 1024Mi
+    requests:
+      cpu: 25m
+      memory: 512Mi
+  observability:
+    logging:
+      destinations:
+        - id: loki
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  azure:
+    application:
+      enabled: true
+      tenant: nav.no
+      claims:
+        groups:
+          - id: 84e7617a-b386-4a85-9b32-aa8fb2724164
+  kafka:
+    pool: nav-prod
+  env:
+    - name: APP_CONFIG_JSON
+      value: >
+        {
+          "topics": [
+            {
+              "name": "fager.notifikasjon",
+              "location": "AIVEN",
+              "keyDeserializerType": "STRING",
+              "valueDeserializerType": "STRING"
+            }
+          ]
+        }
