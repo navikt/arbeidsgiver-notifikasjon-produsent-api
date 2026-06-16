@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.TextNode
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
@@ -210,45 +211,38 @@ class EksternVarslingService(
         withContext(varsel.asMDCContext()) {
             when (varsel.data.eksternVarsel) {
                 is EksternVarsel.Altinntjeneste -> {
-                    val altinntjeneste = varsel.data.eksternVarsel as EksternVarsel.Altinntjeneste
-                    if (!isMigrated(altinntjeneste.serviceCode, altinntjeneste.serviceEdition)) {
-                        log.error("Altinn 2 er avviklet. Markerer varsel ${varsel.data.varselId} som feilet.")
-                        val feilResponse = Altinn3VarselKlient.ErrorResponse(
-                            rå = com.fasterxml.jackson.databind.node.TextNode.valueOf("Altinn 2 er avviklet"),
-                            code = "altinn2_avviklet",
-                            message = "Altinn 2 er avviklet. Varselet kan ikke sendes.",
+                    with(varsel.data.eksternVarsel as EksternVarsel.Altinntjeneste) {
+                        val ressursId = resolveRessursId(
+                            serviceCode = serviceCode,
+                            serviceEdition = serviceEdition,
+                            produsentId = varsel.data.produsentId,
                         )
-                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varsel.data.varselId, feilResponse)
-                        return@withContext
-                    }
-                    val ressursId = resolveRessursId(
-                        serviceCode = altinntjeneste.serviceCode,
-                        serviceEdition = altinntjeneste.serviceEdition,
-                        produsentId = varsel.data.produsentId,
-                    )
-                    if (ressursId != null) {
-                        log.info("Ruter Altinntjeneste-varsel ${varsel.data.varselId} til ressurs $ressursId")
-                        val convertedVarsel = varsel.withEksternVarsel(
-                            EksternVarsel.Altinnressurs(
-                                fnrEllerOrgnr = altinntjeneste.fnrEllerOrgnr,
-                                sendeVindu = altinntjeneste.sendeVindu,
-                                sendeTidspunkt = altinntjeneste.sendeTidspunkt,
-                                resourceId = ressursId,
-                                epostTittel = altinntjeneste.tittel,
-                                epostInnhold = altinntjeneste.innhold,
-                                smsInnhold = altinntjeneste.tittel,
-                                ordreId = null,
+                        if (ressursId == null) {
+                            log.error("Altinn 2 er avviklet. Markerer varsel ${varsel.data.varselId} som feilet.")
+                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varsel.data.varselId,
+                                Altinn3VarselKlient.ErrorResponse(
+                                    rå = TextNode.valueOf("Altinn 2 er avviklet"),
+                                    code = "altinn2_avviklet",
+                                    message = "Altinn 2 er avviklet. Varselet kan ikke sendes.",
+                                )
                             )
-                        )
-                        altinn3VarselHandler(convertedVarsel)
-                    } else {
-                        log.error("Altinn 2 er avviklet. Markerer varsel ${varsel.data.varselId} som feilet.")
-                        val feilResponse = Altinn3VarselKlient.ErrorResponse(
-                            rå = com.fasterxml.jackson.databind.node.TextNode.valueOf("Altinn 2 er avviklet"),
-                            code = "altinn2_avviklet",
-                            message = "Altinn 2 er avviklet. Varselet kan ikke sendes.",
-                        )
-                        eksternVarslingRepository.markerSomSendtAndReleaseJob(varsel.data.varselId, feilResponse)
+                        } else {
+                            log.info("Ruter Altinntjeneste-varsel ${varsel.data.varselId} til ressurs $ressursId")
+                            altinn3VarselHandler(
+                                varsel.withEksternVarsel(
+                                    EksternVarsel.Altinnressurs(
+                                        fnrEllerOrgnr = fnrEllerOrgnr,
+                                        sendeVindu = sendeVindu,
+                                        sendeTidspunkt = sendeTidspunkt,
+                                        resourceId = ressursId,
+                                        epostTittel = tittel,
+                                        epostInnhold = innhold,
+                                        smsInnhold = tittel,
+                                        ordreId = null,
+                                    )
+                                )
+                            )
+                        }
                     }
                 }
                 is EksternVarsel.Sms,
@@ -399,13 +393,6 @@ class EksternVarslingService(
 
 
     companion object {
-        private val migratedServiceCodes: Set<Pair<String, String>> = setOf(
-            "4936" to "1",
-        )
-
-        private fun isMigrated(serviceCode: String, serviceEdition: String): Boolean =
-            (serviceCode to serviceEdition) in migratedServiceCodes
-
         private val altinntjenesteToRessursMap: Map<Pair<String, String>, List<String>> = mapOf(
             "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" to ("5810" to "1"),
             "nav_sosialtjenester_digisos-avtale" to ("5867" to "1"),
