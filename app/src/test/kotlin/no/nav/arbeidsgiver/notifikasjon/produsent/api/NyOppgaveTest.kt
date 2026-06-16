@@ -211,9 +211,8 @@ class NyOppgaveTest {
                 virksomhetsnummer = "42",
                 eksternId = "2",
                 mottaker =
-                    """altinn: {
-                        serviceCode: "1",
-                        serviceEdition: "1"
+                    """altinnRessurs: {
+                        ressursId: "test-fager"
                     }"""
             )
 
@@ -225,9 +224,8 @@ class NyOppgaveTest {
                 virksomhetsnummer = "41",
                 eksternId = "3",
                 mottaker =
-                    """altinn: {
-                        serviceCode: "1",
-                        serviceEdition: "1"
+                    """altinnRessurs: {
+                        ressursId: "test-fager"
                     }"""
             )
 

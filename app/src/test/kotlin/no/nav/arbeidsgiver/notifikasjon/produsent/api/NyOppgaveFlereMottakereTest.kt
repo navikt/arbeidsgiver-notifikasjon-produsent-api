@@ -36,9 +36,8 @@ class NyOppgaveFlereMottakereTest {
                     nyOppgave(
                         """
                     mottaker: {
-                        altinn: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                        altinnRessurs: {
+                            ressursId: "test-fager"
                         }
                     }
                     """
@@ -57,9 +56,8 @@ class NyOppgaveFlereMottakereTest {
                 val mottakere = client.hentMottakere(id)
                 assertEquals(
                     setOf(
-                        QueryNotifikasjoner.AltinnMottaker(
-                            serviceCode = "5441",
-                            serviceEdition = "1",
+                        QueryNotifikasjoner.AltinnRessursMottaker(
+                            ressursId = "test-fager",
                             virksomhetsnummer = "0"
                         )
                     ), mottakere.toSet()
@@ -79,9 +77,8 @@ class NyOppgaveFlereMottakereTest {
                         """
                     mottakere: [
                         {
-                            altinn: {
-                                serviceCode: "5441"
-                                serviceEdition: "1"
+                            altinnRessurs: {
+                                ressursId: "test-fager"
                             }
                         }
                     ]
@@ -99,9 +96,8 @@ class NyOppgaveFlereMottakereTest {
                 val mottakere = client.hentMottakere(id)
                 assertEquals(
                     setOf(
-                        QueryNotifikasjoner.AltinnMottaker(
-                            serviceCode = "5441",
-                            serviceEdition = "1",
+                        QueryNotifikasjoner.AltinnRessursMottaker(
+                            ressursId = "test-fager",
                             virksomhetsnummer = "0"
                         )
                     ), mottakere.toSet()
@@ -121,9 +117,8 @@ class NyOppgaveFlereMottakereTest {
                         """
                     mottakere: [
                         {
-                            altinn: {
-                                serviceCode: "5441"
-                                serviceEdition: "1"
+                            altinnRessurs: {
+                                ressursId: "test-fager"
                             }
                         },
                         {
@@ -147,9 +142,8 @@ class NyOppgaveFlereMottakereTest {
                 val mottakere = client.hentMottakere(id)
                 assertEquals(
                     setOf(
-                        QueryNotifikasjoner.AltinnMottaker(
-                            serviceCode = "5441",
-                            serviceEdition = "1",
+                        QueryNotifikasjoner.AltinnRessursMottaker(
+                            ressursId = "test-fager",
                             virksomhetsnummer = "0"
                         ),
                         QueryNotifikasjoner.NærmesteLederMottaker(
@@ -173,9 +167,8 @@ class NyOppgaveFlereMottakereTest {
                     nyOppgave(
                         """
                     mottaker: {
-                        altinn: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                        altinnRessurs: {
+                            ressursId: "test-fager"
                         }
                     }
                     mottakere: [
@@ -200,9 +193,8 @@ class NyOppgaveFlereMottakereTest {
                 val mottakere = client.hentMottakere(id)
                 assertEquals(
                     setOf(
-                        QueryNotifikasjoner.AltinnMottaker(
-                            serviceCode = "5441",
-                            serviceEdition = "1",
+                        QueryNotifikasjoner.AltinnRessursMottaker(
+                            ressursId = "test-fager",
                             virksomhetsnummer = "0"
                         ),
                         QueryNotifikasjoner.NærmesteLederMottaker(

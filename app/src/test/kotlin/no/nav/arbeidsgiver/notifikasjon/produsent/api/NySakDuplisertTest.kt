@@ -19,9 +19,8 @@ private val sakOpprettet = HendelseModel.SakOpprettet(
     grupperingsid = "grupperingsid",
     merkelapp = "tag",
     mottakere = listOf(
-        HendelseModel.AltinnMottaker(
-            serviceCode = "5441",
-            serviceEdition = "1",
+        HendelseModel.AltinnRessursMottaker(
+            ressursId = "test-fager",
             virksomhetsnummer = "1"
         )
     ),
@@ -103,9 +102,8 @@ private suspend fun HttpClient.nySak(
                     merkelapp: "${sakOpprettet.merkelapp}"
                     grupperingsid: "${sakOpprettet.grupperingsid}"
                     mottakere: [{
-                        altinn: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                        altinnRessurs: {
+                            ressursId: "test-fager"
                         }
                     }]
                     initiellStatus: $status

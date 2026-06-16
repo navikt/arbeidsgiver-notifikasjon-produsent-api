@@ -1,6 +1,5 @@
 package no.nav.arbeidsgiver.notifikasjon.infrastruktur.produsenter
 
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.Mottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.NærmesteLederMottaker
@@ -32,28 +31,6 @@ sealed class MottakerDefinisjon {
     abstract fun akseptererMottaker(mottaker: Mottaker): Boolean
 }
 
-data class ServicecodeDefinisjon(
-    val code: String,
-    val version: String,
-    val description: String? = null
-) : MottakerDefinisjon() {
-    override fun akseptererMottaker(mottaker: Mottaker): Boolean =
-        when (mottaker) {
-            is AltinnMottaker ->
-                mottaker.serviceCode == code && mottaker.serviceEdition == version
-
-            else -> false
-        }
-
-    override fun equals(other: Any?): Boolean = when {
-        this === other -> true
-        other is ServicecodeDefinisjon -> this.code == other.code && this.version == other.version
-        else -> false
-    }
-
-    override fun hashCode(): Int = Objects.hash(code, version)
-}
-
 data class RessursIdDefinisjon(
     val ressursId: String,
 ) : MottakerDefinisjon() {
@@ -83,11 +60,6 @@ object NærmesteLederDefinisjon : MottakerDefinisjon() {
 }
 
 object MottakerRegister {
-    val servicecodeDefinisjoner: List<ServicecodeDefinisjon>
-        get() {
-            return MOTTAKER_REGISTER.filterIsInstance<ServicecodeDefinisjon>()
-        }
-
     val ressursIdDefinisjoner: List<RessursIdDefinisjon>
         get() {
             return MOTTAKER_REGISTER.filterIsInstance<RessursIdDefinisjon>()
@@ -95,7 +67,6 @@ object MottakerRegister {
 
     fun erDefinert(mottakerDefinisjon: MottakerDefinisjon): Boolean =
         when (mottakerDefinisjon) {
-            is ServicecodeDefinisjon -> servicecodeDefinisjoner.contains(mottakerDefinisjon)
             is NærmesteLederDefinisjon -> true
             is RessursIdDefinisjon -> ressursIdDefinisjoner.contains(mottakerDefinisjon)
         }
@@ -168,10 +139,6 @@ val FAGER_TESTPRODUSENT = Produsent(
     ),
     tillatteMottakere = listOf(
         RessursIdDefinisjon(ressursId = "test-fager"),
-        ServicecodeDefinisjon(code = "4936", version = "1"),
-        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
-        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd'"),
-        ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb'"),
         NærmesteLederDefinisjon,
     )
 )
@@ -202,22 +169,6 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         "Varig tilrettelagt arbeid"
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(
-            code = "5332",
-            version = basedOnEnv(prod = { "2" }, other = { "1" }),
-            description = "Arbeidstrening"
-        ),
-        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig lønnstilskudd"),
-        ServicecodeDefinisjon(code = "5516", version = "2", description = "Varig lønnstilskudd"),
-        ServicecodeDefinisjon(code = "5516", version = "3", description = "Sommerjobb"),
-        ServicecodeDefinisjon(code = "5516", version = "4", description = "Mentor"),
-        ServicecodeDefinisjon(code = "5516", version = "5", description = "Inkluderingstilskudd"),
-        ServicecodeDefinisjon(
-            code = "5516",
-            version = "6",
-            description = "Varig tilrettelagt arbeid i ordinær virksomhet"
-        ),
-
         RessursIdDefinisjon(ressursId = "nav_tiltak_arbeidstrening"),
         RessursIdDefinisjon(ressursId = "nav_tiltak_tiltaksrefusjon"),
         RessursIdDefinisjon(ressursId = "nav_tiltak_midlertidig-lonnstilskudd"),
@@ -268,11 +219,6 @@ val PERMITTERING = Produsent(
         "Innskrenking av arbeidstid",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(
-            code = "5810",
-            version = "1",
-            description = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV"
-        ),
         RessursIdDefinisjon(ressursId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
     )
 )
@@ -285,7 +231,6 @@ val FRITAKAGP = Produsent(
     ),
     tillatteMerkelapper = listOf("Fritak arbeidsgiverperiode"),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
         RessursIdDefinisjon(ressursId = "nav_sykepenger_fritak-arbeidsgiverperiode")
     )
 )
@@ -311,7 +256,6 @@ val HELSEARBEIDSGIVER = Produsent(
         "Inntektsmelding sykepenger"
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
         RessursIdDefinisjon(ressursId = "nav_sykepenger_inntektsmelding")
     )
 )
@@ -334,7 +278,6 @@ val TOI = Produsent(
         "Kandidater",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "5078", version = "1", description = "Rekruttering"),
         RessursIdDefinisjon(ressursId = "nav_rekruttering_kandidater"),
     )
 )
@@ -360,15 +303,6 @@ val ARBEIDSGIVERDIALOG = Produsent(
         "Arbeidstrening",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "5516", version = "1", description = "Midlertidig Lønnstilskudd"),
-        ServicecodeDefinisjon(
-            code = "5332",
-            version = basedOnEnv(
-                prod = { "2" },
-                other = { "1" }
-            ),
-            description = "Arbeidstrening"
-        ),
         RessursIdDefinisjon(ressursId = "nav_tiltak_midlertidig-lonnstilskudd"),
         RessursIdDefinisjon(ressursId = "nav_tiltak_arbeidstrening"),
     )
@@ -394,11 +328,6 @@ val YRKESSKADE = Produsent(
         "Skademelding",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(
-            code = "5902",
-            version = "1",
-            description = "Skademelding ved arbeidsulykke eller yrkessykdom"
-        ),
         RessursIdDefinisjon(ressursId = "nav_yrkesskade_skademelding"),
     )
 )
@@ -422,7 +351,6 @@ val FORELDREPENGER = Produsent(
         "Inntektsmelding svangerskapspenger",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
         RessursIdDefinisjon(ressursId = "nav_foreldrepenger_inntektsmelding")
     )
 )
@@ -449,7 +377,6 @@ val K9 = Produsent(
         "Refusjonskrav for omsorgspenger",
     ),
     tillatteMottakere = listOf(
-        ServicecodeDefinisjon(code = "4936", version = "1", description = "Inntektsmelding"),
         RessursIdDefinisjon(ressursId = "nav_sykdom-i-familien_inntektsmelding")
     )
 )

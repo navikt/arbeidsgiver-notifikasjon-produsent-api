@@ -193,9 +193,8 @@ private suspend fun HttpClient.nySak(
                     merkelapp: "tag"
                     grupperingsid: "grupperingsid"
                     mottakere: [{
-                        altinn: {
-                            serviceCode: "5441"
-                            serviceEdition: "1"
+                        altinnRessurs: {
+                            ressursId: "test-fager"
                         }
                     }]
                     initiellStatus: $status

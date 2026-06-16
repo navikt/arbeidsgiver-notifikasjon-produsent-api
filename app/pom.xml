@@ -12,7 +12,6 @@
         <kotlin.version>2.1.20</kotlin.version>
         <kotlin.coroutines.version>1.10.2</kotlin.coroutines.version>
         <ktor.version>3.2.3</ktor.version>
-        <cxf.version>4.1.1</cxf.version>
         <jvm.version>21</jvm.version>
         <kotlin.compiler.jvmTarget>${jvm.version}</kotlin.compiler.jvmTarget>
         <kotlin.compiler.languageVersion>2.0</kotlin.compiler.languageVersion>
@@ -120,36 +119,6 @@
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-logging-jvm</artifactId>
             <version>${ktor.version}</version>
-        </dependency>
-
-        <!-- altinn-ws -->
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-frontend-jaxws</artifactId>
-            <version>${cxf.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.eclipse.angus</groupId>
-                    <artifactId>angus-mail</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-features-logging</artifactId>
-            <version>${cxf.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http</artifactId>
-            <version>${cxf.version}</version>
-        </dependency>
-        <dependency>
-            <!-- trengs bare for å dra opp DummyServer lokalt -->
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http-jetty</artifactId>
-            <version>${cxf.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- graphql -->
@@ -277,28 +246,6 @@
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
         <plugins>
-            <plugin>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-codegen-plugin</artifactId>
-                <version>${cxf.version}</version>
-                <executions>
-                    <execution>
-                        <id>wsdl-to-java</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>wsdl2java</goal>
-                        </goals>
-                        <configuration>
-                            <wsdlOptions>
-                                <wsdlOption>
-                                    <wsdl>${basedir}/src/main/resources/wsdl/NotificationAgencyExternalBasic.svc.wsdl</wsdl>
-                                </wsdlOption>
-                            </wsdlOptions>
-                            <additionalJvmArgs>-Dorg.apache.cxf.Logger=org.apache.cxf.common.logging.NullLogger</additionalJvmArgs>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>

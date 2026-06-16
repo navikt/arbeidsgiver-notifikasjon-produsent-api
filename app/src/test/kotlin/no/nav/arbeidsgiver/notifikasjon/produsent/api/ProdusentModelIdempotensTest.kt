@@ -38,7 +38,7 @@ class ProdusentModelIdempotensTest {
         assertEquals(
             1,
             database.nonTransactionalExecuteQuery(
-                "select * from mottaker_altinn_enkeltrettighet where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'"
+                "select * from mottaker_altinn_ressurs where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'"
             ) {}.size
         )
 
@@ -46,7 +46,7 @@ class ProdusentModelIdempotensTest {
         assertEquals(
             0,
             database.nonTransactionalExecuteQuery(
-                "select * from mottaker_altinn_enkeltrettighet where notifikasjon_id = '$duplikatId'"
+                "select * from mottaker_altinn_ressurs where notifikasjon_id = '$duplikatId'"
             ) {}.size
         )
     }
@@ -73,7 +73,7 @@ class ProdusentModelIdempotensTest {
             1,
             database.nonTransactionalExecuteQuery(
                 """
-            select * from mottaker_altinn_enkeltrettighet
+            select * from mottaker_altinn_ressurs
             where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'
         """
             ) { }.size

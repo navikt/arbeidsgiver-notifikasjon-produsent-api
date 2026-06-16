@@ -2,7 +2,6 @@ package no.nav.arbeidsgiver.notifikasjon.util
 
 import com.fasterxml.jackson.databind.node.NullNode
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel
-import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnRessursMottaker
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinnressursVarselKontaktinfo
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseModel.AltinntjenesteVarselKontaktinfo
@@ -39,10 +38,9 @@ object EksempelHendelse {
             merkelapp = "1",
             eksternId = id.toString(),
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 )
             ),
             tekst = "1",
@@ -102,10 +100,9 @@ object EksempelHendelse {
             merkelapp = "1",
             eksternId = id.toString(),
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     naermesteLederFnr = "1",
@@ -150,10 +147,9 @@ object EksempelHendelse {
             merkelapp = "1",
             eksternId = id.toString(),
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     naermesteLederFnr = "1",
@@ -242,10 +238,9 @@ object EksempelHendelse {
             merkelapp = "1",
             eksternId = id.toString(),
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     virksomhetsnummer = "1",
@@ -292,10 +287,9 @@ object EksempelHendelse {
             merkelapp = "1",
             eksternId = id.toString(),
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     virksomhetsnummer = "1",
@@ -342,10 +336,9 @@ object EksempelHendelse {
             merkelapp = "1",
             eksternId = id.toString(),
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 )
             ),
             frist = LocalDate.parse("2020-01-02"),
@@ -387,10 +380,9 @@ object EksempelHendelse {
             merkelapp = "1",
             eksternId = "2",
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 )
             ),
             frist = LocalDate.parse("2020-01-22"),
@@ -545,10 +537,9 @@ object EksempelHendelse {
             grupperingsid = id.toString(),
             merkelapp = "tag",
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     virksomhetsnummer = "1",
@@ -575,10 +566,9 @@ object EksempelHendelse {
             grupperingsid = id.toString(),
             merkelapp = "tag",
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     virksomhetsnummer = "1",
@@ -605,10 +595,9 @@ object EksempelHendelse {
             grupperingsid = id.toString(),
             merkelapp = "tag",
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     virksomhetsnummer = "1",
@@ -689,10 +678,9 @@ object EksempelHendelse {
             grupperingsid = SakOpprettet.grupperingsid,
             eksternId = "1",
             mottakere = listOf(
-                AltinnMottaker(
+                AltinnRessursMottaker(
                     virksomhetsnummer = "1",
-                    serviceCode = "1",
-                    serviceEdition = "1"
+                    ressursId = "test-fager"
                 ),
                 NærmesteLederMottaker(
                     virksomhetsnummer = "1",
@@ -853,10 +841,9 @@ object EksempelHendelse {
         grupperingsid = "1",
         merkelapp = "tag",
         mottakere = listOf(
-            AltinnMottaker(
+            AltinnRessursMottaker(
                 virksomhetsnummer = "1",
-                serviceCode = "1",
-                serviceEdition = "1"
+                ressursId = "test-fager"
             ),
             NærmesteLederMottaker(
                 virksomhetsnummer = "1",
@@ -882,10 +869,9 @@ object EksempelHendelse {
         grupperingsid = "2",
         merkelapp = "tag",
         mottakere = listOf(
-            AltinnMottaker(
+            AltinnRessursMottaker(
                 virksomhetsnummer = "1",
-                serviceCode = "1",
-                serviceEdition = "1"
+                ressursId = "test-fager"
             ),
             NærmesteLederMottaker(
                 virksomhetsnummer = "1",

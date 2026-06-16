@@ -4364,6 +4364,10 @@
             <h2 class="definition-heading">AltinnMottaker</h2>
             <div class="doc-row">
               <div class="doc-copy">
+                <div class="definition-description doc-copy-section">
+                  <h5>Description</h5>
+                  <p>DEPRECATED: Representerer en Altinn 2-mottaker. Kun relevant for historiske notifikasjoner. Nye notifikasjoner bør bruke AltinnRessursMottaker.</p>
+                </div>
                 <div class="definition-properties doc-copy-section">
                   <h5>Fields</h5>
                   <table>
@@ -4418,9 +4422,8 @@
               <div class="doc-copy">
                 <div class="definition-description doc-copy-section">
                   <h5>Description</h5>
-                  <p>Spesifiser mottaker ved hjelp av tilganger i Altinn 2. Enhver som har den gitte tilgangen vil kunne se notifikasjone.</p>
-                  <p>Tilgangssjekken utføres hver gang en bruker ser på notifikasjoner. Det betyr at hvis en bruker mister en Altinn 2-tilgang, så vil de hverken se historiske eller nye notifikasjone knyttet til den Altinn 2-tilgangen. Og motsatt, hvis en bruker får en Altinn 2-tilgang, vil de se tidligere notifikasjoner for den Altinn2-tilgangen.</p>
-                  <p>Altinn 2 skal avvikles innen juni 2026, og denne mottakeren vil da også forsvinne. Vi anbefaler å migrere til Altinn 3, og ta i bruk AltinnRessursMottakerInput. Når dere migrerer til Altinn3 kan vi sørge for at brukere fortsatt får tilgang til gamle saker og notifikasjoner, så lenge vi blir informert om hvilke Altinn 3 ressurser som tilsvarer hvilke Altinn 2 tjenester. Ta gjerne kontakt med oss og gi beskjed.</p>
+                  <p>DEPRECATED: Altinn 2 er avviklet. Bruk AltinnRessursMottakerInput i stedet.</p>
+                  <p>Denne mottakeren er ikke lenger gyldig og vil returnere UgyldigMottaker ved bruk.</p>
                 </div>
                 <div class="definition-properties doc-copy-section">
                   <h5>Fields</h5>
@@ -4558,7 +4561,7 @@
               <div class="doc-copy">
                 <div class="definition-description doc-copy-section">
                   <h5>Description</h5>
-                  <p>Ekstern varsling på Altinn 2 tjeneste. Ekstern varsling på Altinn 3 ressurs er ikke implementert, men er i backloggen. Ta kontakt derssom dere ønsker at vi prioriterer dette.</p>
+                  <p>DEPRECATED: Altinn 2 er avviklet. Bruk AltinnRessursMottakerInput i stedet.</p>
                 </div>
                 <div class="definition-properties doc-copy-section">
                   <h5>Fields</h5>
@@ -5002,15 +5005,7 @@
               <div class="doc-copy">
                 <div class="definition-description doc-copy-section">
                   <h5>Description</h5>
-                  <p>Med denne typen vil varsel sendes til virksomheten vha tjenesten i Altinn 2. APIet i Altinn 2 som brukes er <a href="https://altinn.github.io/docs/api/tjenesteeiere/soap/endepunkt-liste/#notificationagencyexternal">NotificationAgencyExternal.SendStandaloneNotiuficationBasic</a></p>
-                  <p>Dette vil bli sendt med EMAIL_PREFERRED, som betyr at det mest sannsynlig blir sendt som epost, men i enkelte tilfeller vil bli sendt sms.</p>
-                  <p>De som har registrert sin kontaktadresse på underenheten (enten uten filter eller hvor filteret stemmer med tjenestekoden som oppgis) vil bli varslet. Den offisielle kontaktinformasjonen til overenheten vil bli varslet.</p>
-                  <p>Malen som benyttes er TokenTextOnly og den ser slik ut:</p>
-                  <pre>
-                          type   | subject  | notificationText
-                          SMS    |          | {tittel}{innhold}
-                          EMAIL  | {tittel} | {innhold}
-                          </pre>
+                  <p>DEPRECATED: Altinn 2 er avviklet. Denne input-typen er ikke lenger gyldig og vil returnere feil ved bruk. Bruk EksterntVarselAltinnressursInput i stedet.</p>
                 </div>
                 <div class="definition-properties doc-copy-section">
                   <h5>Fields</h5>
@@ -5167,6 +5162,7 @@
                           <span class="property-name"><code>altinntjeneste</code></span> - <span class="property-type"><a href="#definition-EksterntVarselAltinntjenesteInput"><code>EksterntVarselAltinntjenesteInput</code></a></span>
                         </td>
                         <td>
+                          <span class="deprecation-reason">Altinn 2 er avviklet. Bruk altinnressurs i stedet.</span>
                         </td>
                       </tr>
                       <tr>
@@ -6668,6 +6664,7 @@
                           <span class="property-name"><code>altinn</code></span> - <span class="property-type"><a href="#definition-AltinnMottakerInput"><code>AltinnMottakerInput</code></a></span>
                         </td>
                         <td>
+                          <span class="deprecation-reason">Altinn 2 er avviklet. Bruk altinnRessurs i stedet.</span>
                         </td>
                       </tr>
                       <tr>
@@ -8660,6 +8657,10 @@
             <h2 class="definition-heading">PaaminnelseEksterntVarselAltinntjenesteInput</h2>
             <div class="doc-row">
               <div class="doc-copy">
+                <div class="definition-description doc-copy-section">
+                  <h5>Description</h5>
+                  <p>DEPRECATED: Altinn 2 er avviklet. Denne input-typen er ikke lenger gyldig og vil returnere feil ved bruk.</p>
+                </div>
                 <div class="definition-properties doc-copy-section">
                   <h5>Fields</h5>
                   <table>
@@ -8809,6 +8810,7 @@
                           <span class="property-name"><code>altinntjeneste</code></span> - <span class="property-type"><a href="#definition-PaaminnelseEksterntVarselAltinntjenesteInput"><code>PaaminnelseEksterntVarselAltinntjenesteInput</code></a></span>
                         </td>
                         <td>
+                          <span class="deprecation-reason">Altinn 2 er avviklet. Bruk altinnressurs i stedet.</span>
                         </td>
                       </tr>
                       <tr>

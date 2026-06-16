@@ -284,13 +284,12 @@ class InputValideringTest {
 
         // to mottaker-felt oppgitt på en mottaker
         assertEquals(
-            "Exception while fetching data (/nyBeskjed) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)",
+            "Exception while fetching data (/nyBeskjed) : MottakerInput: nøyaktig ett felt skal være satt. (naermesteLeder, altinnRessurs er gitt)",
             client.nyBeskjed(
                 mottakere = """
                             [{
-                                "altinn": {
-                                    "serviceCode": "1234",
-                                    "serviceEdition": "321"
+                                "altinnRessurs": {
+                                    "ressursId": "test-fager"
                                 },
                                 "naermesteLeder": {
                                     "naermesteLederFnr": "00112233344",
@@ -306,6 +305,45 @@ class InputValideringTest {
             "Exception while fetching data (/nyBeskjed) : notifikasjon.tekst: verdien inneholder uønsket data: personnummer (11 siffer)",
             client.nyBeskjed(
                 tekst = "1".repeat(11)
+            ).getGraphqlErrors()[0].message
+        )
+
+        // deprecated altinn (Altinn 2) mottaker gir valideringsfeil
+        assertEquals(
+            "Exception while fetching data (/nyBeskjed) : MottakerInput: altinn er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnRessurs i stedet.",
+            client.nyBeskjed(
+                mottakere = """
+                            [{
+                                "altinn": {
+                                    "serviceCode": "5441",
+                                    "serviceEdition": "1"
+                                }
+                            }]
+                        """.trimIndent()
+            ).getGraphqlErrors()[0].message
+        )
+
+        // deprecated altinntjeneste (Altinn 2) ekstern varsel gir valideringsfeil
+        assertEquals(
+            "Exception while fetching data (/nyBeskjed) : EksterntVarselInput: altinntjeneste er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnressurs i stedet.",
+            client.nyBeskjed(
+                eksterneVarsler = """
+                            [
+                                {
+                                    "altinntjeneste": {
+                                        "mottaker": {
+                                            "serviceCode": "5441",
+                                            "serviceEdition": "1"
+                                        },
+                                        "tittel": "tittel",
+                                        "innhold": "innhold",
+                                        "sendetidspunkt": {
+                                            "sendevindu": "LOEPENDE"
+                                        }
+                                    }
+                                }
+                            ]
+                        """.trimIndent()
             ).getGraphqlErrors()[0].message
         )
 
@@ -440,13 +478,12 @@ class InputValideringTest {
 
         // to mottaker-felt oppgitt på en mottaker
         assertEquals(
-            "Exception while fetching data (/nyOppgave) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)",
+            "Exception while fetching data (/nyOppgave) : MottakerInput: nøyaktig ett felt skal være satt. (naermesteLeder, altinnRessurs er gitt)",
             client.nyOppgave(
                 mottakere = """
                             [{
-                                "altinn": {
-                                    "serviceCode": "1234",
-                                    "serviceEdition": "321"
+                                "altinnRessurs": {
+                                    "ressursId": "test-fager"
                                 },
                                 "naermesteLeder": {
                                     "naermesteLederFnr": "00112233344",
@@ -462,6 +499,72 @@ class InputValideringTest {
             "Exception while fetching data (/nyOppgave) : notifikasjon.tekst: verdien inneholder uønsket data: personnummer (11 siffer)",
             client.nyOppgave(
                 tekst = "1".repeat(11)
+            ).getGraphqlErrors()[0].message
+        )
+
+        // deprecated altinn (Altinn 2) mottaker gir valideringsfeil
+        assertEquals(
+            "Exception while fetching data (/nyOppgave) : MottakerInput: altinn er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnRessurs i stedet.",
+            client.nyOppgave(
+                mottakere = """
+                            [{
+                                "altinn": {
+                                    "serviceCode": "5441",
+                                    "serviceEdition": "1"
+                                }
+                            }]
+                        """.trimIndent()
+            ).getGraphqlErrors()[0].message
+        )
+
+        // deprecated altinntjeneste (Altinn 2) ekstern varsel gir valideringsfeil
+        assertEquals(
+            "Exception while fetching data (/nyOppgave) : EksterntVarselInput: altinntjeneste er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnressurs i stedet.",
+            client.nyOppgave(
+                eksterneVarsler = """
+                            [
+                                {
+                                    "altinntjeneste": {
+                                        "mottaker": {
+                                            "serviceCode": "5441",
+                                            "serviceEdition": "1"
+                                        },
+                                        "tittel": "tittel",
+                                        "innhold": "innhold",
+                                        "sendetidspunkt": {
+                                            "sendevindu": "LOEPENDE"
+                                        }
+                                    }
+                                }
+                            ]
+                        """.trimIndent()
+            ).getGraphqlErrors()[0].message
+        )
+
+        // deprecated altinntjeneste (Altinn 2) påminnelse ekstern varsel gir valideringsfeil
+        assertEquals(
+            "Exception while fetching data (/nyOppgave) : PaaminnelseEksterntVarselInput: altinntjeneste er ikke lenger støttet. Altinn 2 er avviklet. Bruk altinnressurs i stedet.",
+            client.nyOppgave(
+                paaminnelse = """
+                            {
+                                "tidspunkt": {
+                                    "konkret": "2030-01-01T01:01:01"
+                                },
+                                "eksterneVarsler": [
+                                    {
+                                        "altinntjeneste": {
+                                            "mottaker": {
+                                                "serviceCode": "5441",
+                                                "serviceEdition": "1"
+                                            },
+                                            "tittel": "tittel",
+                                            "innhold": "innhold",
+                                            "sendevindu": "LOEPENDE"
+                                        }
+                                    }
+                                ]
+                            }
+                        """.trimIndent()
             ).getGraphqlErrors()[0].message
         )
 
@@ -637,13 +740,12 @@ class InputValideringTest {
 
         // to mottaker-felt oppgitt på en mottaker
         assertEquals(
-            "Exception while fetching data (/nyKalenderavtale) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)",
+            "Exception while fetching data (/nyKalenderavtale) : MottakerInput: nøyaktig ett felt skal være satt. (naermesteLeder, altinnRessurs er gitt)",
             client.nyKalenderavtale(
                 mottakere = """
                             [{
-                                "altinn": {
-                                    "serviceCode": "1234",
-                                    "serviceEdition": "321"
+                                "altinnRessurs": {
+                                    "ressursId": "test-fager"
                                 },
                                 "naermesteLeder": {
                                     "naermesteLederFnr": "00112233344",
@@ -858,13 +960,12 @@ class InputValideringTest {
 
         // to mottaker-felt oppgitt på en mottaker
         assertEquals(
-            "Exception while fetching data (/nySak) : MottakerInput: nøyaktig ett felt skal være satt. (altinn, naermesteLeder er gitt)",
+            "Exception while fetching data (/nySak) : MottakerInput: nøyaktig ett felt skal være satt. (naermesteLeder, altinnRessurs er gitt)",
             client.nySak(
                 mottakere = """
                             [{
-                                "altinn": {
-                                    "serviceCode": "1234",
-                                    "serviceEdition": "321"
+                                "altinnRessurs": {
+                                    "ressursId": "test-fager"
                                 },
                                 "naermesteLeder": {
                                     "naermesteLederFnr": "00112233344",
@@ -1794,9 +1895,8 @@ private suspend fun HttpClient.nySak(
     tilleggsinformasjon: String = "her er noe tilleggsinformasjon",
     @Language("JSON") mottakere: String = """
         [{
-            "altinn": {
-                "serviceCode": "5441",
-                "serviceEdition": "1"
+            "altinnRessurs": {
+                "ressursId": "test-fager"
             }
         }]
     """.trimIndent(),
@@ -1846,9 +1946,8 @@ private suspend fun HttpClient.nyBeskjed(
     tekst: String = "tittel",
     @Language("JSON") mottakere: String = """
         [{
-            "altinn": {
-                "serviceCode": "5441",
-                "serviceEdition": "1"
+            "altinnRessurs": {
+                "ressursId": "test-fager"
             }
         }]
     """.trimIndent(),
@@ -1907,9 +2006,8 @@ private suspend fun HttpClient.nyOppgave(
     tekst: String = "tittel",
     @Language("JSON") mottakere: String = """
         [{
-            "altinn": {
-                "serviceCode": "5441",
-                "serviceEdition": "1"
+            "altinnRessurs": {
+                "ressursId": "test-fager"
             }
         }]
     """.trimIndent(),
@@ -1974,9 +2072,8 @@ private suspend fun HttpClient.nyKalenderavtale(
     tekst: String = "tekst",
     @Language("JSON") mottakere: String = """
         [{
-            "altinn": {
-                "serviceCode": "5441",
-                "serviceEdition": "1"
+            "altinnRessurs": {
+                "ressursId": "test-fager"
             }
         }]
     """.trimIndent(),

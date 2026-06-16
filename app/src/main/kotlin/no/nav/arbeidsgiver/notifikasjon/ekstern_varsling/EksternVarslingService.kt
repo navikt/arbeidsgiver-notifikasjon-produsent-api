@@ -1,6 +1,7 @@
 package no.nav.arbeidsgiver.notifikasjon.ekstern_varsling
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.TextNode
 import io.micrometer.core.instrument.Tags
 import kotlinx.coroutines.*
 import no.nav.arbeidsgiver.notifikasjon.hendelse.HendelseProdusent
@@ -105,7 +106,6 @@ class EksternVarslingService(
     private val åpningstider: Åpningstider = ÅpningstiderImpl,
     private val osloTid: OsloTid = OsloTidImpl,
     private val eksternVarslingRepository: EksternVarslingRepository,
-    private val altinn2VarselKlient: Altinn2VarselKlient,
     private val altinn3VarselKlient: Altinn3VarselKlient,
     private val hendelseProdusent: HendelseProdusent,
     private val recheckEmergencyBrakeDelay: Duration = Duration.ofMinutes(1),
@@ -211,36 +211,38 @@ class EksternVarslingService(
         withContext(varsel.asMDCContext()) {
             when (varsel.data.eksternVarsel) {
                 is EksternVarsel.Altinntjeneste -> {
-                    val altinntjeneste = varsel.data.eksternVarsel as EksternVarsel.Altinntjeneste
-                    if (!isMigrated(altinntjeneste.serviceCode, altinntjeneste.serviceEdition)) {
-                        altinn2VarselHandler(varsel)
-                        return@withContext
-                    }
-                    val ressursId = resolveRessursId(
-                        serviceCode = altinntjeneste.serviceCode,
-                        serviceEdition = altinntjeneste.serviceEdition,
-                        produsentId = varsel.data.produsentId,
-                    )
-                    if (ressursId != null) {
-                        log.info("Ruter Altinntjeneste-varsel ${varsel.data.varselId} til ressurs $ressursId")
-                        val convertedVarsel = varsel.withEksternVarsel(
-                            EksternVarsel.Altinnressurs(
-                                fnrEllerOrgnr = altinntjeneste.fnrEllerOrgnr,
-                                sendeVindu = altinntjeneste.sendeVindu,
-                                sendeTidspunkt = altinntjeneste.sendeTidspunkt,
-                                resourceId = ressursId,
-                                epostTittel = altinntjeneste.tittel,
-                                epostInnhold = altinntjeneste.innhold,
-                                smsInnhold = altinntjeneste.tittel,
-                                ordreId = null,
-                            )
+                    with(varsel.data.eksternVarsel as EksternVarsel.Altinntjeneste) {
+                        val ressursId = resolveRessursId(
+                            serviceCode = serviceCode,
+                            serviceEdition = serviceEdition,
+                            produsentId = varsel.data.produsentId,
                         )
-                        altinn3VarselHandler(convertedVarsel)
-                    } else {
-                        log.error("Migrert serviceCode ${altinntjeneste.serviceCode}:${altinntjeneste.serviceEdition} " +
-                            "men kan ikke bestemme ressursId for produsentId=${varsel.data.produsentId}. " +
-                            "Faller tilbake til altinn2.")
-                        altinn2VarselHandler(varsel)
+                        if (ressursId == null) {
+                            log.error("Altinn 2 er avviklet. Markerer varsel ${varsel.data.varselId} som feilet.")
+                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varsel.data.varselId,
+                                Altinn3VarselKlient.ErrorResponse(
+                                    rå = TextNode.valueOf("Altinn 2 er avviklet"),
+                                    code = "altinn2_avviklet",
+                                    message = "Altinn 2 er avviklet. Varselet kan ikke sendes.",
+                                )
+                            )
+                        } else {
+                            log.info("Ruter Altinntjeneste-varsel ${varsel.data.varselId} til ressurs $ressursId")
+                            altinn3VarselHandler(
+                                varsel.withEksternVarsel(
+                                    EksternVarsel.Altinnressurs(
+                                        fnrEllerOrgnr = fnrEllerOrgnr,
+                                        sendeVindu = sendeVindu,
+                                        sendeTidspunkt = sendeTidspunkt,
+                                        resourceId = ressursId,
+                                        epostTittel = tittel,
+                                        epostInnhold = innhold,
+                                        smsInnhold = tittel,
+                                        ordreId = null,
+                                    )
+                                )
+                            )
+                        }
                     }
                 }
                 is EksternVarsel.Sms,
@@ -390,80 +392,7 @@ class EksternVarslingService(
     }
 
 
-    private suspend fun altinn2VarselHandler(varsel: EksternVarselTilstand) {
-        val varselId = varsel.data.varselId
-        when (varsel) {
-            is EksternVarselTilstand.Ny -> {
-                val kalkulertSendeTidspunkt =
-                    varsel.kalkuertSendetidspunkt(åpningstider, now = osloTid.localDateTimeNow())
-                if (kalkulertSendeTidspunkt <= osloTid.localDateTimeNow()) {
-                    when (val response = altinn2VarselKlient.send(varsel.data.eksternVarsel)) {
-                        is AltinnVarselKlientResponse.Ok -> {
-                            eksternVarslingRepository.markerSomSendtAndReleaseJob(varselId, response)
-                        }
-
-                        is AltinnVarselKlientResponse.Feil -> {
-                            if (response.isRetryable()) {
-                                log.error("Retryable feil fra altinn ved sending av notifikasjon: {}", response)
-                                eksternVarslingRepository.returnToJobQueue(varselId)
-                            } else {
-                                log.atLevel(
-                                    if (response.isSupressable()) WARN
-                                    else ERROR
-                                ).log("Ikke-retryable feil fra altinn ved sending av notifikasjon: {}:", response)
-                                eksternVarslingRepository.markerSomSendtAndReleaseJob(
-                                    varselId,
-                                    response
-                                )
-                            }
-                        }
-
-                        is UkjentException -> {
-                            eksternVarslingRepository.returnToJobQueue(varselId)
-                            throw response.exception
-                        }
-                    }
-                } else {
-                    eksternVarslingRepository.scheduleJob(varselId, kalkulertSendeTidspunkt)
-                }
-            }
-
-            is EksternVarselTilstand.Sendt -> {
-                try {
-                    hendelseProdusent.send(varsel.toHendelse())
-                    eksternVarslingRepository.markerSomKvittertAndDeleteJob(varselId)
-                } catch (e: RuntimeException) {
-                    e.rethrowIfCancellation()
-                    log.error("Exception producing kafka-kvittering", e)
-                    eksternVarslingRepository.returnToJobQueue(varselId)
-                }
-            }
-
-            is EksternVarselTilstand.Kansellert -> {
-                try {
-                    hendelseProdusent.send(varsel.toHendelse())
-                    eksternVarslingRepository.deleteFromJobQueue(varselId)
-                } catch (e: RuntimeException) {
-                    e.rethrowIfCancellation()
-                    log.error("Exception producing kafka-kvittering", e)
-                    eksternVarslingRepository.returnToJobQueue(varselId)
-                }
-            }
-
-            is EksternVarselTilstand.Kvittert -> {
-                eksternVarslingRepository.deleteFromJobQueue(varselId)
-            }
-        }
-    }
-
     companion object {
-        private val migratedServiceCodes: Set<Pair<String, String>> = setOf(
-            "4936" to "1",
-        )
-
-        private fun isMigrated(serviceCode: String, serviceEdition: String): Boolean =
-            (serviceCode to serviceEdition) in migratedServiceCodes
-
         private val altinntjenesteToRessursMap: Map<Pair<String, String>, List<String>> = mapOf(
             "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" to ("5810" to "1"),
             "nav_sosialtjenester_digisos-avtale" to ("5867" to "1"),
