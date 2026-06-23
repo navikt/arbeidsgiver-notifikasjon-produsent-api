@@ -2,7 +2,6 @@ import { createContext, PropsWithChildren, useContext } from 'react';
 import { ApolloProvider } from '@apollo/client/react';
 import NotifikasjonWidgetComponent from './NotifikasjonWidget/NotifikasjonWidget';
 import { createClient } from './api/graphql';
-import { AnalyticsProvider } from './context/AnalyticsProvider';
 
 export type NotifikasjonWidgetProps = {
   apiUrl?: string,
@@ -44,13 +43,11 @@ export type ProviderProps = PropsWithChildren<{
   miljo: Miljø,
 }>
 
-export const NotifikasjonWidgetProvider = ({ apiUrl, miljo, children }: ProviderProps) => {
+export const NotifikasjonWidgetProvider = ({ apiUrl, miljo: _miljo, children }: ProviderProps) => {
   return (
     <NotifikasjonWidgetProviderLoadedContext.Provider value={true}>
       <ApolloProvider client={createClient(apiUrl)}>
-        <AnalyticsProvider origin="arbeidsgiver-notifikasjon-widget" miljø={miljo}>
-          {children}
-        </AnalyticsProvider>
+        {children}
       </ApolloProvider>
     </NotifikasjonWidgetProviderLoadedContext.Provider>
   );
