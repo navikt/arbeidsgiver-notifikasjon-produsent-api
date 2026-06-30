@@ -7,8 +7,6 @@ import { useMutation } from '@apollo/client/react';
 import { NOTIFIKASJONER_KLIKKET_PAA } from '../../api/graphql';
 import { LukkIkon } from './NotifikasjonListeElement/Ikoner';
 import { ExpandIcon } from '@navikt/aksel-icons';
-import { useAnalytics } from '../../context/AnalyticsProvider';
-import { getLimitedUrl } from '../../utils/utils';
 
 interface NotifikasjonPanelProps {
   erApen: boolean;
@@ -23,23 +21,10 @@ const NotifikasjonPanel = (
     togglePanel,
   }: NotifikasjonPanelProps,
 ) => {
-  const logEvent = useAnalytics();
-
   const notifikasjonRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const notifikasjonPanelListeRef = useRef<HTMLUListElement>(null);
 
   const [valgtNotifikasjonIndex, setValgtNotifikasjonIndex] = useState(0);
-
-  const loggNotifikasjonKlikk = (notifikasjon: Notifikasjon, index: number) => {
-    const klikketPaaTidligere = notifikasjon.brukerKlikk.klikketPaa;
-    logEvent('notifikasjon-klikk', {
-      url: getLimitedUrl(),
-      index,
-      'merkelapp': notifikasjon.merkelapp,
-      'klikket-paa-tidligere': klikketPaaTidligere,
-      'destinasjon': notifikasjon.lenke,
-    });
-  };
 
   const lukkPanel = () => {
     setValgtNotifikasjonIndex(0);
@@ -66,8 +51,6 @@ const NotifikasjonPanel = (
 
   const handleNotifikasjonKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const maksLengde = notifikasjoner?.length ?? 0;
-
-    logEvent('piltast-navigasjon', { url: getLimitedUrl() });
 
     const key = e.key;
 
@@ -143,7 +126,6 @@ const NotifikasjonPanel = (
             style={{ padding: 0, color: 'unset', textDecoration: 'none' }}
             ref={(el: HTMLAnchorElement) => (notifikasjonRefs.current[index] = el)}
             onClick={() => {
-              loggNotifikasjonKlikk(notifikasjon, index);
               notifikasjonKlikketPaa({ variables: { id: notifikasjon.id } });
               setValgtNotifikasjonIndex(index);
             }}
