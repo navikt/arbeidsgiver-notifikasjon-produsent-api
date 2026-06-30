@@ -166,7 +166,8 @@ val ARBEIDSGIVER_TILTAK = Produsent(
         "Sommerjobb",
         "Arbeidstrening",
         "Inkluderingstilskudd",
-        "Varig tilrettelagt arbeid"
+        "Varig tilrettelagt arbeid",
+        "Tiltaksrefusjon",
     ),
     tillatteMottakere = listOf(
         RessursIdDefinisjon(ressursId = "nav_tiltak_arbeidstrening"),
