@@ -423,6 +423,30 @@ val EKSPERTBISTAND = Produsent(
     )
 )
 
+val DIALOG = Produsent(
+    id = "dialog",
+    accessPolicy = basedOnEnv(
+        prod = {
+            listOf(
+                "prod-gcp:helsearbeidsgiver:dialog",
+            )
+        },
+        other = {
+            listOf(
+                "dev-gcp:helsearbeidsgiver:dialog",
+            )
+        },
+    ),
+    tillatteMerkelapper = listOf(
+        "Sykmelding",
+        "Søknad om sykepenger",
+    ),
+    tillatteMottakere = listOf(
+        RessursIdDefinisjon(ressursId = "nav_sykepenger_sykmelding"),
+        RessursIdDefinisjon(ressursId = "nav_sykepenger_soeknad"),
+    )
+)
+
 
 val PRODUSENT_LIST =
     listOf(
@@ -439,6 +463,7 @@ val PRODUSENT_LIST =
         K9,
         MELOSYS,
         EKSPERTBISTAND,
+        DIALOG,
     )
         .filter { it.accessPolicy.isNotEmpty() }
 
