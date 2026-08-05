@@ -79,6 +79,10 @@ spec:
           namespace: helsearbeidsgiver
           cluster: prod-gcp
 
+        - application: dialog
+          namespace: helsearbeidsgiver
+          cluster: prod-gcp
+
         - application: saas-proxy
           namespace: teamcrm
           cluster: prod-gcp

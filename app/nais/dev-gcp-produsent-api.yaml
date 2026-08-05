@@ -92,6 +92,10 @@ spec:
           namespace: helsearbeidsgiver
           cluster: dev-gcp
 
+        - application: dialog
+          namespace: helsearbeidsgiver
+          cluster: dev-gcp
+
         - application: toi-arbeidsgiver-notifikasjon
           namespace: toi
           cluster: dev-gcp
