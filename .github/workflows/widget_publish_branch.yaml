@@ -10,13 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         with:
-          version: 11
+          version: 10.32.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
           cache: 'pnpm'
           cache-dependency-path: widget/component/pnpm-lock.yaml
