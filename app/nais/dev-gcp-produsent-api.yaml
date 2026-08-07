@@ -70,9 +70,9 @@ spec:
 
         - application: esyfovarsel
           namespace: team-esyfo
-          cluster: dev-fss
+          cluster: dev-gcp
 
-        - application: esyfovarsel
+        - application: syfo-budstikka
           namespace: team-esyfo
           cluster: dev-gcp
 
