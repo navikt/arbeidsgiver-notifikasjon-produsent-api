@@ -190,11 +190,13 @@ val ESYFO = Produsent(
         prod = {
             listOf(
                 "prod-gcp:team-esyfo:esyfovarsel",
+                "prod-gcp:team-esyfo:syfo-budstikka",
             )
         },
         other = {
             listOf(
                 "dev-gcp:team-esyfo:esyfovarsel",
+                "dev-gcp:team-esyfo:syfo-budstikka",
             )
         },
     ),

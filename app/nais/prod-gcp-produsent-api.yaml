@@ -63,6 +63,10 @@ spec:
           namespace: team-esyfo
           cluster: prod-gcp
 
+        - application: syfo-budstikka
+          namespace: team-esyfo
+          cluster: prod-gcp
+
         - application: fritakagp
           namespace: helsearbeidsgiver
           cluster: prod-gcp
