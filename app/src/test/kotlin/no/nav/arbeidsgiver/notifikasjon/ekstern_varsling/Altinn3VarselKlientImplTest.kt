@@ -41,7 +41,8 @@ class Altinn3VarselKlientImplTest {
                             "recipientSms": {
                               "phoneNumber": "+4799999999",
                               "smsSettings": {
-                                "body": "Hei, dette er en test"
+                                "body": "Hei, dette er en test",
+                                "sender": "Nav"
                               }
                             }
                           }
@@ -87,7 +88,8 @@ class Altinn3VarselKlientImplTest {
                             "recipientSms": {
                               "phoneNumber": "$output",
                               "smsSettings": {
-                                "body": "Hei, dette er en test"
+                                "body": "Hei, dette er en test",
+                                "sender": "Nav"
                               }
                             }
                           }
@@ -166,7 +168,8 @@ class Altinn3VarselKlientImplTest {
                                 "contentType": "Html"
                               },
                               "smsSettings": {
-                                "body": "Hei, sms"
+                                "body": "Hei, sms",
+                                "sender": "Nav"
                               }
                             }
                           }
@@ -236,7 +239,8 @@ class Altinn3VarselKlientImplTest {
                         "recipientSms": {
                           "phoneNumber": "+4799999999",
                           "smsSettings": {
-                            "body": "Hei, dette er en test"
+                            "body": "Hei, dette er en test",
+                            "sender": "Nav"
                           }
                         }
                       }

@@ -116,6 +116,7 @@ open class Altinn3VarselKlientImpl(
 
 
 private const val EPOST_AVSENDER = "ikke-svar@nav.no"
+private const val SMS_AVSENDER = "Nav"
 
 @Suppress("ConstPropertyName")
 interface Altinn3VarselKlient {
@@ -188,7 +189,9 @@ interface Altinn3VarselKlient {
 
             data class SmsSettings(
                 val body: String,
-            )
+            ) {
+                val sender = SMS_AVSENDER
+            }
 
             companion object {
                 fun from(eksternVarsel: EksternVarsel.Sms, idempotencyId: String) = Sms(
@@ -243,7 +246,9 @@ interface Altinn3VarselKlient {
 
             data class SmsSettings(
                 val body: String,
-            )
+            ) {
+                val sender = SMS_AVSENDER
+            }
 
             companion object {
                 fun from(eksternVarsel: EksternVarsel.Altinnressurs, idempotencyId: String) = Organization(
