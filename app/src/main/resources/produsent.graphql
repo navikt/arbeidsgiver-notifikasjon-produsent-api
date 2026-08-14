@@ -486,6 +486,9 @@ type Mutation {
         Grupperings-id-en knytter en sak og notifikasjoner sammen.
         Den skal være unik for saker innenfor merkelappen.
         Et naturlig valg av grupperingsid er f.eks. et saksnummer.
+
+        Advarsel: en grupperingsid som har vært brukt på en sak som er slettet kan ikke gjenbrukes.
+        Forsøk på dette vil returnere feilen `DuplikatGrupperingsidEtterDelete`.
         """
         grupperingsid: String!
 
@@ -1181,6 +1184,7 @@ type Mutation {
     Advarsel: det er ikke mulig å angre på denne operasjonen. All data blir borte for godt.
     Advarsel: notifikasjoner med samme merkelapp og grupperingsid blir slettet.
     Advarsel: Det vil ikke være mulig å lage en ny sak med samme merkelapp og grupperingsid.
+    Forsøk på å opprette en ny sak med samme grupperingsid vil returnere `DuplikatGrupperingsidEtterDelete`.
     """
     hardDeleteSak(id: ID!): HardDeleteSakResultat!
 
@@ -1998,6 +2002,10 @@ type DuplikatGrupperingsid implements Error {
 """
 Denne feilen returneres hvis det tidligere eksisterte en sak med denne grupperingsid-en under
 merkelappen, som har blitt slettet.
+
+En grupperingsid som har vært brukt på en slettet sak kan ikke gjenbrukes, uavhengig av om
+slettingen skyldes utgått levetid, eksplisitt hardDelete eller automatisk opprydding.
+Bruk en ny, unik grupperingsid for å opprette en ny sak.
 """
 type DuplikatGrupperingsidEtterDelete implements Error {
     feilmelding: String!
