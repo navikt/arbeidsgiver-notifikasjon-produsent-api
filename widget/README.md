@@ -1,3 +1,7 @@
+# ---DEPRECATED---
+Denne pakken er nå deprecated, og det vil ikke bli publisert nye verjsoner. Api endringer i notifikasjonsplatformen (https://github.com/navikt/arbeidsgiver-notifikasjon-produsent-api) vil kunne knekke komponenten, og det anbefales å fjerne den.
+
+
 # arbeidsgiver-notifikasjon-widget
 
 > React component som viser notifikasjoner for innlogget arbeidsgiver.
