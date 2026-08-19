@@ -686,6 +686,32 @@ type Mutation {
     nyOppgave(nyOppgave: NyOppgaveInput!): NyOppgaveResultat!
 
     """
+    Opprett en ny sak og en tilhørende oppgave i ett kall.
+    """
+    nySakOgOppgave(
+        """
+        Grupperings-id-en knytter saken og oppgaven sammen.
+        Den skal være unik for saker innenfor merkelappen.
+        """
+        grupperingsid: String!
+
+        """Merkelapp som saken og oppgaven skal assosieres med."""
+        merkelapp: String!
+
+        """Virksomhetsnummeret til virksomheten som saken omhandler."""
+        virksomhetsnummer: String!
+
+        """Hvem som skal få se saken og oppgaven."""
+        mottakere: [MottakerInput!]!
+
+        """Sak-spesifikke felter."""
+        sak: NySakOgOppgaveSakInput!
+
+        """Oppgaven som skal opprettes sammen med saken."""
+        oppgave: NySakOgOppgaveOppgaveInput!
+    ): NySakOgOppgaveResultat!
+
+    """
     Marker en oppgave (identifisert ved id) som utført. Dersom oppgaven har påminnelse, vil denne og eventuelle eksterne varsler på påminnelsen bli kansellert.
     """
     oppgaveUtfoert(
@@ -1392,6 +1418,94 @@ input NyOppgaveInput {
     paaminnelse: PaaminnelseInput
 }
 
+input NySakOgOppgaveSakInput {
+    """
+    En tittel på saken, som vises til brukeren.
+    Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
+    """
+    tittel: String!
+
+    """
+    Tilleggsinformasjon som vises under tittelen på saken.
+    Feltet er begrenset til 140 tegn og kan ikke inneholde fødselsnummer.
+    """
+    tilleggsinformasjon: String
+
+    """
+    Lenke som brukeren kan klikke på for å komme rett til saken.
+    """
+    lenke: String
+
+    """
+    Initiell status for saken.
+    """
+    initiellStatus: SaksStatus!
+
+    """
+    Hva som er neste steg i saken.
+    """
+    nesteSteg: String
+
+    """
+    Når endringen skjedde. Frivillig — bruker mottakstidspunktet hvis ikke oppgitt.
+    """
+    tidspunkt: ISO8601DateTime
+
+    """
+    Overstyr statusteksten som vises til brukeren.
+    """
+    overstyrStatustekstMed: String
+
+    """
+    Skeduler hard delete av saken.
+    """
+    hardDelete: FutureTemporalInput
+}
+
+input NySakOgOppgaveOppgaveInput {
+    """
+    Unik ekstern id for oppgaven innenfor merkelappen.
+    Brukes for idempotens — samme eksternId gir samme oppgave.
+    """
+    eksternId: String!
+
+    """
+    Teksten som vises i oppgaven til brukeren. Feltet er begrenset til 300 tegn og kan ikke inneholde fødselsnummer.
+    """
+    tekst: String!
+
+    """
+    Lenken brukeren føres til ved klikk på oppgaven.
+    """
+    lenke: String!
+
+    """
+    Frist for når oppgaven skal utføres. Oppgaven markeres automatisk UTGAAT når fristen er forbi.
+    Vises til brukeren i grensesnittet. Utelates dersom oppgaven ikke har frist.
+    """
+    frist: ISO8601Date
+
+    """
+    Tidspunkt for når oppgaven ble opprettet. Bruker mottakstidspunktet hvis ikke oppgitt.
+    """
+    opprettetTidspunkt: ISO8601DateTime
+
+    """
+    Skeduler hard delete av oppgaven.
+    """
+    hardDelete: FutureTemporalInput
+
+    """
+    Eksterne varsler som skal sendes ved opprettelse av oppgaven.
+    """
+    eksterneVarsler: [EksterntVarselInput!]! = []
+
+    """
+    Påminnelse som skal aktiveres på et gitt tidspunkt.
+    """
+    paaminnelse: PaaminnelseInput
+}
+
 input PaaminnelseInput {
     """
     Tidspunktet for når påminnelsen skal aktiveres.
@@ -1888,6 +2002,24 @@ union NyOppgaveResultat =
     | UkjentProdusent
     | UkjentRolle
     | UgyldigPaaminnelseTidspunkt
+
+union NySakOgOppgaveResultat =
+    | NySakOgOppgaveVellykket
+    | UgyldigMerkelapp
+    | UgyldigMottaker
+    | DuplikatGrupperingsid
+    | DuplikatGrupperingsidEtterDelete
+    | DuplikatEksternIdOgMerkelapp
+    | UkjentProdusent
+    | UkjentRolle
+    | UgyldigPaaminnelseTidspunkt
+
+type NySakOgOppgaveVellykket {
+    sakId: ID!
+    oppgaveId: ID!
+    eksterneVarsler: [NyEksterntVarselResultat!]!
+    paaminnelse: PaaminnelseResultat
+}
 
 union NyBeskjedResultat =
     | NyBeskjedVellykket
