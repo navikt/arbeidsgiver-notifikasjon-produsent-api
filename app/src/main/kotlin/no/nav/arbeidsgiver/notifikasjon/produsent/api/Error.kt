@@ -12,6 +12,7 @@ internal sealed class Error {
         MutationNyBeskjed.NyBeskjedResultat,
         MutationNyOppgave.NyOppgaveResultat,
         MutationNySak.NySakResultat,
+        MutationNySakOgOppgave.NySakOgOppgaveResultat,
         MutationDelete.HardDeleteNotifikasjonResultat,
         MutationDelete.SoftDeleteNotifikasjonResultat,
         MutationDelete.HardDeleteSakResultat,
@@ -88,6 +89,7 @@ internal sealed class Error {
     ) : Error(),
         MutationNyBeskjed.NyBeskjedResultat,
         MutationNyOppgave.NyOppgaveResultat,
+        MutationNySakOgOppgave.NySakOgOppgaveResultat,
         MutationKalenderavtale.NyKalenderavtaleResultat
 
     @JsonTypeName("DuplikatGrupperingsid")
@@ -95,13 +97,15 @@ internal sealed class Error {
         override val feilmelding: String,
         val idTilEksisterende: UUID
     ) : Error(),
-        MutationNySak.NySakResultat
+        MutationNySak.NySakResultat,
+        MutationNySakOgOppgave.NySakOgOppgaveResultat
 
     @JsonTypeName("DuplikatGrupperingsidEtterDelete")
     data class DuplikatGrupperingsidEtterDelete(
         override val feilmelding: String
     ) : Error(),
-        MutationNySak.NySakResultat
+        MutationNySak.NySakResultat,
+        MutationNySakOgOppgave.NySakOgOppgaveResultat
 
     @JsonTypeName("NotifikasjonFinnesIkke")
     data class NotifikasjonFinnesIkke(
@@ -131,6 +135,7 @@ internal sealed class Error {
     ) :
         Error(),
         MutationNyOppgave.NyOppgaveResultat,
+        MutationNySakOgOppgave.NySakOgOppgaveResultat,
         MutationOppgaveUtsettFrist.OppgaveUtsettFristResultat,
         MutationOppgavePåminnelse.OppgaveEndrePaaminnelseResultat
 

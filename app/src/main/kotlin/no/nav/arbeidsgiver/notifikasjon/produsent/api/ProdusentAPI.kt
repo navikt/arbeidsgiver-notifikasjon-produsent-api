@@ -49,6 +49,7 @@ object ProdusentAPI {
                 MutationOppgaveUtsettFrist(hendelseDispatcher, produsentRepository).wire(this)
                 MutationDelete(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNySak(hendelseDispatcher, produsentRepository).wire(this)
+                MutationNySakOgOppgave(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNyStatusSak(hendelseDispatcher, produsentRepository).wire(this)
                 MutationKalenderavtale(hendelseDispatcher, produsentRepository).wire(this)
                 MutationNesteStegSak(hendelseDispatcher, produsentRepository).wire(this)
