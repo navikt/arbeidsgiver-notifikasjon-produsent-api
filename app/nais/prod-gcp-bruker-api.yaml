@@ -43,7 +43,7 @@ spec:
     sqlInstances:
       - name: notifikasjon-bruker-api-v2
         type: POSTGRES_17
-        tier: db-custom-2-7680
+        tier: db-custom-2-13312
         diskAutoresize: true
         highAvailability: false
         databases:
