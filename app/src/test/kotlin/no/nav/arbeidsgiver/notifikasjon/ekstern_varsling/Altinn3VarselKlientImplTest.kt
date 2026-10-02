@@ -17,6 +17,7 @@ import org.junit.jupiter.api.assertThrows
 import org.skyscreamer.jsonassert.JSONAssert
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class Altinn3VarselKlientImplTest {
@@ -542,6 +543,82 @@ class Altinn3VarselKlientImplTest {
             assertTrue(it.hasFailedRecipients)
             assertTrue(it.allRecipientsFinished)
             assertTrue(!it.allRecipientsDelivered)
+        }
+    }
+
+    @Test
+    fun `Altinn3VarselKlientImpl#shipment with Order_Retrying is processing`() = runTest {
+        val shipmentId = "shipment-45"
+        //language=json
+        val mockShipmentResponse = """
+            {
+                "shipmentId": "$shipmentId",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Retrying",
+                "lastUpdate": "2026-10-02T08:21:04.126885Z",
+                "recipients": []
+            }"""
+
+        val client = newClient(shipmentId, mockShipmentResponse)
+        client.shipment(shipmentId).let {
+            it as Altinn3VarselKlient.ShipmentResponse.Success
+            assertEquals(Altinn3VarselKlient.ShipmentStatus.Order_Retrying, it.status)
+            assertTrue(it.isOrderProcessing)
+            assertFalse(it.isOrderFailed)
+            assertFalse(it.isOrderCompleted)
+        }
+    }
+
+    @Test
+    fun `Altinn3VarselKlientImpl#shipment with Order_Failed`() = runTest {
+        val shipmentId = "shipment-46"
+        //language=json
+        val mockShipmentResponse = """
+            {
+                "shipmentId": "$shipmentId",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Failed",
+                "lastUpdate": "2026-10-02T08:21:04.126885Z",
+                "recipients": [
+                    {
+                        "status": "SMS_Sending",
+                        "lastUpdate": "2026-10-02T08:21:04.126885Z",
+                        "destination": "+4799999999"
+                    }
+                ]
+            }"""
+
+        val client = newClient(shipmentId, mockShipmentResponse)
+        client.shipment(shipmentId).let {
+            it as Altinn3VarselKlient.ShipmentResponse.Success
+            assertEquals(Altinn3VarselKlient.ShipmentStatus.Order_Failed, it.status)
+            assertTrue(it.isOrderFailed)
+            assertFalse(it.isOrderProcessing)
+            assertFalse(it.isOrderCompleted)
+        }
+    }
+
+    @Test
+    fun `Altinn3VarselKlientImpl#shipment with Order_Failed and null recipients`() = runTest {
+        val shipmentId = "shipment-47"
+        //language=json
+        val mockShipmentResponse = """
+            {
+                "shipmentId": "$shipmentId",
+                "sendersReference": null,
+                "type": "Notification",
+                "status": "Order_Failed",
+                "lastUpdate": "2026-10-02T08:21:04.126885Z",
+                "recipients": null
+            }"""
+
+        val client = newClient(shipmentId, mockShipmentResponse)
+        client.shipment(shipmentId).let {
+            it as Altinn3VarselKlient.ShipmentResponse.Success
+            assertTrue(it.isOrderFailed)
+            assertEquals(emptyList(), it.recipients)
         }
     }
 }

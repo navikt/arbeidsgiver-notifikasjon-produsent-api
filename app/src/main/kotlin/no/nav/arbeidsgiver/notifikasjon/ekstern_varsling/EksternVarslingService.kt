@@ -364,6 +364,9 @@ class EksternVarslingService(
             shipment.isOrderCancelled || shipment.isOrderConditionNotMet ->
                 Pair(Altinn3VarselStatus.Kansellert, shipment.rå)
 
+            shipment.isOrderFailed ->
+                Pair(Altinn3VarselStatus.KvittertMedFeil, shipment.rå)
+
             shipment.isOrderCompleted -> {
                 // Orderen er ferdig prosessert. Sjekker status på mottakere.
                 if (shipment.recipients.any { it.isProcessing }) {
@@ -448,6 +451,9 @@ private fun JsonNode.extractStatusAndDescription(): Pair<String, String> {
 
     // Case 1: New /future/shipment format. Object with status and recipients array.
     val shipmentStatus = at("/status")
+    if (shipmentStatus.asText() == Altinn3VarselKlient.ShipmentStatus.Order_Failed) {
+        return Altinn3VarselKlient.ShipmentStatus.Order_Failed to "Bestillingen feilet hos Altinn etter alle forsøk. Ingen varsler ble sendt."
+    }
     val recipients = at("/recipients")
     if (!shipmentStatus.isMissingNode && recipients.isArray) {
         val failedRecipients = recipients.filter { it.at("/status").asText().contains("Failed") }

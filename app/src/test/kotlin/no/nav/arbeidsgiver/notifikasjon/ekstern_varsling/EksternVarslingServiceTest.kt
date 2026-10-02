@@ -29,6 +29,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -1251,6 +1252,147 @@ class EksternVarslingServiceTest {
                 assertEquals(1, vellykket.size, "Partial failure should produce EksterntVarselVellykket")
                 val feilet = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
                 assertEquals(0, feilet.size, "Partial failure should NOT produce EksterntVarselFeilet")
+            }
+            job.cancel()
+        }
+    }
+
+    @Test
+    fun `Altinn3 varsel - Order_Retrying venter til ordren er fullført`() = runBlocking {
+        //language=JSON
+        val shipmentRetrying = laxObjectMapper.readValue<JsonNode>(
+            """
+            {
+              "shipmentId": "retrying-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Retrying",
+              "lastUpdate": "2026-10-02T08:21:04.126885Z",
+              "recipients": []
+            }
+            """.trimIndent()
+        )
+        //language=JSON
+        val shipmentCompleted = laxObjectMapper.readValue<JsonNode>(
+            """
+            {
+              "shipmentId": "retrying-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Completed",
+              "lastUpdate": "2026-10-02T08:25:04.126885Z",
+              "recipients": [
+                {
+                  "status": "SMS_Delivered",
+                  "lastUpdate": "2026-10-02T08:25:04.126885Z",
+                  "destination": "+4712345678"
+                }
+              ]
+            }
+            """.trimIndent()
+        )
+        val shipmentKall = AtomicInteger(0)
+        val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) =
+                Altinn3VarselKlient.OrderResponse.Success(
+                    orderId = "retrying-123",
+                    shipmentId = "shipment-retrying",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", "retrying-123")
+                        putObject("notification").put("shipmentId", "shipment-retrying")
+                    }
+                )
+
+            override suspend fun shipment(shipmentId: String) =
+                Altinn3VarselKlient.ShipmentResponse.Success.fromJson(
+                    if (shipmentKall.getAndIncrement() < 2) shipmentRetrying else shipmentCompleted
+                )
+        }
+
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent) = setupService(
+                database,
+                altinn3VarselKlient = altinn3VarselKlient
+            )
+            repository.oppdaterModellEtterHendelse(oppgave)
+            database.nonTransactionalExecuteUpdate(
+                "update emergency_break set stop_processing = false where id = 0"
+            )
+            val job = service.start(this)
+            eventually(5.seconds) {
+                val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                assertEquals(1, vellykket.size)
+                assertEquals(shipmentCompleted, vellykket.first().råRespons)
+                assertEquals(0, hendelseProdusent.hendelserOfType<EksterntVarselFeilet>().size)
+            }
+            assertTrue(shipmentKall.get() > 2, "Order_Retrying skal gi ny statussjekk, ikke sluttilstand")
+            job.cancel()
+        }
+    }
+
+    /**
+     * Digdir har bekreftet at Order_Failed er transaksjonelt: ingenting er sendt, uavhengig av
+     * hva recipients viser. Derfor gir Order_Failed alltid EksterntVarselFeilet.
+     */
+    @Test
+    fun `Altinn3 varsel - Order_Failed gir EksterntVarselFeilet`() = runBlocking {
+        //language=JSON
+        val shipmentFailed = """
+            {
+              "shipmentId": "failed-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Failed",
+              "lastUpdate": "2026-10-02T08:21:04.126885Z",
+              "recipients": [
+                {
+                  "status": "SMS_Sending",
+                  "lastUpdate": "2026-10-02T08:21:04.126885Z",
+                  "destination": "+4712345678"
+                }
+              ]
+            }
+        """.trimIndent()
+        val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) =
+                Altinn3VarselKlient.OrderResponse.Success(
+                    orderId = "failed-123",
+                    shipmentId = "shipment-failed",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", "failed-123")
+                        putObject("notification").put("shipmentId", "shipment-failed")
+                    }
+                )
+
+            override suspend fun shipment(shipmentId: String) =
+                Altinn3VarselKlient.ShipmentResponse.Success.fromJson(
+                    laxObjectMapper.readValue<JsonNode>(shipmentFailed)
+                )
+        }
+
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent) = setupService(
+                database,
+                altinn3VarselKlient = altinn3VarselKlient
+            )
+            repository.oppdaterModellEtterHendelse(oppgave)
+            database.nonTransactionalExecuteUpdate(
+                "update emergency_break set stop_processing = false where id = 0"
+            )
+            val job = service.start(this)
+            eventually(5.seconds) {
+                val feilet = hendelseProdusent.hendelserOfType<EksterntVarselFeilet>()
+                assertEquals(1, feilet.size)
+                assertEquals("Order_Failed", feilet.first().altinnFeilkode)
+                assertTrue(feilet.first().feilmelding.isNotBlank())
+                assertEquals(0, hendelseProdusent.hendelserOfType<EksterntVarselVellykket>().size)
+
+                repository.oppdaterModellEtterHendelse(feilet.first())
+                repository.findVarsel(feilet.first().varselId).let { varselTilstand ->
+                    varselTilstand as EksternVarselTilstand.Kvittert
+                    varselTilstand.response as AltinnResponse.Feil
+                    assertEquals("Order_Failed", varselTilstand.response.feilkode)
+                }
             }
             job.cancel()
         }

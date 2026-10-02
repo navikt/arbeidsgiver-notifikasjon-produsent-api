@@ -375,7 +375,9 @@ interface Altinn3VarselKlient {
              * - [ShipmentStatus.Order_Registered] — Midlertidig. Bestillingen er registrert og venter på behandling.
              * - [ShipmentStatus.Order_Processing] — Midlertidig. Bestillingen er plukket opp og varsler er under generering.
              * - [ShipmentStatus.Order_Processed] — Midlertidig. Alle varsler er generert, men kan fortsatt være under utsending.
+             * - [ShipmentStatus.Order_Retrying] — Midlertidig. Prosessering feilet, Altinn prøver på nytt.
              * - [ShipmentStatus.Order_Completed] — Endelig. Alle mottakere har fått et endelig resultat (levert eller feilet).
+             * - [ShipmentStatus.Order_Failed] — Endelig. Prosessering feilet etter alle forsøk. Ingenting er sendt (transaksjonelt, bekreftet av Digdir).
              * - [ShipmentStatus.Order_SendConditionNotMet] — Endelig. Sendebetingelsen ble ikke oppfylt, ingen varsler ble sendt.
              * - [ShipmentStatus.Order_Cancelled] — Endelig. Bestillingen ble kansellert før varsler ble sendt.
              *
@@ -390,6 +392,7 @@ interface Altinn3VarselKlient {
                 get() = status in listOf(
                     ShipmentStatus.Order_Registered,
                     ShipmentStatus.Order_Processing,
+                    ShipmentStatus.Order_Retrying,
                 )
 
             val isOrderCompleted
@@ -397,6 +400,9 @@ interface Altinn3VarselKlient {
 
             val isOrderProcessed
                 get() = status == ShipmentStatus.Order_Processed
+
+            val isOrderFailed
+                get() = status == ShipmentStatus.Order_Failed
 
             val isOrderCancelled
                 get() = status == ShipmentStatus.Order_Cancelled
@@ -469,6 +475,8 @@ interface Altinn3VarselKlient {
                  * - [ShipmentStatus.Email_Failed_FilteredSpam] — Endelig. Filtrert som spam.
                  * - [ShipmentStatus.Email_Failed_Quarantined] — Endelig. Satt i karantene.
                  * - [ShipmentStatus.Email_Failed_TTL] — Endelig. Overskred time-to-live.
+                 * - [ShipmentStatus.Email_Failed_InvalidSasUrl] — Endelig. Ugyldig SAS-URL for vedlegg.
+                 * - [ShipmentStatus.Email_Failed_PayloadTooLarge] — Endelig. E-posten er for stor.
                  *
                  * @see <a href="https://docs.altinn.studio/nb/notifications/reference/notification-status/">Altinn Notification Status Reference</a>
                  */
@@ -516,6 +524,8 @@ interface Altinn3VarselKlient {
         const val Order_SendConditionNotMet = "Order_SendConditionNotMet"
         const val Order_Cancelled = "Order_Cancelled"
         const val Order_Processed = "Order_Processed"
+        const val Order_Retrying = "Order_Retrying"
+        const val Order_Failed = "Order_Failed"
 
         // SMS-statuser
         const val SMS_New = "SMS_New"
@@ -548,6 +558,8 @@ interface Altinn3VarselKlient {
         const val Email_Failed_FilteredSpam = "Email_Failed_FilteredSpam"
         const val Email_Failed_Quarantined = "Email_Failed_Quarantined"
         const val Email_Failed_TTL = "Email_Failed_TTL"
+        const val Email_Failed_InvalidSasUrl = "Email_Failed_InvalidSasUrl"
+        const val Email_Failed_PayloadTooLarge = "Email_Failed_PayloadTooLarge"
     }
 }
 
