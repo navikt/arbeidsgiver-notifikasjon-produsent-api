@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@12.11.2",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -11,13 +12,13 @@
     "gql:generate": "graphql-codegen"
   },
   "dependencies": {
-    "@apollo/client": "^4.1.7",
-    "@navikt/ds-css": "^8.10.1",
-    "@navikt/ds-react": "^8.10.1",
+    "@apollo/client": "^4.3.3",
+    "@navikt/ds-css": "^8.19.1",
+    "@navikt/ds-react": "^8.19.1",
     "@types/react-syntax-highlighter": "15.5.13",
-    "graphql": "^16.13.2",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "graphql": "^16.14.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "react-syntax-highlighter": "16.1.1"
   },
   "devDependencies": {
@@ -25,16 +26,16 @@
     "@graphql-codegen/typescript": "5.0.9",
     "@graphql-codegen/typescript-operations": "5.0.9",
     "@graphql-codegen/typescript-react-apollo": "4.4.1",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.59.0",
-    "@typescript-eslint/parser": "^8.59.0",
-    "@vitejs/plugin-react-swc": "^4.3.0",
-    "eslint": "^9.39.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.1",
+    "@typescript-eslint/parser": "^8.71.1",
+    "@vitejs/plugin-react-swc": "^4.3.3",
+    "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
+    "eslint-plugin-react-refresh": "^0.5.7",
     "typescript": "^5.9.3",
-    "vite": "^8.0.9"
+    "vite": "^8.3.4"
   },
   "overrides": {
     "prismjs": "~1.30.0"
