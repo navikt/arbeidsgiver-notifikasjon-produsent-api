@@ -172,10 +172,15 @@
         </dependency>
 
         <!-- db -->
+        <!--
+            42.7.13+ validerer rettigheter på .pk8-nøkler. bruker-api-writer monterer
+            sqlcertificate via filesFrom, som gir 0644, og pgjdbc avviser da nøkkelen.
+            Ikke oppgrader før sertifikatet monteres med 0600/0640.
+        -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.13</version>
+            <version>42.7.12</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
