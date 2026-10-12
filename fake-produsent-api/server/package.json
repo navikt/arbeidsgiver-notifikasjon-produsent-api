@@ -4,13 +4,14 @@
   "license": "MIT",
   "type": "module",
   "main": "server/server.js",
+  "packageManager": "pnpm@12.11.2",
   "dependencies": {
     "apollo-server-express": "^3.13.0",
     "casual": "^1.6.2",
-    "express": "^4.19.2",
-    "graphql": "^16.9.0",
-    "nodemon": "^3.1.4",
-    "winston": "^3.13.1"
+    "express": "^4.22.3",
+    "graphql": "^16.14.2",
+    "nodemon": "^3.1.14",
+    "winston": "^3.19.0"
   },
   "overrides": {
     "braces": ">=3.0.3"

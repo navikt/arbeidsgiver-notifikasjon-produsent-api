@@ -1,0 +1,4 @@
+nodeLinker: hoisted
+
+allowBuilds:
+  '@apollo/protobufjs': false
