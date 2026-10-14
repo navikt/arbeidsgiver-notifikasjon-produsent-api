@@ -47,7 +47,7 @@ spec:
   filesFrom:
     - secret: sqeletor-notifikasjon-bruker-api-v2-1136d046
       mountPath: /var/run/secrets/nais.io/sqlcertificate
-      mode: 416
+      mode: 0640 # 416 in JSON
 
 ---
 # https://nav-it.slack.com/archives/C5KUST8N6/p1680085706741319
