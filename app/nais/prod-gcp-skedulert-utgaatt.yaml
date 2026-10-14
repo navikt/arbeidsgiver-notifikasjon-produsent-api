@@ -18,10 +18,10 @@ spec:
     max: 2
   liveness:
     path: /internal/alive
-    initialDelay: 60
+    initialDelay: 90
   readiness:
     path: /internal/ready
-    initialDelay: 60
+    initialDelay: 90
   prometheus:
     enabled: true
     path: /internal/metrics

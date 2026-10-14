@@ -15,10 +15,10 @@ spec:
       memory: 1024Mi
   liveness:
     path: /internal/alive
-    initialDelay: 60
+    initialDelay: 90
   readiness:
     path: /internal/ready
-    initialDelay: 60
+    initialDelay: 90
   prometheus:
     enabled: true
     path: /internal/metrics
@@ -47,6 +47,7 @@ spec:
   filesFrom:
     - secret: sqeletor-notifikasjon-bruker-api-v2-1136d046
       mountPath: /var/run/secrets/nais.io/sqlcertificate
+      mode: 416
 
 ---
 # https://nav-it.slack.com/archives/C5KUST8N6/p1680085706741319
