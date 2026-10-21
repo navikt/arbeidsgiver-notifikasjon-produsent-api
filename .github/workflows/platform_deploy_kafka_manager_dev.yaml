@@ -14,9 +14,9 @@ jobs:
       id-token: "write"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: nais/deploy/actions/deploy@v3
         name: "dev-gcp: deploy kafka-manager"
         env:
           CLUSTER: dev-gcp

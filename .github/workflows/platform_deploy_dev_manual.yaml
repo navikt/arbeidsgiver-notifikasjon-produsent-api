@@ -28,13 +28,13 @@ jobs:
           - kafka-bq
           #- manuelt-vedlikehold
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: NAIS login
         uses: nais/login@v0
         id: login
         with:
           team: fager
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: nais/deploy/actions/deploy@v3
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
           VAR: image=${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
