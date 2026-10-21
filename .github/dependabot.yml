@@ -1,17 +1,13 @@
 version: 2
 
-registries:
-  npm-github:
-    type: npm-registry
-    url: https://npm.pkg.github.com
-    token: ${{ secrets.READER_TOKEN }}
-
 updates:
-  # pnpm-workspace (frontend/*). Kun oppdateringer innenfor rangene i package.json.
+  # pnpm-prosjekter (test-produsent inkl. server, docs, fake-produsent-api/server).
+  # Kun oppdateringer innenfor rangene i package.json.
   - package-ecosystem: npm
-    directory: "/"
-    registries:
-      - npm-github
+    directories:
+      - "/test-produsent"
+      - "/docs"
+      - "/fake-produsent-api/server"
     schedule:
       interval: weekly
       day: monday
@@ -28,9 +24,9 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
 
-  # Backend. Kun minor- og patch-oppdateringer.
+  # Backend (app/). Kun minor- og patch-oppdateringer.
   - package-ecosystem: maven
-    directory: "/backend"
+    directory: "/app"
     schedule:
       interval: weekly
       day: monday
