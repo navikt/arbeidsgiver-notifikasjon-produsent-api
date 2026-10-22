@@ -176,6 +176,73 @@ class SkedulertHardDeleteRepositoryEventIntakeTest {
         }
 
     @Test
+    fun `oppdaterModellEtterHendelse hard delete sak oppdatert uten tidligere skedulert delete`() =
+        withTestDatabase(SkedulertHardDelete.databaseConfig) { database ->
+            val repository = SkedulertHardDeleteRepositoryImpl(database)
+            repository.sakOpprettet(
+                idsuffix = "2",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = null
+            )
+            val hendelse = repository.hardDeleteSakOppdatert(
+                idsuffix = "2",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = HendelseModel.HardDeleteUpdate(
+                    nyTid = LocalDateTimeOrDuration.parse("2022-10-13T07:20:50.52"),
+                    strategi = OVERSKRIV,
+                )
+            )
+
+            val skedulert = repository.hent(hendelse.aggregateId)
+            assertNotNull(skedulert)
+            assertEquals(
+                LocalDateTimeOrDuration.parse("2022-10-13T07:20:50.52").let {
+                    ScheduledTime(it, Instant.EPOCH).happensAt()
+                },
+                skedulert.beregnetSlettetidspunkt
+            )
+        }
+
+    @Test
+    fun `oppdaterModellEtterHendelse hard delete sak oppdatert med tidligere skedulert delete`() =
+        withTestDatabase(SkedulertHardDelete.databaseConfig) { database ->
+            val repository = SkedulertHardDeleteRepositoryImpl(database)
+            repository.sakOpprettet(
+                idsuffix = "3",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = "P2Y",
+            )
+
+            // FORLENG til tidligere tidspunkt ignoreres
+            repository.hardDeleteSakOppdatert(
+                idsuffix = "3",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = HendelseModel.HardDeleteUpdate(
+                    nyTid = LocalDateTimeOrDuration.parse("P1Y"),
+                    strategi = FORLENG,
+                )
+            )
+            assertEquals(
+                Instant.parse("2022-01-01T01:01:00Z"),
+                repository.hent(uuid("3"))!!.beregnetSlettetidspunkt
+            )
+
+            // OVERSKRIV til tidligere tidspunkt gjelder
+            repository.hardDeleteSakOppdatert(
+                idsuffix = "3",
+                mottattTidspunkt = "2020-01-01T01:01+00",
+                hardDelete = HendelseModel.HardDeleteUpdate(
+                    nyTid = LocalDateTimeOrDuration.parse("P1Y"),
+                    strategi = OVERSKRIV,
+                )
+            )
+            assertEquals(
+                Instant.parse("2021-01-01T01:01:00Z"),
+                repository.hent(uuid("3"))!!.beregnetSlettetidspunkt
+            )
+        }
+
+    @Test
     fun `oppdaterModellEtterHendelse oppdater hendelse med hard delete og tidligere skedulert delete`() =
         withTestDatabase(SkedulertHardDelete.databaseConfig) { database ->
             val repository = SkedulertHardDeleteRepositoryImpl(database)
@@ -641,6 +708,26 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.nyStatusSak(
         idempotensKey = IdempotenceKey.initial(),
         hardDelete = hardDelete,
         nyLenkeTilSak = null,
+    )
+)
+
+private suspend fun SkedulertHardDeleteRepositoryImpl.hardDeleteSakOppdatert(
+    idsuffix: String,
+    mottattTidspunkt: String,
+    hardDelete: HendelseModel.HardDeleteUpdate,
+    merkelapp: String = "merkelapp",
+    grupperingsid: String = idsuffix,
+): HendelseModel.HardDeleteSakOppdatert = oppdaterModell(
+    HendelseModel.HardDeleteSakOppdatert(
+        hendelseId = UUID.randomUUID(),
+        virksomhetsnummer = idsuffix,
+        produsentId = idsuffix,
+        kildeAppNavn = idsuffix,
+        sakId = uuid(idsuffix),
+        merkelapp = merkelapp,
+        grupperingsid = grupperingsid,
+        mottattTidspunkt = OffsetDateTime.parse(mottattTidspunkt),
+        hardDelete = hardDelete,
     )
 )
 

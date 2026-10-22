@@ -239,6 +239,7 @@ class SkedulertPåminnelseRepository(
 
             is HendelseModel.NesteStegSak,
             is HendelseModel.TilleggsinformasjonSak,
+            is HendelseModel.HardDeleteSakOppdatert,
             is HendelseModel.BeskjedOpprettet,
             is HendelseModel.BrukerKlikket,
             is HendelseModel.SakOpprettet,

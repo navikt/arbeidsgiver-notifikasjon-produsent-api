@@ -540,6 +540,8 @@ class DataproduktModel(
                 }
             }
 
+            is HendelseModel.HardDeleteSakOppdatert -> Unit
+
             is NesteStegSak -> {
                 database.nonTransactionalExecuteUpdate(
                     """

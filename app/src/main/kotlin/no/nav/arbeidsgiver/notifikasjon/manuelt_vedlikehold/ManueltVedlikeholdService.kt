@@ -61,6 +61,7 @@ class ManueltVedlikeholdService(
             is HendelseModel.NesteStegSak,
             is HendelseModel.TilleggsinformasjonSak,
             is HendelseModel.OppgavePåminnelseEndret,
+            is HendelseModel.HardDeleteSakOppdatert,
             is HendelseModel.SoftDelete -> Unit
 
         }

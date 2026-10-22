@@ -151,6 +151,7 @@ class BrukerRepositoryImpl(
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
             is TilleggsinformasjonSak -> oppdaterModellEtterTilleggsinformasjonSak(hendelse)
             is HendelseModel.OppgavePåminnelseEndret -> Unit
+            is HendelseModel.HardDeleteSakOppdatert -> Unit
         }
     }
 

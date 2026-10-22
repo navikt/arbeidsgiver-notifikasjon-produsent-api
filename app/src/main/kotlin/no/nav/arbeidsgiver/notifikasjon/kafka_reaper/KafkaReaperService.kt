@@ -62,6 +62,7 @@ class KafkaReaperServiceImpl(
             is EksterntVarselFeilet,
             is EksterntVarselKansellert,
             is HendelseModel.OppgavePåminnelseEndret,
+            is HendelseModel.HardDeleteSakOppdatert,
             is EksterntVarselVellykket -> {
                 if (kafkaReaperModel.erSlettet(hendelse.aggregateId)) {
                     kafkaProducer.tombstone(

@@ -1202,6 +1202,60 @@ type Mutation {
         """
         grupperingsid: String!
     ): HardDeleteSakResultat!
+
+    """
+    Setter (eller endrer) tidspunktet for når en sak skal slettes med hard delete.
+    Saken slettes ikke umiddelbart, men på tidspunktet som beregnes ut fra `hardDelete`
+    og valgt strategi. Når tidspunktet er nådd, slettes saken som beskrevet i `hardDeleteSak(id)`.
+
+    Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+    """
+    skedulerHardDeleteSak(
+        """
+        ID-en som saken har. Den du fikk da du opprettet saken.
+        """
+        id: ID!
+
+        """
+        Nytt tidspunkt for sletting, og strategi for hvordan det skal anvendes.
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput!
+    ): SkedulerHardDeleteSakResultat!
+
+    """
+    Se dokumentasjon for `skedulerHardDeleteSak(id, hardDelete)`.
+    """
+    skedulerHardDeleteSakByGrupperingsid(
+        """
+        Merkelappen som dere ga oss da dere opprettet saken.
+        """
+        merkelapp: String!
+
+        """
+        ID-en som dere ga oss da dere opprettet saken.
+        """
+        grupperingsid: String!
+
+        """
+        Nytt tidspunkt for sletting, og strategi for hvordan det skal anvendes.
+        Se: [HardDeleteUpdateInput typen](#harddeleteupdateinput)
+        """
+        hardDelete: HardDeleteUpdateInput!
+    ): SkedulerHardDeleteSakResultat!
+}
+
+union SkedulerHardDeleteSakResultat =
+    | SkedulerHardDeleteSakVellykket
+    | UgyldigMerkelapp
+    | SakFinnesIkke
+    | UkjentProdusent
+
+type SkedulerHardDeleteSakVellykket {
+    """
+    ID-en til saken som har fått nytt tidspunkt for hard delete.
+    """
+    id: ID!
 }
 
 union SoftDeleteNotifikasjonResultat =

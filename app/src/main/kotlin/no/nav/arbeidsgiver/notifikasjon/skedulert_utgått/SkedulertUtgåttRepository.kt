@@ -165,6 +165,7 @@ class SkedulertUtgåttRepository(
             is HendelseModel.EksterntVarselFeilet,
             is HendelseModel.EksterntVarselKansellert,
             is HendelseModel.OppgavePåminnelseEndret,
+            is HendelseModel.HardDeleteSakOppdatert,
             is HendelseModel.EksterntVarselVellykket -> Unit
         }
     }
