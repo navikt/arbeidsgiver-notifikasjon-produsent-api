@@ -76,6 +76,8 @@
                   <li><a href="#mutation-oppgaveUtgaattByEksternId">oppgaveUtgaattByEksternId</a></li>
                   <li><a href="#mutation-oppgaveUtsettFrist">oppgaveUtsettFrist</a></li>
                   <li><a href="#mutation-oppgaveUtsettFristByEksternId">oppgaveUtsettFristByEksternId</a></li>
+                  <li><a href="#mutation-skedulerHardDeleteSak">skedulerHardDeleteSak</a></li>
+                  <li><a href="#mutation-skedulerHardDeleteSakByGrupperingsid">skedulerHardDeleteSakByGrupperingsid</a></li>
                   <li><a href="#mutation-softDeleteNotifikasjon">softDeleteNotifikasjon</a></li>
                   <li><a href="#mutation-softDeleteNotifikasjonByEksternId">softDeleteNotifikasjonByEksternId</a></li>
                   <li><a href="#mutation-softDeleteNotifikasjonByEksternId_V2">softDeleteNotifikasjonByEksternId_V2</a></li>
@@ -190,6 +192,8 @@
               <li><a href="#definition-SaksStatus">SaksStatus</a></li>
               <li><a href="#definition-SendetidspunktInput">SendetidspunktInput</a></li>
               <li><a href="#definition-Sendevindu">Sendevindu</a></li>
+              <li><a href="#definition-SkedulerHardDeleteSakResultat">SkedulerHardDeleteSakResultat</a></li>
+              <li><a href="#definition-SkedulerHardDeleteSakVellykket">SkedulerHardDeleteSakVellykket</a></li>
               <li><a href="#definition-SmsKontaktInfoInput">SmsKontaktInfoInput</a></li>
               <li><a href="#definition-SmsMottakerInput">SmsMottakerInput</a></li>
               <li><a href="#definition-SoftDeleteNotifikasjonResultat">SoftDeleteNotifikasjonResultat</a></li>
@@ -3697,6 +3701,208 @@
                   <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
   <span class="hljs-attr">"data"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
     <span class="hljs-attr">"oppgaveUtsettFristByEksternId"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">OppgaveUtsettFristVellykket</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="mutation-skedulerHardDeleteSak" class="operation operation-mutation" data-traverse-target="mutation-skedulerHardDeleteSak">
+            <div class="operation-group-name">
+              <a href="#group-Operations-Mutations">Mutations</a>
+            </div>
+            <h2 class="operation-heading ">
+              <code>skedulerHardDeleteSak</code>
+            </h2>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="operation-description doc-copy-section">
+                  <h5>Description</h5>
+                  <p>Setter (eller endrer) tidspunktet for når en sak skal slettes med hard delete. Saken slettes ikke umiddelbart, men på tidspunktet som beregnes ut fra <code>hardDelete</code> og valgt strategi. Når tidspunktet er nådd, slettes saken som beskrevet i <code>hardDeleteSak(id)</code>.</p>
+                  <p>Se: <a href="#harddeleteupdateinput">HardDeleteUpdateInput typen</a></p>
+                </div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="operation-response doc-copy-section">
+                  <h5>Response</h5>
+                  <p> Returns a <a href="#definition-SkedulerHardDeleteSakResultat"><code>SkedulerHardDeleteSakResultat!</code></a>
+                  </p>
+                </div>
+                <div class="operation-arguments doc-copy-section">
+                  <h5>Arguments</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>id</code></span> - <span class="property-type"><a href="#definition-ID"><code>ID!</code></a></span>
+                        </td>
+                        <td> ID-en som saken har. Den du fikk da du opprettet saken. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>hardDelete</code></span> - <span class="property-type"><a href="#definition-HardDeleteUpdateInput"><code>HardDeleteUpdateInput!</code></a></span>
+                        </td>
+                        <td> Nytt tidspunkt for sletting, og strategi for hvordan det skal anvendes. Se: <a href="#harddeleteupdateinput">HardDeleteUpdateInput typen</a> </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="doc-examples">
+                <h4 class="example-heading">Example</h4>
+                <div class="example-section example-section-is-code operation-query-example">
+                  <h5>Query</h5>
+                  <pre><code class="hljs language-gql"><span class="hljs-symbol"><span class="hljs-keyword">mutation</span> skedulerHardDeleteSak<span class="hljs-tag">(
+  <span class="hljs-code">$id</span>: ID!,
+  <span class="hljs-code">$hardDelete</span>:<span class="hljs-type"> HardDeleteUpdateInput!</span>
+)</span> <span class="hljs-tag">{
+  <span class="hljs-symbol">skedulerHardDeleteSak<span class="hljs-tag">(
+    id: <span class="hljs-code">$id</span>,
+    hardDelete: <span class="hljs-code">$hardDelete</span>
+  )</span> <span class="hljs-tag">{
+   <span class="hljs-type"> ... on SkedulerHardDeleteSakVellykket <span class="hljs-tag">{
+      <span class="hljs-symbol">id</span>
+    }</span>
+    ... on UgyldigMerkelapp <span class="hljs-tag">{
+      <span class="hljs-symbol">feilmelding</span>
+    }</span>
+    ... on SakFinnesIkke <span class="hljs-tag">{
+      <span class="hljs-symbol">feilmelding</span>
+    }</span>
+    ... on UkjentProdusent <span class="hljs-tag">{
+      <span class="hljs-symbol">feilmelding</span>
+    }</span>
+  }</span>
+}</span></span></span></span>
+</code></pre>
+                </div>
+                <div class="example-section example-section-is-code operation-variables-example">
+                  <h5>Variables</h5>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"42c0ffee-1337-7331-babe-42c0ffeebabe"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"hardDelete"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">HardDeleteUpdateInput</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+                </div>
+                <div class="example-section example-section-is-code operation-response-example">
+                  <h5>Response</h5>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"data"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">"skedulerHardDeleteSak"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">SkedulerHardDeleteSakVellykket</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="mutation-skedulerHardDeleteSakByGrupperingsid" class="operation operation-mutation" data-traverse-target="mutation-skedulerHardDeleteSakByGrupperingsid">
+            <div class="operation-group-name">
+              <a href="#group-Operations-Mutations">Mutations</a>
+            </div>
+            <h2 class="operation-heading ">
+              <code>skedulerHardDeleteSakByGrupperingsid</code>
+            </h2>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="operation-description doc-copy-section">
+                  <h5>Description</h5>
+                  <p>Se dokumentasjon for <code>skedulerHardDeleteSak(id, hardDelete)</code>.</p>
+                </div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="operation-response doc-copy-section">
+                  <h5>Response</h5>
+                  <p> Returns a <a href="#definition-SkedulerHardDeleteSakResultat"><code>SkedulerHardDeleteSakResultat!</code></a>
+                  </p>
+                </div>
+                <div class="operation-arguments doc-copy-section">
+                  <h5>Arguments</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>merkelapp</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> Merkelappen som dere ga oss da dere opprettet saken. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>grupperingsid</code></span> - <span class="property-type"><a href="#definition-String"><code>String!</code></a></span>
+                        </td>
+                        <td> ID-en som dere ga oss da dere opprettet saken. </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="property-name"><code>hardDelete</code></span> - <span class="property-type"><a href="#definition-HardDeleteUpdateInput"><code>HardDeleteUpdateInput!</code></a></span>
+                        </td>
+                        <td> Nytt tidspunkt for sletting, og strategi for hvordan det skal anvendes. Se: <a href="#harddeleteupdateinput">HardDeleteUpdateInput typen</a> </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="doc-examples">
+                <h4 class="example-heading">Example</h4>
+                <div class="example-section example-section-is-code operation-query-example">
+                  <h5>Query</h5>
+                  <pre><code class="hljs language-gql"><span class="hljs-symbol"><span class="hljs-keyword">mutation</span> skedulerHardDeleteSakByGrupperingsid<span class="hljs-tag">(
+  <span class="hljs-code">$merkelapp</span>:<span class="hljs-type"> String!</span>,
+  <span class="hljs-code">$grupperingsid</span>:<span class="hljs-type"> String!</span>,
+  <span class="hljs-code">$hardDelete</span>:<span class="hljs-type"> HardDeleteUpdateInput!</span>
+)</span> <span class="hljs-tag">{
+  <span class="hljs-symbol">skedulerHardDeleteSakByGrupperingsid<span class="hljs-tag">(
+    merkelapp: <span class="hljs-code">$merkelapp</span>,
+    grupperingsid: <span class="hljs-code">$grupperingsid</span>,
+    hardDelete: <span class="hljs-code">$hardDelete</span>
+  )</span> <span class="hljs-tag">{
+   <span class="hljs-type"> ... on SkedulerHardDeleteSakVellykket <span class="hljs-tag">{
+      <span class="hljs-symbol">id</span>
+    }</span>
+    ... on UgyldigMerkelapp <span class="hljs-tag">{
+      <span class="hljs-symbol">feilmelding</span>
+    }</span>
+    ... on SakFinnesIkke <span class="hljs-tag">{
+      <span class="hljs-symbol">feilmelding</span>
+    }</span>
+    ... on UkjentProdusent <span class="hljs-tag">{
+      <span class="hljs-symbol">feilmelding</span>
+    }</span>
+  }</span>
+}</span></span></span></span>
+</code></pre>
+                </div>
+                <div class="example-section example-section-is-code operation-variables-example">
+                  <h5>Variables</h5>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"merkelapp"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Inkluderingstilskudd"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"grupperingsid"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"42c0ffee-1337-7331-babe-42c0ffeebabe"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"hardDelete"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">HardDeleteUpdateInput</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+                </div>
+                <div class="example-section example-section-is-code operation-response-example">
+                  <h5>Response</h5>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"data"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">"skedulerHardDeleteSakByGrupperingsid"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">SkedulerHardDeleteSakVellykket</span>
   <span class="hljs-punctuation">}</span>
 <span class="hljs-punctuation">}</span>
 </code></pre>
@@ -9375,6 +9581,92 @@
                 <div class="example-section example-section-is-code">
                   <h5>Example</h5>
                   <pre><code class="hljs language-gql"><span class="hljs-symbol">"NKS_AAPNINGSTID"</span>
+</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="definition-SkedulerHardDeleteSakResultat" class="definition definition-union" data-traverse-target="definition-SkedulerHardDeleteSakResultat">
+            <div class="definition-group-name">
+              <a href="#group-Types">Types</a>
+            </div>
+            <h2 class="definition-heading">SkedulerHardDeleteSakResultat</h2>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="definition-properties doc-copy-section">
+                  <h5>Types</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Union Types</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p><a href="#definition-SkedulerHardDeleteSakVellykket"><code>SkedulerHardDeleteSakVellykket</code></a></p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p><a href="#definition-UgyldigMerkelapp"><code>UgyldigMerkelapp</code></a></p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p><a href="#definition-SakFinnesIkke"><code>SakFinnesIkke</code></a></p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p><a href="#definition-UkjentProdusent"><code>UkjentProdusent</code></a></p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="doc-examples">
+                <div class="example-section example-section-is-code">
+                  <h5>Example</h5>
+                  <pre><code class="hljs language-gql"><span class="hljs-symbol">SkedulerHardDeleteSakVellykket</span>
+</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section id="definition-SkedulerHardDeleteSakVellykket" class="definition definition-object" data-traverse-target="definition-SkedulerHardDeleteSakVellykket">
+            <div class="definition-group-name">
+              <a href="#group-Types">Types</a>
+            </div>
+            <h2 class="definition-heading">SkedulerHardDeleteSakVellykket</h2>
+            <div class="doc-row">
+              <div class="doc-copy">
+                <div class="definition-properties doc-copy-section">
+                  <h5>Fields</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Field Name</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td data-property-name=""><span class="property-name"><code>id</code></span> - <span class="property-type"><a href="#definition-ID"><code>ID!</code></a></span>
+                        </td>
+                        <td> ID-en til saken som har fått nytt tidspunkt for hard delete. </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="doc-examples">
+                <div class="example-section example-section-is-code">
+                  <h5>Example</h5>
+                  <pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"42c0ffee-1337-7331-babe-42c0ffeebabe"</span>
+<span class="hljs-punctuation">}</span>
 </code></pre>
                 </div>
               </div>
