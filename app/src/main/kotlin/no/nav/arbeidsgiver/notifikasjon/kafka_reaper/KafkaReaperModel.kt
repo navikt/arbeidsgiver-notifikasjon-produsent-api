@@ -168,4 +168,5 @@ val Hendelse.typeNavn: String
         is NesteStegSak -> "NesteStegSak"
         is TilleggsinformasjonSak -> "TillegsinformasjonSak"
         is HendelseModel.OppgavePåminnelseEndret -> "OppgavePåminnelseEndret"
+        is HendelseModel.HardDeleteSakOppdatert -> "HardDeleteSakOppdatert"
     }

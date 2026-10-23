@@ -649,6 +649,20 @@ object EksempelHendelse {
         ),
         nyLenkeTilSak = null,
     )
+    val HardDeleteSakOppdatert = HendelseModel.HardDeleteSakOppdatert(
+        hendelseId = hendelseId.next(),
+        virksomhetsnummer = "1",
+        produsentId = "1",
+        kildeAppNavn = "1",
+        sakId = SakOpprettet.sakId,
+        merkelapp = SakOpprettet.merkelapp,
+        grupperingsid = SakOpprettet.grupperingsid,
+        mottattTidspunkt = OffsetDateTime.now(),
+        hardDelete = HendelseModel.HardDeleteUpdate(
+            nyTid = HendelseModel.LocalDateTimeOrDuration.LocalDateTime(LocalDateTime.parse("2019-10-13T07:20:50.52")),
+            strategi = HendelseModel.NyTidStrategi.OVERSKRIV,
+        ),
+    )
     val PåminnelseOpprettet = HendelseModel.PåminnelseOpprettet(
         virksomhetsnummer = "1",
         hendelseId = hendelseId.next(),
@@ -935,6 +949,7 @@ object EksempelHendelse {
         SakOpprettetNullOppgittTs,
         NyStatusSak,
         NyStatusSak_NullOppgittTs,
+        HardDeleteSakOppdatert,
         SakOpprettetNullOppgittLenke,
         PåminnelseOpprettet,
         KalenderavtaleOpprettet,

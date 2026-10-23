@@ -659,6 +659,24 @@ object HendelseModel {
         val erSak = grupperingsid != null
     }
 
+    /** Oppdaterer skedulert hard delete-tidspunkt for en sak, uten å slette den umiddelbart. */
+    @JsonTypeName("HardDeleteSakOppdatert")
+    data class HardDeleteSakOppdatert(
+        override val hendelseId: UUID,
+        override val virksomhetsnummer: String,
+        override val produsentId: String,
+        override val kildeAppNavn: String,
+        override val sakId: UUID,
+
+        val merkelapp: String,
+        val grupperingsid: String,
+        val mottattTidspunkt: OffsetDateTime,
+        val hardDelete: HardDeleteUpdate,
+    ) : Hendelse(), Sak {
+        @JsonIgnore
+        override val aggregateId: UUID = sakId
+    }
+
     @JsonTypeName("BrukerKlikket")
     data class BrukerKlikket(
         override val virksomhetsnummer: String,

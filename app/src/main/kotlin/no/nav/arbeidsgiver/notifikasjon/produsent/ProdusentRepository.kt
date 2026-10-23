@@ -336,6 +336,7 @@ class ProdusentRepositoryImpl(
             is NesteStegSak -> oppdaterModellEtterNesteStegSak(hendelse)
             is HendelseModel.TilleggsinformasjonSak -> oppdaterModellEtterTillegsinformasjonSak(hendelse)
             is HendelseModel.OppgavePåminnelseEndret -> oppdaterModellEtterOppgavePåminnelseEndret(hendelse)
+            is HendelseModel.HardDeleteSakOppdatert -> Unit
         }
     }
 

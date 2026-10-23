@@ -71,6 +71,7 @@ class EksternVarslingRepository(
             is TilleggsinformasjonSak -> Unit
             is FristUtsatt -> Unit
             is HendelseModel.OppgavePåminnelseEndret -> Unit
+            is HendelseModel.HardDeleteSakOppdatert -> Unit
         }
     }
 

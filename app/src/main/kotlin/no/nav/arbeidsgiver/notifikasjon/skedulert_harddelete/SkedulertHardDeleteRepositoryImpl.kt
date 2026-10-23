@@ -178,6 +178,15 @@ class SkedulertHardDeleteRepositoryImpl(
                 )
             }
 
+            is HendelseModel.HardDeleteSakOppdatert -> {
+                upsert(
+                    aggregateId = hendelse.aggregateId,
+                    opprettetTidspunkt = hendelse.mottattTidspunkt.toInstant(),
+                    hardDelete = hendelse.hardDelete,
+                    eksisterende = hent(hendelse.aggregateId),
+                )
+            }
+
             is HendelseModel.HardDelete ->
                 delete(
                     aggregateId = hendelse.aggregateId,

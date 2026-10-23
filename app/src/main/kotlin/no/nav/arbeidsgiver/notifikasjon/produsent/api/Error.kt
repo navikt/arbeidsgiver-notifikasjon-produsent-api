@@ -16,6 +16,7 @@ internal sealed class Error {
         MutationDelete.SoftDeleteNotifikasjonResultat,
         MutationDelete.HardDeleteSakResultat,
         MutationDelete.SoftDeleteSakResultat,
+        MutationSkedulerHardDeleteSak.SkedulerHardDeleteSakResultat,
         MutationKalenderavtale.NyKalenderavtaleResultat
 
     @JsonTypeName("UgyldigMerkelapp")
@@ -141,6 +142,7 @@ internal sealed class Error {
         MutationNyStatusSak.NyStatusSakResultat,
         MutationDelete.SoftDeleteSakResultat,
         MutationDelete.HardDeleteSakResultat,
+        MutationSkedulerHardDeleteSak.SkedulerHardDeleteSakResultat,
         MutationKalenderavtale.NyKalenderavtaleResultat,
         QuerySak.HentSakResultat,
         MutationNesteStegSak.NesteStegSakResultat,
