@@ -166,6 +166,18 @@ internal inline fun validerMottakereMotSak(
     }
 }
 
+internal suspend fun HendelseDispatcher.sendStatusoppdateringForDuplikatSak(
+    eksisterendeSak: ProdusentModel.Sak,
+    statusoppdatering: HendelseModel.NyStatusSak,
+) {
+    if (eksisterendeSak.statusoppdateringRegistrert()) {
+        Util.log.info("duplisert opprettelse av sak med id ${eksisterendeSak.id}")
+    } else {
+        Util.log.info("statusoppdatering ikke registrert for duplisert opprettelse av sak med id ${eksisterendeSak.id}")
+        send(statusoppdatering.copy(sakId = eksisterendeSak.id))
+    }
+}
+
 fun String.ensurePrefix(prefix: String) =
     prefix + removePrefix(prefix)
 
