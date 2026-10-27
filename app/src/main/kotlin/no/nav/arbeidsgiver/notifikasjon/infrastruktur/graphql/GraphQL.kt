@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.slf4j.MDCContext
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.findCause
@@ -176,7 +177,11 @@ fun createGraphQL(
     val schema = SchemaGenerator()
         .makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
     return newGraphQL(schema)
-        .instrumentation(MicrometerInstrumentation(meterRegistry))
+        .apply {
+            if (Metrics.GRAPHQL_FIELD_METRICS_ENABLED) {
+                instrumentation(MicrometerInstrumentation(meterRegistry))
+            }
+        }
         .build()
 }
 

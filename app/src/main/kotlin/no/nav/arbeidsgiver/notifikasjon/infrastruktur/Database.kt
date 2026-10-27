@@ -25,6 +25,8 @@ import java.sql.*
 import java.time.*
 import java.time.temporal.ChronoUnit
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.zip.CRC32
 
 /** Encapsulate a DataSource, and expose it through an higher-level interface which
  * takes care of of cleaning up all resources, and where it's clear whether you
@@ -389,13 +391,37 @@ fun <T> measureSql(
     sql: String,
     action: () -> T
 ): T {
+    if (!Metrics.SQL_METRICS_ENABLED) {
+        return action()
+    }
     val timer = getTimer(
         name = "database.execution",
-        tags = setOf("sql" to sql),
+        tags = setOf("sql_id" to SqlId.of(sql)),
         description = "Execution time for sql query or update"
     )
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     return timer.recordCallable(action)
+}
+
+/**
+ * Full SQL as a label value exceeds Mimir's label length limit, so the series is rejected.
+ * Use a short hash as label instead, and log the id -> sql mapping once per distinct query.
+ */
+internal object SqlId {
+    private val log = logger()
+    private val ids = ConcurrentHashMap<String, String>()
+    private val whitespace = Regex("""\s+""")
+
+    fun of(sql: String): String = ids.computeIfAbsent(sql) {
+        val normalized = sql.replace(whitespace, " ").trim()
+        val id = CRC32()
+            .apply { update(normalized.toByteArray()) }
+            .value
+            .toString(16)
+            .padStart(8, '0')
+        log.info("database.execution sql_id={} sql={}", id, normalized)
+        id
+    }
 }
 
 /**
