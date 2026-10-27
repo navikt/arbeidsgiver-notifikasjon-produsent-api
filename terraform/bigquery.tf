@@ -40,14 +40,15 @@ resource "google_bigquery_connection" "this" {
   }
 }
 
-resource "google_project_iam_member" "sa-bq-roles" {
-  for_each = toset([
-    "bigquery.connectionAdmin",
-    "cloudsql.client",
-  ])
+resource "google_project_iam_member" "sa-bq-cloudsql-client" {
   project = var.project
-  role    = "roles/${each.key}"
+  role    = "roles/cloudsql.client"
   member  = "serviceAccount:${google_bigquery_connection.this.cloud_sql[0].service_account_id}"
+}
+
+moved {
+  from = google_project_iam_member.sa-bq-roles["cloudsql.client"]
+  to   = google_project_iam_member.sa-bq-cloudsql-client
 }
 
 resource "google_bigquery_table" "notifikasjon" {

@@ -46,7 +46,7 @@ class DataproduktModel(
             registrerKoblingForCascadeDelete(hendelse)
         }
         if (erHardDeleted(hendelse.aggregateId)) {
-            log.info("skipping harddeleted event {}", hendelse)
+            log.info("skipping harddeleted event for aggregateId {}", hendelse.aggregateId)
             return
         }
         database.nonTransactionalExecuteUpdate(
