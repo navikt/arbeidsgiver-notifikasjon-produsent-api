@@ -397,7 +397,7 @@ fun <T> measureSql(
 ): T {
     val timer = getTimer(
         name = "database.execution",
-        tags = setOf("query" to name),
+        tags = setOf("sql" to name),
         description = "Execution time for sql query or update"
     )
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
