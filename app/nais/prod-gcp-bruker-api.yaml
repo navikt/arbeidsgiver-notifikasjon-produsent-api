@@ -16,7 +16,7 @@ spec:
     limits:
       memory: 1200Mi
   replicas:
-    max: 24
+    max: 20
   ingresses:
     - https://ag-notifikasjon-bruker-api.nav.no/
   liveness:
