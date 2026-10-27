@@ -223,6 +223,7 @@ private fun eksterntVarselVellykket(varselId: UUID) = HendelseModel.EksterntVars
 
 suspend fun Database.insertVarselTilstand(varselTilstand: EksternVarselTilstand.Sendt) {
     nonTransactionalExecuteUpdate(
+        name = "EksternVarslingStatusEksportServiceTest.insertVarselTilstand.insert_ekstern_varsel_kontaktinfo",
         """
                 insert into ekstern_varsel_kontaktinfo
                 (
@@ -253,6 +254,7 @@ suspend fun Database.insertVarselTilstand(varselTilstand: EksternVarselTilstand.
     }
 
     nonTransactionalExecuteUpdate(
+        name = "EksternVarslingStatusEksportServiceTest.insertVarselTilstand.update_ekstern_varsel_kontaktinfo",
         """ 
                 update ekstern_varsel_kontaktinfo
                 set 

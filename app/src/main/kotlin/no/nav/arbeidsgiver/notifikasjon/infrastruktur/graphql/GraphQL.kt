@@ -176,7 +176,10 @@ fun createGraphQL(
     val schema = SchemaGenerator()
         .makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
     return newGraphQL(schema)
-        .instrumentation(MicrometerInstrumentation(meterRegistry))
+        // Avslått: graphql-micrometer måler hvert felt i hver respons. Det gir en timer per
+        // felt med klientside-persentiler, og vi mistenker at det står for en stor del av
+        // CPU-bruken per pod. graphql.timer og graphql.datafetcher dekker behovet inntil videre.
+        // .instrumentation(MicrometerInstrumentation(meterRegistry))
         .build()
 }
 

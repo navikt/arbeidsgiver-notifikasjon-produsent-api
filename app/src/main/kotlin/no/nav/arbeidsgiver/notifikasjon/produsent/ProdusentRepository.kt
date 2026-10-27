@@ -143,7 +143,7 @@ class ProdusentRepositoryImpl(
     }
 
     override suspend fun erHardDeleted(type: AggregateType, merkelapp: String, grupperingsid: String) =
-        database.nonTransactionalExecuteQuery("""
+        database.nonTransactionalExecuteQuery(name = "ProdusentRepository.erHardDeleted", """
             select * from hard_deleted_aggregates_metadata where aggregate_type = ? and merkelapp = ? and grupperingsid = ?
             """,
             {
@@ -158,6 +158,7 @@ class ProdusentRepositoryImpl(
         variables: ParameterSetters.() -> Unit,
     ): List<ProdusentModel.Sak> {
         return database.nonTransactionalExecuteQuery(
+            name = "ProdusentRepository.hentSaker",
             """ 
             with 
                 valgt_sak as materialized (
@@ -197,6 +198,7 @@ class ProdusentRepositoryImpl(
         setup: ParameterSetters.() -> Unit
     ): List<ProdusentModel.Notifikasjon> =
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentRepository.hentNotifikasjonerMedVarsler",
             """ 
             with 
                 valgt_notifikasjon as (
@@ -342,6 +344,7 @@ class ProdusentRepositoryImpl(
 
     override suspend fun notifikasjonOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean =
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentRepository.notifikasjonOppdateringFinnes",
             """
             select * from notifikasjon_oppdatering where notifikasjon_id = ? and idempotence_key = ?
             """,
@@ -354,6 +357,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterSakOpprettet(sakOpprettet: SakOpprettet) {
         database.transaction {
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterSakOpprettet.insert_sak",
                 """
                     insert into sak(id, merkelapp, grupperingsid, virksomhetsnummer, mottakere, tittel, tilleggsinformasjon, lenke, neste_steg, tidspunkt_mottatt)
                     values (?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, now())
@@ -374,6 +378,7 @@ class ProdusentRepositoryImpl(
                     // noop. saken finnes allerede
                 } else {
                     executeUpdate(
+                        name = "ProdusentRepository.oppdaterModellEtterSakOpprettet.insert_sak_id",
                         """
                         insert into sak_id (incoming_sak_id, sak_id) values (?, ?)
                         on conflict do nothing
@@ -389,6 +394,7 @@ class ProdusentRepositoryImpl(
 
     override suspend fun sakOppdateringFinnes(id: UUID, idempotenceKey: String): Boolean =
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentRepository.sakOppdateringFinnes",
             """
             select * from sak_oppdatering where sak_id = ? and idempotence_key = ?
             """,
@@ -400,6 +406,7 @@ class ProdusentRepositoryImpl(
 
     private fun Transaction.finnDbSakId(sakId: UUID): UUID? =
         executeQuery(
+            name = "ProdusentRepository.finnDbSakId",
             """
                     select sak_id from sak_id where incoming_sak_id = ?
                 """,
@@ -413,6 +420,7 @@ class ProdusentRepositoryImpl(
             val sakId = finnDbSakId(nyStatusSak.sakId) ?: return@transaction // log? metric?
 
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterNyStatusSak",
                 """
                 insert into sak_status
                 (id, idempotence_key, sak_id, status, overstyr_statustekst_med, tidspunkt_oppgitt, tidspunkt_mottatt)
@@ -434,6 +442,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterTillegsinformasjonSak(tilleggsinformasjonSak: HendelseModel.TilleggsinformasjonSak) {
         database.transaction {
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterTillegsinformasjonSak.update_sak",
                 """
                     update sak
                     set tilleggsinformasjon = ?
@@ -446,6 +455,7 @@ class ProdusentRepositoryImpl(
 
             tilleggsinformasjonSak.idempotenceKey?.also {
                 executeUpdate(
+                    name = "ProdusentRepository.oppdaterModellEtterTillegsinformasjonSak.insert_sak_oppdatering",
                     """
                         insert into sak_oppdatering(
                             hendelse_id, sak_id, idempotence_key
@@ -465,6 +475,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterNesteStegSak(nesteStegSak: NesteStegSak) {
         database.transaction {
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterNesteStegSak.update_sak",
                 """
                 update sak
                 set neste_steg = ?
@@ -477,6 +488,7 @@ class ProdusentRepositoryImpl(
 
             nesteStegSak.idempotenceKey?.also {
                 executeUpdate(
+                    name = "ProdusentRepository.oppdaterModellEtterNesteStegSak.insert_sak_oppdatering",
                     """
                 insert into sak_oppdatering(
                     hendelse_id, sak_id, idempotence_key
@@ -496,7 +508,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterDelete(aggregateId: UUID, merkelapp: String?, grupperingsid: String?) {
         database.transaction {
             registrerDelete(this, aggregateId)
-            executeQuery("""
+            executeQuery(name = "ProdusentRepository.oppdaterModellEtterDelete.select_sak", """
                 select aggregate_type from (
                     select 'SAK' as aggregate_type from sak where id = ?
                     union
@@ -517,6 +529,7 @@ class ProdusentRepositoryImpl(
                 // har ikke grunnlag for å backfille metadata, men for fremtidige events vil vi ha metadata.
                 // derfor er det en null-sjekk rundt dette
                 executeUpdate(
+                    name = "ProdusentRepository.oppdaterModellEtterDelete.insert_hard_deleted_aggregates_metadata",
                     """
                 insert into hard_deleted_aggregates_metadata(aggregate_id, aggregate_type, merkelapp, grupperingsid)
                 values (?, ?, ?, ?);
@@ -531,12 +544,13 @@ class ProdusentRepositoryImpl(
 
             if (grupperingsid != null && merkelapp != null) {
                 // cascade hard delete av sak med grupperingsid og merkelapp
-                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
+                executeUpdate(name = "ProdusentRepository.oppdaterModellEtterDelete.delete_notifikasjon_by_grupperingsid", """delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
                     text(grupperingsid)
                     text(merkelapp)
                 }
             }
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterDelete.delete_notifikasjon_by_id",
                 """
                 delete from notifikasjon
                 where id = ?
@@ -545,6 +559,7 @@ class ProdusentRepositoryImpl(
                 uuid(aggregateId)
             }
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterDelete.delete_sak",
                 """
                 delete from sak
                 where id = ?
@@ -553,6 +568,7 @@ class ProdusentRepositoryImpl(
                 uuid(aggregateId)
             }
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterDelete.delete_eksternt_varsel",
                 """
                 delete from eksternt_varsel
                 where notifikasjon_id = ?
@@ -561,6 +577,7 @@ class ProdusentRepositoryImpl(
                 uuid(aggregateId)
             }
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterDelete.delete_paaminnelse_eksternt_varsel",
                 """
                 delete from paaminnelse_eksternt_varsel
                 where notifikasjon_id = ?
@@ -573,6 +590,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterOppgaveUtført(utførtHendelse: OppgaveUtført, metadata: HendelseMetadata) {
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterOppgaveUtført",
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTFOERT}',
@@ -587,6 +605,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterOppgaveUtgått(utgåttHendelse: OppgaveUtgått) {
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterOppgaveUtgått",
             """
             UPDATE notifikasjon
             SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
@@ -602,6 +621,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: BeskjedOpprettet) {
         database.transaction {
             val inserted = executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterBeskjedOpprettet.insert_notifikasjon",
                 """
                 insert into notifikasjon(
                     type,
@@ -641,6 +661,7 @@ class ProdusentRepositoryImpl(
             }
 
             executeBatch(
+                name = "ProdusentRepository.oppdaterModellEtterBeskjedOpprettet.insert_eksternt_varsel",
                 """
                 insert into eksternt_varsel(
                     varsel_id,
@@ -664,6 +685,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
         database.transaction {
             val inserted = executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterOppgaveOpprettet.insert_notifikasjon",
                 """
                 insert into notifikasjon(
                     type,
@@ -705,6 +727,7 @@ class ProdusentRepositoryImpl(
             }
 
             executeBatch(
+                name = "ProdusentRepository.oppdaterModellEtterOppgaveOpprettet.insert_eksternt_varsel",
                 """
                 insert into eksternt_varsel(
                     varsel_id,
@@ -724,6 +747,7 @@ class ProdusentRepositoryImpl(
             }
 
             executeBatch(
+                name = "ProdusentRepository.oppdaterModellEtterOppgaveOpprettet.insert_paaminnelse_eksternt_varsel",
                 """
                 insert into paaminnelse_eksternt_varsel(
                     varsel_id,
@@ -746,6 +770,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: EksterntVarselVellykket) {
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterEksterntVarselVellykket.update_eksternt_varsel",
             """
             update eksternt_varsel set status = 'SENDT' where varsel_id = ?
             """
@@ -753,6 +778,7 @@ class ProdusentRepositoryImpl(
             uuid(eksterntVarselVellykket.varselId)
         }
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterEksterntVarselVellykket.update_paaminnelse_eksternt_varsel",
             """
             update paaminnelse_eksternt_varsel set status = 'SENDT' where varsel_id = ?
             """
@@ -763,6 +789,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterEksterntVarselFeilet.update_eksternt_varsel",
             """
             update eksternt_varsel 
             set status = 'FEILET',
@@ -774,6 +801,7 @@ class ProdusentRepositoryImpl(
             uuid(eksterntVarselFeilet.varselId)
         }
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterEksterntVarselFeilet.update_paaminnelse_eksternt_varsel",
             """
             update paaminnelse_eksternt_varsel 
             set status = 'FEILET',
@@ -788,6 +816,7 @@ class ProdusentRepositoryImpl(
 
     private suspend fun oppdaterModellEtterEksterntVarselKansellert(eksterntVarselKansellert: EksterntVarselKansellert) {
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterEksterntVarselKansellert.update_eksternt_varsel",
             """
             update eksternt_varsel 
             set status = 'KANSELLERT'
@@ -797,6 +826,7 @@ class ProdusentRepositoryImpl(
             uuid(eksterntVarselKansellert.varselId)
         }
         database.nonTransactionalExecuteUpdate(
+            name = "ProdusentRepository.oppdaterModellEtterEksterntVarselKansellert.update_paaminnelse_eksternt_varsel",
             """
             update paaminnelse_eksternt_varsel 
             set status = 'KANSELLERT'
@@ -810,6 +840,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterFristUtsatt(fristUtsatt: FristUtsatt) {
         database.transaction {
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterFristUtsatt.update_notifikasjon",
                 """
                 UPDATE notifikasjon
                 SET tilstand = '${ProdusentModel.Oppgave.Tilstand.NY}',
@@ -823,6 +854,7 @@ class ProdusentRepositoryImpl(
             }
 
             executeBatch(
+                name = "ProdusentRepository.oppdaterModellEtterFristUtsatt.insert_paaminnelse_eksternt_varsel",
                 """
                 insert into paaminnelse_eksternt_varsel(
                     varsel_id,
@@ -853,6 +885,7 @@ class ProdusentRepositoryImpl(
 
     private fun Transaction.storeNærmesteLederMottaker(notifikasjonId: UUID, mottaker: NærmesteLederMottaker) {
         executeUpdate(
+            name = "ProdusentRepository.storeNærmesteLederMottaker",
             """
             insert into mottaker_digisyfo(notifikasjon_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?)
@@ -868,6 +901,7 @@ class ProdusentRepositoryImpl(
 
     private fun Transaction.storeAltinnMottaker(notifikasjonId: UUID, mottaker: AltinnMottaker) {
         executeUpdate(
+            name = "ProdusentRepository.storeAltinnMottaker",
             """
             insert into mottaker_altinn_enkeltrettighet
                 (notifikasjon_id, virksomhet, service_code, service_edition)
@@ -884,6 +918,7 @@ class ProdusentRepositoryImpl(
 
     private fun Transaction.storeAltinnRessursMottaker(notifikasjonId: UUID, mottaker: AltinnRessursMottaker) {
         executeUpdate(
+            name = "ProdusentRepository.storeAltinnRessursMottaker",
             """
             insert into mottaker_altinn_ressurs
                 (notifikasjon_id, virksomhet, ressursId)
@@ -900,6 +935,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(hendelse: KalenderavtaleOpprettet) {
         database.transaction {
             val inserted = executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterKalenderavtaleOpprettet.insert_notifikasjon",
                 """
                 insert into notifikasjon(
                     type,
@@ -951,6 +987,7 @@ class ProdusentRepositoryImpl(
             }
 
             executeBatch(
+                name = "ProdusentRepository.oppdaterModellEtterKalenderavtaleOpprettet.insert_eksternt_varsel",
                 """
                 insert into eksternt_varsel(
                     varsel_id,
@@ -970,6 +1007,7 @@ class ProdusentRepositoryImpl(
             }
 
             executeBatch(
+                name = "ProdusentRepository.oppdaterModellEtterKalenderavtaleOpprettet.insert_paaminnelse_eksternt_varsel",
                 """
                 insert into paaminnelse_eksternt_varsel(
                     varsel_id,
@@ -993,6 +1031,7 @@ class ProdusentRepositoryImpl(
     private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(hendelse: KalenderavtaleOppdatert) {
         database.transaction {
             executeUpdate(
+                name = "ProdusentRepository.oppdaterModellEtterKalenderavtaleOppdatert.update_notifikasjon",
                 """
                 update notifikasjon set 
                     tilstand = coalesce(?, tilstand),
@@ -1020,6 +1059,7 @@ class ProdusentRepositoryImpl(
             }
             if (hendelse.idempotenceKey != null) {
                 executeUpdate(
+                    name = "ProdusentRepository.oppdaterModellEtterKalenderavtaleOppdatert.insert_notifikasjon_oppdatering",
                     """
                     insert into notifikasjon_oppdatering(
                         hendelse_id, notifikasjon_id, idempotence_key
@@ -1037,6 +1077,7 @@ class ProdusentRepositoryImpl(
         database.transaction {
             if (hendelse.idempotenceKey != null) {
                 executeUpdate(
+                    name = "ProdusentRepository.oppdaterModellEtterOppgavePåminnelseEndret",
                     """
                         insert into notifikasjon_oppdatering(
                             hendelse_id, notifikasjon_id, idempotence_key

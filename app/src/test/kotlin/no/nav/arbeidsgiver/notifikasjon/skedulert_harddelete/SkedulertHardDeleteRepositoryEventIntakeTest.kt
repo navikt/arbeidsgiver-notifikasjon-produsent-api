@@ -733,6 +733,7 @@ private suspend fun SkedulertHardDeleteRepositoryImpl.hardDeleteSakOppdatert(
 
 suspend fun Database.hentAggregate(aggregateId: UUID): UUID? {
     return nonTransactionalExecuteQuery(
+        name = "SkedulertHardDeleteRepositoryEventIntakeTest.hentAggregate",
         """
             select 
                 aggregate_id 

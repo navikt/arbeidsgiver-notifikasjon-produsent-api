@@ -175,6 +175,7 @@ class SkedulertUtgåttRepository(
         action: suspend (Oppgave) -> Unit
     ) = database.transaction {
         executeQuery(
+            name = "SkedulertUtgåttRepository.hentOgFjernAlleUtgåtteOppgaver",
             """
                 delete from skedulert_utgatt as s
                     using oppgave as o
@@ -203,6 +204,7 @@ class SkedulertUtgåttRepository(
     ) =
         database.transaction {
             executeQuery(
+                name = "SkedulertUtgåttRepository.hentOgFjernAlleAvholdteKalenderavtaler",
                 """
                 delete from skedulert_utgatt as s
                     using kalenderavtale as k
@@ -232,6 +234,7 @@ class SkedulertUtgåttRepository(
 
     private suspend fun upsertSkedulertUtgåttOppgave(oppgave: Oppgave) = database.transaction {
         executeUpdate(
+            name = "SkedulertUtgåttRepository.upsertSkedulertUtgåttOppgave.insert_oppgave",
             """
                 insert into oppgave(oppgave_id, frist, virksomhetsnummer, produsent_id)
                 values (?, ?, ?, ?)
@@ -247,6 +250,7 @@ class SkedulertUtgåttRepository(
             text(oppgave.produsentId)
         }
         executeUpdate(
+            name = "SkedulertUtgåttRepository.upsertSkedulertUtgåttOppgave.insert_skedulert_utgatt",
             """
                 insert into skedulert_utgatt(aggregat_id, aggregat_type)
                 values (?, ?)
@@ -262,6 +266,7 @@ class SkedulertUtgåttRepository(
         kalenderavtale: Kalenderavtale
     ) = database.transaction {
         executeUpdate(
+            name = "SkedulertUtgåttRepository.skedulerAvholdtKalenderavtale.insert_kalenderavtale",
             """
                 insert into kalenderavtale(
                     kalenderavtale_id, start_tidspunkt, tilstand, virksomhetsnummer, produsent_id, merkelapp, grupperingsid, opprettet_tidspunkt
@@ -294,6 +299,7 @@ class SkedulertUtgåttRepository(
 
             else -> {
                 executeUpdate(
+                    name = "SkedulertUtgåttRepository.skedulerAvholdtKalenderavtale.insert_skedulert_utgatt",
                     """
                         insert into skedulert_utgatt(aggregat_id, aggregat_type)
                         values (?, ?)
@@ -312,6 +318,7 @@ class SkedulertUtgåttRepository(
     ) = database.transaction {
 
         executeUpdate(
+            name = "SkedulertUtgåttRepository.oppdaterSkedulerAvholdtKalenderavtale",
             """
                 insert into skedulert_utgatt(aggregat_id, aggregat_type)
                 select ?, ?
@@ -330,6 +337,7 @@ class SkedulertUtgåttRepository(
 
     suspend fun slettSkeduleringHvisOppgaveErEldre(oppgaveId: UUID, utgaattTidspunkt: LocalDate) =
         database.nonTransactionalExecuteUpdate(
+            name = "SkedulertUtgåttRepository.slettSkeduleringHvisOppgaveErEldre",
             """
                 delete from skedulert_utgatt
                     using skedulert_utgatt as s
@@ -360,6 +368,7 @@ class SkedulertUtgåttRepository(
 
     private fun Transaction.slettOppgaverKnyttetTilSak(sakId: UUID) {
         executeUpdate(
+            name = "SkedulertUtgåttRepository.slettOppgaverKnyttetTilSak.delete_oppgave",
             """
                 delete from oppgave
                 where oppgave_id in (
@@ -372,6 +381,7 @@ class SkedulertUtgåttRepository(
             uuid(sakId)
         }
         executeUpdate(
+            name = "SkedulertUtgåttRepository.slettOppgaverKnyttetTilSak.delete_skedulert_utgatt",
             """
                 delete from skedulert_utgatt
                 where aggregat_id in (
@@ -387,6 +397,7 @@ class SkedulertUtgåttRepository(
 
     private fun Transaction.slettKalenderavtalerKnyttetTilSak(sakId: UUID) {
         executeUpdate(
+            name = "SkedulertUtgåttRepository.slettKalenderavtalerKnyttetTilSak.delete_kalenderavtale",
             """
                 delete from kalenderavtale
                 where kalenderavtale_id in (
@@ -400,6 +411,7 @@ class SkedulertUtgåttRepository(
         }
 
         executeUpdate(
+            name = "SkedulertUtgåttRepository.slettKalenderavtalerKnyttetTilSak.delete_skedulert_utgatt",
             """
                 delete from skedulert_utgatt
                 where aggregat_id in (
@@ -415,6 +427,7 @@ class SkedulertUtgåttRepository(
 
     fun Transaction.slettOppgave(aggregateId: UUID) {
         executeUpdate(
+            name = "SkedulertUtgåttRepository.slettOppgave",
             """
                 delete from oppgave
                 where oppgave_id = ?
@@ -427,6 +440,7 @@ class SkedulertUtgåttRepository(
 
     fun Transaction.slettKalenderavtale(aggregateId: UUID) {
         executeUpdate(
+            name = "SkedulertUtgåttRepository.slettKalenderavtale",
             """
                 delete from kalenderavtale
                 where kalenderavtale_id = ?
@@ -439,6 +453,7 @@ class SkedulertUtgåttRepository(
 
     fun Transaction.slettSkedulertUtgått(aggregateId: UUID) {
         executeUpdate(
+            name = "SkedulertUtgåttRepository.slettSkedulertUtgått",
             """
                 delete from skedulert_utgatt
                 where aggregat_id = ?
@@ -450,6 +465,7 @@ class SkedulertUtgåttRepository(
 
     suspend fun huskSakOppgaveKobling(sakId: UUID, oppgaveId: UUID) {
         database.nonTransactionalExecuteUpdate(
+            name = "SkedulertUtgåttRepository.huskSakOppgaveKobling",
             """
                 insert into oppgave_sak_kobling (oppgave_id, sak_id) values (?, ?)
                 on conflict (oppgave_id) do update
@@ -464,6 +480,7 @@ class SkedulertUtgåttRepository(
 
     suspend fun huskSakKalenderavtaleKobling(sakId: UUID, kalenderavtaleId: UUID) {
         database.nonTransactionalExecuteUpdate(
+            name = "SkedulertUtgåttRepository.huskSakKalenderavtaleKobling",
             """
                         insert into kalenderavtale_sak_kobling (kalenderavtale_id, sak_id) values (?, ?)
                         on conflict (kalenderavtale_id) do update

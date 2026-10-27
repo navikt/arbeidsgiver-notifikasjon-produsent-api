@@ -161,6 +161,7 @@ class BrukerRepositoryImpl(
     ): List<BrukerModel.Notifikasjon> = timer.coRecord {
 
         database.nonTransactionalExecuteQuery(
+            name = "BrukerRepository.hentNotifikasjoner",
             """
             with 
                 mine_altinntilganger as (
@@ -326,6 +327,7 @@ class BrukerRepositoryImpl(
                 .ifNotBlank { "where $it" }
 
             val rows = database.nonTransactionalExecuteQuery(
+                name = "BrukerRepository.hentSaker",
                 """
                     with 
                         mine_altinntilganger as (
@@ -546,6 +548,7 @@ class BrukerRepositoryImpl(
     ): BrukerModel.Sak? {
         return timer.coRecord {
             val rows = database.nonTransactionalExecuteQuery(
+                name = "BrukerRepository.hentSakById",
                 """
                     with
                         mine_altinntilganger as (
@@ -611,6 +614,7 @@ class BrukerRepositoryImpl(
         return timer.coRecord {
 
             val rows = database.nonTransactionalExecuteQuery(
+                name = "BrukerRepository.hentSakByGrupperingsid",
                 """
                     with 
                         mine_altinntilganger as (
@@ -676,6 +680,7 @@ class BrukerRepositoryImpl(
         }
 
         val tidslinjer = database.nonTransactionalExecuteQuery(
+            name = "BrukerRepository.berikSaker.select_tidslinjer",
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
             with saker as (
@@ -744,6 +749,7 @@ class BrukerRepositoryImpl(
             }
 
         val sisteStatuser = database.nonTransactionalExecuteQuery(
+            name = "BrukerRepository.berikSaker.select_siste_statuser",
             """
             with sak_status_med_rank as (
               select
@@ -784,6 +790,7 @@ class BrukerRepositoryImpl(
 
     override suspend fun virksomhetsnummerForNotifikasjon(notifikasjonsid: UUID): String? =
         database.nonTransactionalExecuteQuery(
+            name = "BrukerRepository.virksomhetsnummerForNotifikasjon",
             """
                 SELECT virksomhetsnummer FROM notifikasjon WHERE id = ? LIMIT 1
             """, {
@@ -797,6 +804,7 @@ class BrukerRepositoryImpl(
         grupperinger: List<BrukerModel.Gruppering>,
     ): Map<String, BrukerModel.SakMetadata> = timer.coRecord {
         val rows = database.nonTransactionalExecuteQuery(
+            name = "BrukerRepository.hentSakerForNotifikasjoner",
             /*  quotes are necessary for fields from json, otherwise they are lower-cased */
             """
                 with gruppering as (
@@ -827,6 +835,7 @@ class BrukerRepositoryImpl(
         val tilgangerAltinnMottaker = altinnTilganger.tilganger.filter { virksomhetsnumre.contains(it.orgNr) }
 
         return database.nonTransactionalExecuteQuery(
+            name = "BrukerRepository.hentKommendeKalenderavaler",
             """
             with 
                 mine_altinntilganger as (
@@ -900,6 +909,7 @@ class BrukerRepositoryImpl(
 
     override suspend fun settNotifikasjonerSistLest(tidspunkt: OffsetDateTime, fnr: String) {
         database.nonTransactionalExecuteUpdate(
+            name = "BrukerRepository.settNotifikasjonerSistLest",
             """
             insert into notifikasjoner_sist_lest (fnr, tidspunkt) values (?, ?)
             on conflict (fnr) do update set tidspunkt = ?
@@ -913,6 +923,7 @@ class BrukerRepositoryImpl(
 
     override suspend fun hentNotifikasjonerSistLest(fnr: String): OffsetDateTime? {
         val result = database.nonTransactionalExecuteQuery(
+            name = "BrukerRepository.hentNotifikasjonerSistLest",
             """
                 select tidspunkt from notifikasjoner_sist_lest
                 where fnr = ?
@@ -936,20 +947,20 @@ class BrukerRepositoryImpl(
         }) {
             if (grupperingsid != null && merkelapp != null) {
                 // cascade hard delete av sak med grupperingsid og merkelapp
-                executeUpdate("""delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
+                executeUpdate(name = "BrukerRepository.oppdaterModellEtterDelete.delete_notifikasjon_by_grupperingsid", """delete from notifikasjon n where n.grupperingsid = ? and merkelapp = ?;""") {
                     text(grupperingsid)
                     text(merkelapp)
                 }
             }
-            executeUpdate("""delete from notifikasjon where id = ?;""") {
+            executeUpdate(name = "BrukerRepository.oppdaterModellEtterDelete.delete_notifikasjon_by_id", """delete from notifikasjon where id = ?;""") {
                 uuid(aggregateId)
             }
 
-            executeUpdate("""delete from brukerklikk where notifikasjonsid = ?;""") {
+            executeUpdate(name = "BrukerRepository.oppdaterModellEtterDelete.delete_brukerklikk", """delete from brukerklikk where notifikasjonsid = ?;""") {
                 uuid(aggregateId)
             }
 
-            executeUpdate("""delete from sak where id = ?;""") {
+            executeUpdate(name = "BrukerRepository.oppdaterModellEtterDelete.delete_sak", """delete from sak where id = ?;""") {
                 uuid(aggregateId)
             }
 
@@ -961,6 +972,7 @@ class BrukerRepositoryImpl(
         val utførtTidspunkt = utførtHendelse.utfoertTidspunkt ?: metdata.timestamp.atOffset(ZoneOffset.UTC)
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterOppgaveUtført",
                 """
                 UPDATE notifikasjon
                 SET 
@@ -980,6 +992,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterOppgaveUtgått(utgåttHendelse: OppgaveUtgått) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterOppgaveUtgått",
                 """
                 UPDATE notifikasjon
                 SET tilstand = '${ProdusentModel.Oppgave.Tilstand.UTGAATT}',
@@ -998,6 +1011,7 @@ class BrukerRepositoryImpl(
 
     private suspend fun oppdaterModellEtterBrukerKlikket(brukerKlikket: BrukerKlikket) {
         database.nonTransactionalExecuteUpdate(
+            name = "BrukerRepository.oppdaterModellEtterBrukerKlikket",
             """
             insert into brukerklikk(fnr, notifikasjonsid) values (?, ?)
             on conflict do nothing
@@ -1011,6 +1025,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterBeskjedOpprettet(beskjedOpprettet: BeskjedOpprettet) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterBeskjedOpprettet",
                 """
                 insert into notifikasjon(
                     type,
@@ -1058,6 +1073,7 @@ class BrukerRepositoryImpl(
     ) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterSakOpprettet.insert_sak",
                 """
                 insert into sak(
                     id, virksomhetsnummer, tittel, lenke, merkelapp, grupperingsid, neste_steg, tilleggsinformasjon, sist_endret_tidspunkt, opprettet_tidspunkt
@@ -1083,6 +1099,7 @@ class BrukerRepositoryImpl(
              *  NB. `greatest('foo', null) = 'foo'`, og `least('foo', null) = 'foo'`.
              **/
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterSakOpprettet.update_sak",
                 """
                 update sak
                 set 
@@ -1098,6 +1115,7 @@ class BrukerRepositoryImpl(
             }
 
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterSakOpprettet.insert_sak_search",
                 """
                 insert into sak_search(id, text)
                 values (?, lower(?)) 
@@ -1123,6 +1141,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterNyStatusSak(nyStatusSak: NyStatusSak) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterNyStatusSak.insert_sak_status",
                 """
                 insert into sak_status(
                     id, sak_id, status, overstyrt_statustekst, mottatt_tidspunkt, oppgitt_tidspunkt 
@@ -1147,6 +1166,7 @@ class BrukerRepositoryImpl(
             settSakOppdatert(nyStatusSak.sakId, nyStatusSak.oppgittTidspunkt ?: nyStatusSak.mottattTidspunkt)
 
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterNyStatusSak.update_sak_search",
                 """
                 with sak_status_agg as (
                     select s.id, s.tittel || ' ' || s.merkelapp AS tittel_merkelapp, string_agg(ss.status || ' ' || ss.overstyrt_statustekst, ' ') AS statustekst
@@ -1165,6 +1185,7 @@ class BrukerRepositoryImpl(
 
             if (nyStatusSak.nyLenkeTilSak != null) {
                 executeUpdate(
+                    name = "BrukerRepository.oppdaterModellEtterNyStatusSak.update_sak",
                     """
                     UPDATE sak
                     SET lenke = ?
@@ -1181,6 +1202,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterTilleggsinformasjonSak(tilleggsinformasjonSak: TilleggsinformasjonSak) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterTilleggsinformasjonSak",
                 """
                     update sak
                     set tilleggsinformasjon = ?
@@ -1196,6 +1218,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterNesteStegSak(nesteStegSak: NesteStegSak) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterNesteStegSak",
                 """
                     update sak
                     set neste_steg = ?
@@ -1211,6 +1234,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterPåminnelseOpprettet(påminnelseOpprettet: PåminnelseOpprettet) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterPåminnelseOpprettet.update_notifikasjon",
                 """
                     update notifikasjon
                     set paaminnelse_tidspunkt = ?
@@ -1220,7 +1244,7 @@ class BrukerRepositoryImpl(
                 timestamp_with_timezone(påminnelseOpprettet.tidspunkt.påminnelseTidspunkt.atOffset(ZoneOffset.UTC))
                 uuid(påminnelseOpprettet.notifikasjonId)
             }
-            executeUpdate("delete from brukerklikk where notifikasjonsid = ?;") {
+            executeUpdate(name = "BrukerRepository.oppdaterModellEtterPåminnelseOpprettet.delete_brukerklikk", "delete from brukerklikk where notifikasjonsid = ?;") {
                 uuid(påminnelseOpprettet.notifikasjonId)
             }
 
@@ -1265,6 +1289,7 @@ class BrukerRepositoryImpl(
         mottaker: NærmesteLederMottaker
     ) {
         executeUpdate(
+            name = "BrukerRepository.storeNærmesteLederMottaker",
             """
             insert into mottaker_digisyfo(notifikasjon_id, sak_id, virksomhet, fnr_leder, fnr_sykmeldt)
             values (?, ?, ?, ?, ?)
@@ -1286,6 +1311,7 @@ class BrukerRepositoryImpl(
         altinnTilgang: String
     ) {
         executeUpdate(
+            name = "BrukerRepository.storeAltinnMottaker",
             """
             insert into mottaker_altinn_tilgang
                 (notifikasjon_id, sak_id, virksomhet, altinn_tilgang)
@@ -1303,6 +1329,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterOppgaveOpprettet(oppgaveOpprettet: OppgaveOpprettet) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterOppgaveOpprettet",
                 """
                 insert into notifikasjon(
                     type,
@@ -1350,6 +1377,7 @@ class BrukerRepositoryImpl(
     override suspend fun oppdaterModellEtterNærmesteLederLeesah(nærmesteLederLeesah: NarmesteLederLeesah) {
         if (nærmesteLederLeesah.aktivTom != null) {
             database.nonTransactionalExecuteUpdate(
+                name = "BrukerRepository.oppdaterModellEtterNærmesteLederLeesah.delete_naermeste_leder_kobling",
                 """
                 delete from naermeste_leder_kobling where id = ?
             """
@@ -1358,6 +1386,7 @@ class BrukerRepositoryImpl(
             }
         } else {
             database.nonTransactionalExecuteUpdate(
+                name = "BrukerRepository.oppdaterModellEtterNærmesteLederLeesah.insert_naermeste_leder_kobling",
                 """
                 INSERT INTO naermeste_leder_kobling(id, fnr, naermeste_leder_fnr, orgnummer)
                 VALUES(?, ?, ?, ?) 
@@ -1381,6 +1410,7 @@ class BrukerRepositoryImpl(
         return timer.coRecord {
 
             val rows = database.nonTransactionalExecuteQuery(
+                name = "BrukerRepository.hentSakstyper",
                 """
                     with 
                         mine_altinntilganger as (
@@ -1424,6 +1454,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterFristUtsatt(hendelse: FristUtsatt) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterFristUtsatt",
                 """
             update notifikasjon
             set tilstand = '${BrukerModel.Oppgave.Tilstand.NY}',
@@ -1443,6 +1474,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterKalenderavtaleOpprettet(hendelse: HendelseModel.KalenderavtaleOpprettet) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterKalenderavtaleOpprettet",
                 """
                 insert into notifikasjon(
                     id,
@@ -1496,6 +1528,7 @@ class BrukerRepositoryImpl(
     private suspend fun oppdaterModellEtterKalenderavtaleOppdatert(hendelse: HendelseModel.KalenderavtaleOppdatert) {
         database.transaction {
             executeUpdate(
+                name = "BrukerRepository.oppdaterModellEtterKalenderavtaleOppdatert",
                 """
                 update notifikasjon set
                     tilstand = coalesce(?, tilstand),
@@ -1524,6 +1557,7 @@ class BrukerRepositoryImpl(
 
     private fun Transaction.hentSakIdByNotifikasjonsId(notifikasjonsId: UUID): UUID? {
         val sakId = executeQuery(
+            name = "BrukerRepository.hentSakIdByNotifikasjonsId",
             """
                 select s.id as id
                 from sak as s 
@@ -1547,6 +1581,7 @@ class BrukerRepositoryImpl(
             return
 
         executeUpdate(
+            name = "BrukerRepository.settSakOppdatert",
             """
                 update sak set
                 sist_endret_tidspunkt = ?

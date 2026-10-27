@@ -148,6 +148,7 @@ class KafkaReaperModelIdempotensTest {
             )
         )
         val notifikasjoner = database.nonTransactionalExecuteQuery(
+            name = "KafkaReaperModelIdempotensTest.Atomisk hard delete av Sak sletter kun tilhørende notifikasjoner",
             """
                 select notifikasjon_id from deleted_notifikasjon
             """.trimIndent(),

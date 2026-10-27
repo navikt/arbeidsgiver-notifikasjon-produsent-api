@@ -154,27 +154,30 @@ class Database private constructor(
     }
 
     suspend fun <T> nonTransactionalExecuteQuery(
+        name: String,
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T,
     ): List<T> =
         dataSource.withConnection { connection ->
-            Transaction(connection).executeQuery(sql, setup, transform)
+            Transaction(connection).executeQuery(name, sql, setup, transform)
         }
 
     suspend fun nonTransactionalExecuteUpdate(
+        name: String,
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int = dataSource.withConnection { connection ->
-        Transaction(connection).executeUpdate(sql, setup)
+        Transaction(connection).executeUpdate(name, sql, setup)
     }
 
     suspend fun <T> nonTransactionalExecuteBatch(
+        name: String,
         @Language("PostgreSQL") sql: String,
         iterable: Iterable<T>,
         setup: ParameterSetters.(it: T) -> Unit = {},
     ): IntArray = dataSource.withConnection { connection ->
-        Transaction(connection).executeBatch(sql, iterable, setup)
+        Transaction(connection).executeBatch(name, sql, iterable, setup)
     }
 
     suspend fun <T> transaction(
@@ -204,11 +207,12 @@ value class Transaction(
     private val connection: Connection,
 ) {
     fun <T> executeQuery(
+        name: String,
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
         transform: ResultSet.() -> T,
     ): List<T> {
-        return measureSql(sql) {
+        return measureSql(name) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -225,10 +229,11 @@ value class Transaction(
     }
 
     fun executeUpdate(
+        name: String,
         @Language("PostgreSQL") sql: String,
         setup: ParameterSetters.() -> Unit = {},
     ): Int {
-        return measureSql(sql) {
+        return measureSql(name) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -239,6 +244,7 @@ value class Transaction(
     }
 
     fun <T> executeBatch(
+        name: String,
         @Language("PostgreSQL") sql: String,
         iterable: Iterable<T>,
         setup: ParameterSetters.(it: T) -> Unit = {},
@@ -246,7 +252,7 @@ value class Transaction(
         if (iterable.none()) {
             return intArrayOf()
         }
-        return measureSql(sql) {
+        return measureSql(name) {
             connection
                 .prepareStatement(sql)
                 .use { preparedStatement ->
@@ -386,12 +392,12 @@ val databaseObjectMapper = jacksonObjectMapper().apply {
 }
 
 fun <T> measureSql(
-    sql: String,
+    name: String,
     action: () -> T
 ): T {
     val timer = getTimer(
         name = "database.execution",
-        tags = setOf("sql" to sql),
+        tags = setOf("sql" to name),
         description = "Execution time for sql query or update"
     )
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")

@@ -391,6 +391,7 @@ class EksternVarslingRepositoryTest {
         assertEquals(
             listOf(oppgaveOpprettet.notifikasjonId),
             database.nonTransactionalExecuteQuery(
+                name = "EksternVarslingRepositoryTest.Hard delete event for sak.select_hard_delete",
                 """
                 select * from hard_delete where notifikasjon_id = ?
                 """,
@@ -405,6 +406,7 @@ class EksternVarslingRepositoryTest {
 
         // fjerner info fra lookup tabell
         with(database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepositoryTest.Hard delete event for sak.select_merkelapp_grupperingsid_notifikasjon",
             "select * from merkelapp_grupperingsid_notifikasjon where notifikasjon_id = ?",
             { uuid(oppgaveOpprettet.notifikasjonId) }
         ) { asMap() }) {

@@ -52,6 +52,7 @@ class KafkaReaperModelImpl(
 
         database.transaction {
             executeUpdate(
+                name = "KafkaReaperModel.oppdaterModellEtterHendelse.insert_notifikasjon_hendelse_relasjon",
                 """
                 insert into notifikasjon_hendelse_relasjon
                 (
@@ -77,6 +78,7 @@ class KafkaReaperModelImpl(
             if (hendelse is HardDelete) {
                 if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
                     executeUpdate(
+                        name = "KafkaReaperModel.oppdaterModellEtterHendelse.HardDelete.insert_deleted_notifikasjon_by_grupperingsid",
                         """
                         insert into deleted_notifikasjon (notifikasjon_id, deleted_at) 
                             (select hendelse_id as notifikasjon_id, ? as deleted_at from notifikasjon_hendelse_relasjon
@@ -92,6 +94,7 @@ class KafkaReaperModelImpl(
                 }
 
                 executeUpdate(
+                    name = "KafkaReaperModel.oppdaterModellEtterHendelse.HardDelete.insert_deleted_notifikasjon_by_id",
                     """
                         insert into deleted_notifikasjon (notifikasjon_id, deleted_at) 
                         values (?, ?)
@@ -107,6 +110,7 @@ class KafkaReaperModelImpl(
 
     override suspend fun alleRelaterteHendelser(notifikasjonId: UUID): List<UUID> {
         return database.nonTransactionalExecuteQuery(
+            name = "KafkaReaperModel.alleRelaterteHendelser",
             """
                 select hendelse_id from notifikasjon_hendelse_relasjon
                 where notifikasjon_id = ?
@@ -121,6 +125,7 @@ class KafkaReaperModelImpl(
 
     override suspend fun erSlettet(notifikasjonId: UUID): Boolean {
         return database.nonTransactionalExecuteQuery(
+            name = "KafkaReaperModel.erSlettet",
             """
                 select *
                 from deleted_notifikasjon
@@ -136,6 +141,7 @@ class KafkaReaperModelImpl(
 
     override suspend fun fjernRelasjon(hendelseId: UUID) {
         database.nonTransactionalExecuteUpdate(
+            name = "KafkaReaperModel.fjernRelasjon",
             """
                 delete from notifikasjon_hendelse_relasjon
                 where hendelse_id = ? 

@@ -164,6 +164,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.LØPENDE sendingsvindu",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -229,6 +230,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.NKS_ÅPNINGSTID sendingsvindu innenfor nks åpningstid sendes med en gang",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -289,6 +291,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.NKS_ÅPNINGSTID sendingsvindu utenfor nks åpningstid reskjeddullerres.update_emergency_break",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -301,11 +304,13 @@ class EksternVarslingServiceTest {
                 assertNotEquals((0 to 0), repository.waitQueueCount())
                 assertFalse(
                     database.nonTransactionalExecuteQuery(
+                        name = "EksternVarslingServiceTest.NKS_ÅPNINGSTID sendingsvindu utenfor nks åpningstid reskjeddullerres.select_wait_queue",
                         "select * from wait_queue where varsel_id = '${uuid("2")}'"
                     ) { asMap() }.isEmpty()
                 )
                 assertTrue(
                     database.nonTransactionalExecuteQuery(
+                        name = "EksternVarslingServiceTest.NKS_ÅPNINGSTID sendingsvindu utenfor nks åpningstid reskjeddullerres.select_job_queue",
                         "select * from job_queue where varsel_id = '${uuid("2")}'"
                     ) { asMap() }.isEmpty()
                 )
@@ -360,6 +365,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.DAGTID_IKKE_SØNDAG sendingsvindu innenfor sendes med en gang",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -419,6 +425,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.DAGTID_IKKE_SØNDAG sendingsvindu utenfor reskjedduleres",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -479,6 +486,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.SPESIFISERT sendingsvindu som har passert sendes med en gang",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -537,6 +545,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.SPESIFISERT sendingsvindu som er i fremtid reskjedduleres",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -609,6 +618,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.localDateNow.update_emergency_break",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -621,6 +631,7 @@ class EksternVarslingServiceTest {
                 assertNotEquals((0 to 0), repository.waitQueueCount())
                 assertFalse(
                     database.nonTransactionalExecuteQuery(
+                        name = "EksternVarslingServiceTest.localDateNow.select_wait_queue",
                         """
                             select * from wait_queue where varsel_id = '$gammelVarselId'
                         """
@@ -678,6 +689,7 @@ class EksternVarslingServiceTest {
             eventually(10.seconds) {
                 assertFalse(
                     database.nonTransactionalExecuteQuery(
+                        name = "EksternVarslingServiceTest.localDateNow.select_wait_queue_2",
                         """
                             select * from wait_queue where varsel_id = '$gammelVarselId'
                         """
@@ -802,6 +814,7 @@ class EksternVarslingServiceTest {
 
             assertEquals(1, repository.jobQueueCount())
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break",
                 """
                 update emergency_break set stop_processing = false where id = 0
                 """
@@ -869,6 +882,7 @@ class EksternVarslingServiceTest {
 
             assertEquals(1, repository.jobQueueCount())
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_2",
                 """
                 update emergency_break set stop_processing = false where id = 0
                 """
@@ -942,6 +956,7 @@ class EksternVarslingServiceTest {
 
             assertEquals(1, repository.jobQueueCount())
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_3",
                 """
                 update emergency_break set stop_processing = false where id = 0
                 """
@@ -1011,6 +1026,7 @@ class EksternVarslingServiceTest {
             )
 
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.hard delete slettes først etter varsel er kvittert.update_emergency_break",
                 """
                 update emergency_break set stop_processing = false where id = 0
             """
@@ -1019,6 +1035,7 @@ class EksternVarslingServiceTest {
             // assert varsel exists
             assertTrue(
                 database.nonTransactionalExecuteQuery(
+                    name = "EksternVarslingServiceTest.hard delete slettes først etter varsel er kvittert.select_ekstern_varsel_kontaktinfo",
                     """
                     select * from ekstern_varsel_kontaktinfo where notifikasjon_id = '${uuid("1")}'
                     """
@@ -1031,6 +1048,7 @@ class EksternVarslingServiceTest {
             eventually(5.seconds) {
                 assertTrue(
                     database.nonTransactionalExecuteQuery(
+                        name = "EksternVarslingServiceTest.hard delete slettes først etter varsel er kvittert.select_ekstern_varsel_kontaktinfo_2",
                         """
                     select * from ekstern_varsel_kontaktinfo where notifikasjon_id = '${uuid("1")}'
                     """
@@ -1057,6 +1075,7 @@ class EksternVarslingServiceTest {
             eventually(5.seconds) {
                 assertTrue(
                     database.nonTransactionalExecuteQuery(
+                        name = "EksternVarslingServiceTest.hard delete slettes først etter varsel er kvittert.select_ekstern_varsel_kontaktinfo_3",
                         """
                     select * from ekstern_varsel_kontaktinfo where notifikasjon_id = '${uuid("1")}'
                     """
@@ -1117,6 +1136,7 @@ class EksternVarslingServiceTest {
             )
             repository.oppdaterModellEtterHendelse(oppgave)
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_4",
                 "update emergency_break set stop_processing = false where id = 0"
             )
             val job = service.start(this)
@@ -1178,6 +1198,7 @@ class EksternVarslingServiceTest {
             )
             repository.oppdaterModellEtterHendelse(oppgave)
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_5",
                 "update emergency_break set stop_processing = false where id = 0"
             )
             val job = service.start(this)
@@ -1243,6 +1264,7 @@ class EksternVarslingServiceTest {
             )
             repository.oppdaterModellEtterHendelse(oppgave)
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_6",
                 "update emergency_break set stop_processing = false where id = 0"
             )
             val job = service.start(this)
@@ -1316,6 +1338,7 @@ class EksternVarslingServiceTest {
             )
             repository.oppdaterModellEtterHendelse(oppgave)
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_7",
                 "update emergency_break set stop_processing = false where id = 0"
             )
             val job = service.start(this)
@@ -1377,6 +1400,7 @@ class EksternVarslingServiceTest {
             )
             repository.oppdaterModellEtterHendelse(oppgave)
             database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_8",
                 "update emergency_break set stop_processing = false where id = 0"
             )
             val job = service.start(this)

@@ -50,6 +50,7 @@ class DataproduktModel(
             return
         }
         database.nonTransactionalExecuteUpdate(
+            name = "DataproduktModel.oppdaterModellEtterHendelse.insert_aggregat_hendelse",
             """
             insert into aggregat_hendelse(
                 hendelse_id,
@@ -77,6 +78,7 @@ class DataproduktModel(
         when (hendelse) {
             is BeskjedOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.BeskjedOpprettet.insert_notifikasjon",
                     """
                     insert into notifikasjon 
                     (
@@ -138,6 +140,7 @@ class DataproduktModel(
 
             is OppgaveOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.OppgaveOpprettet.insert_notifikasjon",
                     """
                     insert into notifikasjon 
                     (
@@ -231,6 +234,7 @@ class DataproduktModel(
                 markerIngenUtsendingPåPåminnelseEksterneVarsler(hendelse.notifikasjonId)
 
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.OppgaveUtført.update_notifikasjon",
                     """
                         update notifikasjon
                         set utfoert_tidspunkt = ?,
@@ -264,6 +268,7 @@ class DataproduktModel(
                 }
 
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.OppgaveUtgått.update_notifikasjon",
                     """
                         update notifikasjon 
                         set utgaatt_tidspunkt = ?, 
@@ -279,6 +284,7 @@ class DataproduktModel(
 
             is PåminnelseOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.PåminnelseOpprettet.update_notifikasjon",
                     """
                         update notifikasjon 
                         set paaminnelse_tidspunkt = ?
@@ -294,6 +300,7 @@ class DataproduktModel(
 
             is BrukerKlikket -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.BrukerKlikket.insert_notifikasjon_klikk",
                     """
                         insert into notifikasjon_klikk (hendelse_id, notifikasjon_id, fnr, klikket_paa_tidspunkt) 
                         select val.hendelse_id, val.notifikasjon_id, val.fnr, val.klikket_paa_tidspunkt
@@ -315,6 +322,7 @@ class DataproduktModel(
             is EksterntVarselVellykket -> {
                 updateEksternVarsel(listOf(hendelse.varselId), "UTSENDING_VELLYKKET", null, metadata.timestamp)
                 database.nonTransactionalExecuteBatch(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.EksterntVarselVellykket.insert_ekstern_varsel_resultat",
                     """
                            insert into ekstern_varsel_resultat (varsel_id, resultat_name, resultat_receiver, resultat_type)
                            values (?, ?, ?, ?)
@@ -345,6 +353,7 @@ class DataproduktModel(
             is SoftDelete -> {
                 if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
                     database.nonTransactionalExecuteUpdate(
+                        name = "DataproduktModel.oppdaterModellEtterHendelse.SoftDelete.update_notifikasjon_by_grupperingsid",
                         """
                         update notifikasjon
                         set soft_deleted_tidspunkt = ?
@@ -358,6 +367,7 @@ class DataproduktModel(
                     }
                 }
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.SoftDelete.update_notifikasjon_by_id",
                     """
                     update notifikasjon
                     set soft_deleted_tidspunkt = ?
@@ -368,6 +378,7 @@ class DataproduktModel(
                     uuid(hendelse.aggregateId)
                 }
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.SoftDelete.update_sak",
                     """
                     update sak 
                     set soft_deleted_tidspunkt = ?
@@ -383,6 +394,7 @@ class DataproduktModel(
                 database.transaction {
                     if (hendelse.grupperingsid != null && hendelse.merkelapp != null) {
                         executeUpdate(
+                            name = "DataproduktModel.oppdaterModellEtterHendelse.HardDelete.delete_notifikasjon_by_grupperingsid",
                             """
                             delete from notifikasjon
                             where grupperingsid = ?
@@ -394,6 +406,7 @@ class DataproduktModel(
                         }
                     }
                     executeUpdate(
+                        name = "DataproduktModel.oppdaterModellEtterHendelse.HardDelete.delete_notifikasjon_by_id",
                         """
                         delete from notifikasjon
                         where notifikasjon_id = ?
@@ -402,6 +415,7 @@ class DataproduktModel(
                         uuid(hendelse.aggregateId)
                     }
                     executeUpdate(
+                        name = "DataproduktModel.oppdaterModellEtterHendelse.HardDelete.delete_sak",
                         """
                         delete from sak 
                         where sak_id = ?
@@ -410,6 +424,7 @@ class DataproduktModel(
                         uuid(hendelse.aggregateId)
                     }
                     executeUpdate(
+                        name = "DataproduktModel.oppdaterModellEtterHendelse.HardDelete.delete_aggregat_hendelse",
                         """
                         delete from aggregat_hendelse
                         where aggregat_id = ?
@@ -423,6 +438,7 @@ class DataproduktModel(
 
             is SakOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.SakOpprettet.insert_sak",
                     """
                         insert into sak (
                             sak_id, grupperings_id, produsent_id, merkelapp, tittel, tilleggsinformasjon, neste_steg, lenke, oppgitt_tidspunkt, mottatt_tidspunkt, soft_deleted_tidspunkt
@@ -464,6 +480,7 @@ class DataproduktModel(
 
             is NyStatusSak -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.NyStatusSak.insert_sak_status",
                     """
                         insert into sak_status (
                             status_id, idempotens_key, sak_id, status, overstyr_statustekst_med, oppgitt_tidspunkt, mottatt_tidspunkt, ny_lenke_til_sak
@@ -501,6 +518,7 @@ class DataproduktModel(
 
             is FristUtsatt -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.FristUtsatt.update_notifikasjon",
                     """
                     update notifikasjon
                     set frist = ?,
@@ -529,6 +547,7 @@ class DataproduktModel(
 
             is TilleggsinformasjonSak -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.TilleggsinformasjonSak.update_sak",
                     """
                     update sak
                     set tilleggsinformasjon = ?
@@ -544,6 +563,7 @@ class DataproduktModel(
 
             is NesteStegSak -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.NesteStegSak.update_sak",
                     """
                     update sak
                     set neste_steg = ?
@@ -557,6 +577,7 @@ class DataproduktModel(
 
             is HendelseModel.KalenderavtaleOpprettet -> {
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.KalenderavtaleOpprettet.insert_notifikasjon",
                     """
                     insert into notifikasjon 
                     (
@@ -642,6 +663,7 @@ class DataproduktModel(
                 }
 
                 database.nonTransactionalExecuteUpdate(
+                    name = "DataproduktModel.oppdaterModellEtterHendelse.KalenderavtaleOppdatert.update_notifikasjon",
                     """
                         update notifikasjon
                         set ny_lenke = ?,
@@ -774,6 +796,7 @@ class DataproduktModel(
 
     private suspend fun markerIngenUtsendingPåPåminnelseEksterneVarsler(notifikasjonId: UUID) {
         database.nonTransactionalExecuteUpdate(
+            name = "DataproduktModel.markerIngenUtsendingPåPåminnelseEksterneVarsler",
             """
                         update ekstern_varsel
                         set status_utsending = 'INGEN_UTSENDING'
@@ -794,6 +817,7 @@ class DataproduktModel(
         timestamp: Instant? = null,
     ) =
         database.nonTransactionalExecuteBatch(
+            name = "DataproduktModel.updateEksternVarsel",
             """
                            update ekstern_varsel
                            set 
@@ -819,6 +843,7 @@ class DataproduktModel(
         utregnetTidspunkt: Instant,
     ) {
         database.nonTransactionalExecuteUpdate(
+            name = "DataproduktModel.storeHardDelete",
             """
             insert into hard_delete_bestilling
             (
@@ -847,6 +872,7 @@ class DataproduktModel(
             when (it) {
                 is AltinnMottaker -> {
                     database.nonTransactionalExecuteUpdate(
+                        name = "DataproduktModel.storeMottakere.AltinnMottaker.insert_mottaker_enkeltrettighet",
                         """
                             insert into mottaker_enkeltrettighet (sak_id, notifikasjon_id, virksomhetsnummer, service_code, service_edition)
                             values (?, ?, ?, ?, ?)
@@ -863,6 +889,7 @@ class DataproduktModel(
 
                 is NærmesteLederMottaker -> {
                     database.nonTransactionalExecuteUpdate(
+                        name = "DataproduktModel.storeMottakere.NærmesteLederMottaker.insert_mottaker_naermeste_leder",
                         """
                             insert into mottaker_naermeste_leder (sak_id, notifikasjon_id, virksomhetsnummer, fnr_leder, fnr_ansatt)
                             values (?, ?, ?, ?, ?)
@@ -879,6 +906,7 @@ class DataproduktModel(
 
                 is HendelseModel.AltinnRessursMottaker -> {
                     database.nonTransactionalExecuteUpdate(
+                        name = "DataproduktModel.storeMottakere.AltinnRessursMottaker.insert_mottaker_altinn_ressurs",
                         """
                             insert into mottaker_altinn_ressurs (sak_id, notifikasjon_id, virksomhetsnummer, ressursid)
                             values (?, ?, ?, ?)
@@ -904,6 +932,7 @@ class DataproduktModel(
         statusUtsending: String,
     ) {
         database.nonTransactionalExecuteBatch(
+            name = "DataproduktModel.opprettVarselBestilling.insert_ekstern_varsel",
             """
             insert into ekstern_varsel
             (
@@ -1009,6 +1038,7 @@ class DataproduktModel(
         }
 
         database.nonTransactionalExecuteBatch(
+            name = "DataproduktModel.opprettVarselBestilling.insert_ekstern_varsel_mottaker_tlf",
             """
             insert into ekstern_varsel_mottaker_tlf(varsel_id, tlf) 
             values (?, ?)
@@ -1021,6 +1051,7 @@ class DataproduktModel(
         }
 
         database.nonTransactionalExecuteBatch(
+            name = "DataproduktModel.opprettVarselBestilling.insert_ekstern_varsel_mottaker_epost",
             """
             insert into ekstern_varsel_mottaker_epost (varsel_id, epost) 
             values (?, ?)
@@ -1033,6 +1064,7 @@ class DataproduktModel(
         }
 
         database.nonTransactionalExecuteBatch(
+            name = "DataproduktModel.opprettVarselBestilling.insert_ekstern_varsel_mottaker_tjeneste",
             """
             insert into ekstern_varsel_mottaker_tjeneste (varsel_id, tjenestekode, tjenesteversjon) 
             values (?, ?, ?)

@@ -42,6 +42,7 @@ class DataproduktEksterVarselVellykketTest {
         )
 
         val result = database.nonTransactionalExecuteQuery(
+            name = "DataproduktEksterVarselVellykketTest.Dataprodukt ekstern varsel vellykket med flere mottakere i respons",
             """
                 select * from ekstern_varsel_resultat where varsel_id = ?
                 """,
@@ -97,6 +98,7 @@ class DataproduktEksterVarselVellykketTest {
         )
 
         val result = database.nonTransactionalExecuteQuery(
+            name = "DataproduktEksterVarselVellykketTest.Dataprodukt ekstern varsel vellykket med Altinn 3 legacy notifications respons",
             """
                 select * from ekstern_varsel_resultat where varsel_id = ?
                 """,
@@ -141,6 +143,7 @@ class DataproduktEksterVarselVellykketTest {
         )
 
         val result = database.nonTransactionalExecuteQuery(
+            name = "DataproduktEksterVarselVellykketTest.Dataprodukt ekstern varsel vellykket med Altinn 3 recipients respons",
             """
                 select * from ekstern_varsel_resultat where varsel_id = ?
                 """,

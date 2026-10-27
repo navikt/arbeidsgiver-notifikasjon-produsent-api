@@ -70,6 +70,7 @@ data class NærmesteLederFor(
 
 private suspend fun Database.hentAnsatte(narmesteLederFnr: String): List<NærmesteLederFor> {
     return nonTransactionalExecuteQuery(
+        name = "BrukerRepositoryNærmesteLederTest.hentAnsatte",
         """
             select * from naermeste_leder_kobling 
                 where naermeste_leder_fnr = ?

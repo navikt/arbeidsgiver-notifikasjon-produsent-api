@@ -38,6 +38,7 @@ class ProdusentModelIdempotensTest {
         assertEquals(
             1,
             database.nonTransactionalExecuteQuery(
+                name = "ProdusentModelIdempotensTest.NyBeskjed to ganger ulik id.select_mottaker_altinn_ressurs",
                 "select * from mottaker_altinn_ressurs where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'"
             ) {}.size
         )
@@ -46,6 +47,7 @@ class ProdusentModelIdempotensTest {
         assertEquals(
             0,
             database.nonTransactionalExecuteQuery(
+                name = "ProdusentModelIdempotensTest.NyBeskjed to ganger ulik id.select_mottaker_altinn_ressurs_2",
                 "select * from mottaker_altinn_ressurs where notifikasjon_id = '$duplikatId'"
             ) {}.size
         )
@@ -72,6 +74,7 @@ class ProdusentModelIdempotensTest {
         assertEquals(
             1,
             database.nonTransactionalExecuteQuery(
+                name = "ProdusentModelIdempotensTest.NyBeskjed to ganger",
                 """
             select * from mottaker_altinn_ressurs
             where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'
@@ -194,6 +197,7 @@ private suspend fun assertDeleted(
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentModelIdempotensTest.assertDeleted.select_sak",
             """
                 select * from sak where id = '${sakId}'
             """
@@ -204,6 +208,7 @@ private suspend fun assertDeleted(
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentModelIdempotensTest.assertDeleted.select_notifikasjon",
             """
                 select * from notifikasjon where grupperingsid = '${grupperingsid}' and merkelapp = '${merkelapp}'
             """
@@ -214,6 +219,7 @@ private suspend fun assertDeleted(
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentModelIdempotensTest.assertDeleted.select_mottaker_altinn_enkeltrettighet",
             """
                 select * from mottaker_altinn_enkeltrettighet where notifikasjon_id = '${sakId}'
             """
@@ -224,6 +230,7 @@ private suspend fun assertDeleted(
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentModelIdempotensTest.assertDeleted.select_mottaker_altinn_ressurs",
             """
                 select * from mottaker_altinn_ressurs where notifikasjon_id = '${sakId}'
             """
@@ -234,6 +241,7 @@ private suspend fun assertDeleted(
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentModelIdempotensTest.assertDeleted.select_mottaker_altinn_enkeltrettighet_2",
             """
                 select * from mottaker_altinn_enkeltrettighet where notifikasjon_id = '${notifikasjonId}'
             """
@@ -243,6 +251,7 @@ private suspend fun assertDeleted(
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "ProdusentModelIdempotensTest.assertDeleted.select_mottaker_altinn_ressurs_2",
             """
                 select * from mottaker_altinn_ressurs where notifikasjon_id = '${notifikasjonId}'
             """

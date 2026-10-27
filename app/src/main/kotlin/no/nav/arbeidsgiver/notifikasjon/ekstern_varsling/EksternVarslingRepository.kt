@@ -85,6 +85,7 @@ class EksternVarslingRepository(
                 notifikasjonOpprettet = beskjedOpprettet.opprettetTidspunkt
             ) { tx: Transaction ->
                 tx.executeUpdate(
+                    name = "EksternVarslingRepository.oppdaterModellEtterBeskjedOpprettet",
                     """
                 insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
                 values (?, ?, ?)
@@ -109,6 +110,7 @@ class EksternVarslingRepository(
                 notifikasjonOpprettet = oppgaveOpprettet.opprettetTidspunkt
             ) { tx: Transaction ->
                 tx.executeUpdate(
+                    name = "EksternVarslingRepository.oppdaterModellEtterOppgaveOpprettet",
                     """
                 insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
                 values (?, ?, ?)
@@ -133,6 +135,7 @@ class EksternVarslingRepository(
                 notifikasjonOpprettet = kalenderavtaleOpprettet.opprettetTidspunkt
             ) { tx: Transaction ->
                 tx.executeUpdate(
+                    name = "EksternVarslingRepository.oppdaterModellEtterKalenderavtaleOpprettet",
                     """
                 insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
                 values (?, ?, ?)
@@ -151,6 +154,7 @@ class EksternVarslingRepository(
         if (hendelse.eksterneVarsler.isNotEmpty() || hendelse.tilstand == AVLYST) {
             database.transaction {
                 executeUpdate(
+                    name = "EksternVarslingRepository.oppdaterModellEtterKalenderavtaleOppdatert.update_ekstern_varsel_kontaktinfo",
                     """
                     update ekstern_varsel_kontaktinfo
                     set state = '${EksterntVarselTilstand.KANSELLERT}'
@@ -168,6 +172,7 @@ class EksternVarslingRepository(
                     notifikasjonOpprettet = hendelse.oppdatertTidspunkt.atOffset(ZoneOffset.UTC)
                 ) { tx: Transaction ->
                     tx.executeUpdate(
+                        name = "EksternVarslingRepository.oppdaterModellEtterKalenderavtaleOppdatert.insert_merkelapp_grupperingsid_notifikasjon",
                         """
                     insert into merkelapp_grupperingsid_notifikasjon (merkelapp, grupperingsid, notifikasjon_id)
                     values (?, ?, ?)
@@ -197,6 +202,7 @@ class EksternVarslingRepository(
 
     private suspend fun oppdaterModellEtterEksterntVarselFeilet(eksterntVarselFeilet: EksterntVarselFeilet) {
         database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.oppdaterModellEtterEksterntVarselFeilet",
             """
             update ekstern_varsel_kontaktinfo 
             set 
@@ -219,6 +225,7 @@ class EksternVarslingRepository(
 
     private suspend fun oppdaterModellEtterEksterntVarselVellykket(eksterntVarselVellykket: EksterntVarselVellykket) {
         database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.oppdaterModellEtterEksterntVarselVellykket",
             """
             update ekstern_varsel_kontaktinfo 
             set 
@@ -237,6 +244,7 @@ class EksternVarslingRepository(
 
     private suspend fun oppdaterModellEtterEksterntVarselKansellert(hendelse: EksterntVarselKansellert) {
         database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.oppdaterModellEtterEksterntVarselKansellert",
             """
             update ekstern_varsel_kontaktinfo 
             set 
@@ -253,6 +261,7 @@ class EksternVarslingRepository(
         database.transaction {
             if (hardDelete.merkelapp != null && hardDelete.grupperingsid != null) {
                 executeUpdate(
+                    name = "EksternVarslingRepository.oppdaterModellEtterHardDelete.insert_hard_delete_by_grupperingsid",
                     """
                     insert into hard_delete (notifikasjon_id) 
                     (
@@ -267,6 +276,7 @@ class EksternVarslingRepository(
                 }
 
                 executeUpdate(
+                    name = "EksternVarslingRepository.oppdaterModellEtterHardDelete.delete_merkelapp_grupperingsid_notifikasjon_by_grupperingsid",
                     """
                     delete from merkelapp_grupperingsid_notifikasjon 
                     where merkelapp = ? and grupperingsid = ?
@@ -278,6 +288,7 @@ class EksternVarslingRepository(
             }
 
             executeUpdate(
+                name = "EksternVarslingRepository.oppdaterModellEtterHardDelete.insert_hard_delete_by_id",
                 """
                 insert into hard_delete (notifikasjon_id) values (?)
                 on conflict do nothing
@@ -287,6 +298,7 @@ class EksternVarslingRepository(
             }
 
             executeUpdate(
+                name = "EksternVarslingRepository.oppdaterModellEtterHardDelete.delete_merkelapp_grupperingsid_notifikasjon_by_id",
                 """
                delete from merkelapp_grupperingsid_notifikasjon where notifikasjon_id = ?  
                 """
@@ -298,11 +310,13 @@ class EksternVarslingRepository(
 
     suspend fun deleteScheduledHardDeletes() {
         database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.deleteScheduledHardDeletes.refresh_ekstern_varsel_kontaktinfo_to_delete",
             """
             refresh materialized view ekstern_varsel_kontaktinfo_to_delete;
             """
         )
         database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.deleteScheduledHardDeletes.delete_ekstern_varsel_kontaktinfo",
             """
             delete from ekstern_varsel_kontaktinfo
             where notifikasjon_id in (
@@ -359,6 +373,7 @@ class EksternVarslingRepository(
     }
 
     private fun Transaction.isHardDeleted(notifikasjonsId: UUID) = executeQuery(
+        name = "EksternVarslingRepository.isHardDeleted",
         """
             select 1 from hard_delete where notifikasjon_id = ?
             """,
@@ -376,6 +391,7 @@ class EksternVarslingRepository(
         notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate(
+            name = "EksternVarslingRepository.insertSmsVarsel",
             """
             INSERT INTO ekstern_varsel_kontaktinfo
             (
@@ -427,6 +443,7 @@ class EksternVarslingRepository(
         notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate(
+            name = "EksternVarslingRepository.insertEpostVarsel",
             """
             INSERT INTO ekstern_varsel_kontaktinfo
             (
@@ -481,6 +498,7 @@ class EksternVarslingRepository(
         notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate(
+            name = "EksternVarslingRepository.insertAltinntjenesteVarsel",
             """
             INSERT INTO ekstern_varsel_kontaktinfo
             (
@@ -538,6 +556,7 @@ class EksternVarslingRepository(
         notifikasjonOpprettet: OffsetDateTime,
     ) {
         executeUpdate(
+            name = "EksternVarslingRepository.insertAltinnressursVarsel",
             """
             INSERT INTO ekstern_varsel_kontaktinfo
             (
@@ -596,6 +615,7 @@ class EksternVarslingRepository(
 
     suspend fun releaseTimedOutJobLocks(): List<ReleasedResource> {
         return database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.releaseTimedOutJobLocks",
             """
             UPDATE job_queue
             SET locked = false
@@ -615,12 +635,14 @@ class EksternVarslingRepository(
     suspend fun detectEmptyDatabase() {
         database.transaction {
             val databaseIsEmpty = executeQuery(
+                name = "EksternVarslingRepository.detectEmptyDatabase.select_emergency_break",
                 """select 1 from emergency_break limit 1""", transform = {}
             ).isEmpty()
 
             if (databaseIsEmpty) {
                 log.error("database is empty, disabling processing")
                 executeUpdate(
+                    name = "EksternVarslingRepository.detectEmptyDatabase.insert_emergency_break",
                     """
                         insert into emergency_break (id, stop_processing, detected_at)
                         values (0, true, CURRENT_TIMESTAMP)
@@ -636,6 +658,7 @@ class EksternVarslingRepository(
 
     suspend fun emergencyBreakOn(): Boolean {
         return database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.emergencyBreakOn",
             """ select stop_processing from emergency_break where id = 0 """,
             transform = { getBoolean("stop_processing") }
         )
@@ -646,6 +669,7 @@ class EksternVarslingRepository(
 
     suspend fun createJobsForAbandonedVarsler() {
         database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.createJobsForAbandonedVarsler",
             """
             insert into job_queue (varsel_id, locked)
             (
@@ -662,6 +686,7 @@ class EksternVarslingRepository(
 
     suspend fun findJob(lockTimeout: Duration): UUID? =
         database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.findJob",
             """
             UPDATE job_queue
             SET locked = true,
@@ -692,6 +717,7 @@ class EksternVarslingRepository(
 
     suspend fun findVarsel(varselId: UUID): EksternVarselTilstand? {
         return database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.findVarsel",
             """
             select * from ekstern_varsel_kontaktinfo where varsel_id = ?
             """,
@@ -801,6 +827,7 @@ class EksternVarslingRepository(
 
     private fun Transaction.deleteFromJobQueue(varselId: UUID) {
         executeUpdate(
+            name = "EksternVarslingRepository.deleteFromJobQueue",
             """
             DELETE FROM job_queue WHERE varsel_id = ?
         """
@@ -812,6 +839,7 @@ class EksternVarslingRepository(
     suspend fun markerSomKvittertAndDeleteJob(varselId: UUID) {
         database.transaction {
             executeUpdate(
+                name = "EksternVarslingRepository.markerSomKvittertAndDeleteJob",
                 """
                     update ekstern_varsel_kontaktinfo
                     set state = '${EksterntVarselTilstand.KVITTERT}'
@@ -829,6 +857,7 @@ class EksternVarslingRepository(
     suspend fun markerSomSendtAndReleaseJob(varselId: UUID, response: Altinn3VarselKlient.OrderResponse) {
         database.transaction {
             executeUpdate(
+                name = "EksternVarslingRepository.markerSomSendtAndReleaseJob",
                 """ 
                 update ekstern_varsel_kontaktinfo
                 set 
@@ -872,6 +901,7 @@ class EksternVarslingRepository(
     suspend fun scheduleJob(varselId: UUID, resumeAt: LocalDateTime) {
         database.transaction {
             executeUpdate(
+                name = "EksternVarslingRepository.scheduleJob.insert_wait_queue",
                 """
                 insert into wait_queue (varsel_id, resume_job_at) 
                 values (?, ?)
@@ -881,6 +911,7 @@ class EksternVarslingRepository(
                 timestamp_without_timezone(resumeAt)
             }
             executeUpdate(
+                name = "EksternVarslingRepository.scheduleJob.delete_job_queue",
                 """
                 delete from job_queue where varsel_id = ?
                 """
@@ -892,6 +923,7 @@ class EksternVarslingRepository(
 
     suspend fun rescheduleWaitingJobs(scheduledAt: LocalDateTime): Int {
         return database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.rescheduleWaitingJobs",
             """
                 with selected as (
                     delete from wait_queue
@@ -909,6 +941,7 @@ class EksternVarslingRepository(
 
     suspend fun jobQueueCount(): Int {
         return database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.jobQueueCount",
             """
             select count(*) as count from job_queue 
         """
@@ -919,6 +952,7 @@ class EksternVarslingRepository(
 
     suspend fun waitQueueCount(): Pair<Int, Int> {
         return database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.waitQueueCount",
             """
             select
                 count(case when resume_job_at <= now() then 1 end) as past,
@@ -932,6 +966,7 @@ class EksternVarslingRepository(
 
     suspend fun mottakerErPåAllowList(mottaker: String): Boolean {
         return database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.mottakerErPåAllowList",
             """
             select mottaker from allow_list 
             where mottaker = ?
@@ -945,6 +980,7 @@ class EksternVarslingRepository(
 
     suspend fun updateEmergencyBrakeTo(newState: Boolean) {
         database.nonTransactionalExecuteUpdate(
+            name = "EksternVarslingRepository.updateEmergencyBrakeTo",
             """
             insert into emergency_break (id, stop_processing, detected_at)
             values (0, ?, CURRENT_TIMESTAMP)
@@ -961,6 +997,7 @@ class EksternVarslingRepository(
 
     suspend fun ordreHarMottakerPåAllowlist(orderId: String): Boolean {
         return database.nonTransactionalExecuteQuery(
+            name = "EksternVarslingRepository.ordreHarMottakerPåAllowlist",
             """
             select 1 from ekstern_varsel_kontaktinfo
             inner join allow_list on mottaker = coalesce(epost_adresse, tlfnr, ressursId, concat(service_code, ':', service_edition))
@@ -975,6 +1012,7 @@ class EksternVarslingRepository(
 
 internal fun Transaction.putOnJobQueue(varselId: UUID) {
     executeUpdate(
+        name = "EksternVarslingRepository.putOnJobQueue",
         """
             insert into job_queue(varsel_id, locked) values (?, false)
             on conflict do nothing;

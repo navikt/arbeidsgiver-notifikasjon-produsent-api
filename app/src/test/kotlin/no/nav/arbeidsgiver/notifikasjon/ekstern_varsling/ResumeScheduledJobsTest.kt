@@ -110,6 +110,7 @@ class ResumeScheduledJobsTest {
 
 suspend fun Database.jobQueue(): List<UUID> =
     this.nonTransactionalExecuteQuery(
+        name = "ResumeScheduledJobsTest.jobQueue",
         """
         select varsel_id from job_queue
         order by id
@@ -120,6 +121,7 @@ suspend fun Database.jobQueue(): List<UUID> =
 
 suspend fun Database.waitQueue(): List<UUID> =
     this.nonTransactionalExecuteQuery(
+        name = "ResumeScheduledJobsTest.waitQueue",
         """
         select varsel_id from wait_queue
     """

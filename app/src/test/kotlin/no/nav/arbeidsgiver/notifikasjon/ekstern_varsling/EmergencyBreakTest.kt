@@ -61,6 +61,7 @@ class EmergencyBreakTest {
         repository.oppdaterModellEtterHendelse(oppgaveOpprettet)
 
         database.nonTransactionalExecuteUpdate(
+            name = "EmergencyBreakTest.EmergencyBreak",
             """
             update emergency_break
             set stop_processing = false
