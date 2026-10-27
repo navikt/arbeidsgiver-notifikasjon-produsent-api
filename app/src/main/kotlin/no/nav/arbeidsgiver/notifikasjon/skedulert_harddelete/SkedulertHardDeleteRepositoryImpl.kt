@@ -69,6 +69,7 @@ class SkedulertHardDeleteRepositoryImpl(
         tilOgMed: Instant,
     ): List<SkedulertHardDelete> {
         return database.nonTransactionalExecuteQuery(
+            name = "SkedulertHardDeleteRepositoryImpl.hentSkedulerteHardDeletes",
             sql = """
             select 
                 aggregate.aggregate_id,
@@ -217,6 +218,7 @@ class SkedulertHardDeleteRepositoryImpl(
             registrerDelete(this, aggregateId)
             if (merkelapp != null && grupperingsid != null) {
                 executeUpdate(
+                    name = "SkedulertHardDeleteRepositoryImpl.delete.delete_aggregate_by_grupperingsid",
                     """
                     delete from aggregate where merkelapp = ? and grupperingsid = ?  
                 """
@@ -227,6 +229,7 @@ class SkedulertHardDeleteRepositoryImpl(
             }
 
             executeUpdate(
+                name = "SkedulertHardDeleteRepositoryImpl.delete.delete_aggregate_by_id",
                 """
                 delete from aggregate where aggregate_id = ?  
             """
@@ -238,6 +241,7 @@ class SkedulertHardDeleteRepositoryImpl(
 
     override suspend fun hent(aggregateId: UUID): SkedulertHardDelete? {
         return database.nonTransactionalExecuteQuery(
+            name = "SkedulertHardDeleteRepositoryImpl.hent",
             """
             select 
                 aggregate.aggregate_id,
@@ -267,6 +271,7 @@ class SkedulertHardDeleteRepositoryImpl(
         grupperingsid: String?,
     ) {
         database.nonTransactionalExecuteUpdate(
+            name = "SkedulertHardDeleteRepositoryImpl.saveAggregate",
             """
                 insert into aggregate (
                     aggregate_id, 
@@ -333,6 +338,7 @@ class SkedulertHardDeleteRepositoryImpl(
         if (hardDelete == null) return
         val scheduledTime = ScheduledTime(hardDelete, opprettetTidspunkt)
         database.nonTransactionalExecuteUpdate(
+            name = "SkedulertHardDeleteRepositoryImpl.upsert",
             """
             insert into skedulert_hard_delete (
                 aggregate_id, 

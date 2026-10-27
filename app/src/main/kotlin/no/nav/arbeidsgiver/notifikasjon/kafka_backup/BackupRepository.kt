@@ -32,7 +32,7 @@ class BackupRepository(
     }
 
     private fun Transaction.delete(key: ByteArray) {
-        executeUpdate("""
+        executeUpdate(name = "BackupRepository.delete", """
             update topic_notifikasjon
             set event_value = null
             where event_key = ?
@@ -45,6 +45,7 @@ class BackupRepository(
     private fun Transaction.save(record: ConsumerRecord<ByteArray, ByteArray>) {
         val headers = record.headers().map { it.key() to it.value()?.base64Encoded }
         executeUpdate(
+        name = "BackupRepository.save",
         """
             insert into topic_notifikasjon
             (
@@ -80,6 +81,7 @@ class BackupRepository(
 
     suspend fun readRecords(offset: Long, limit: Long): List<Record> {
         return database.nonTransactionalExecuteQuery(
+            name = "BackupRepository.readRecords",
             """
                 select * from topic_notifikasjon
                 order by id

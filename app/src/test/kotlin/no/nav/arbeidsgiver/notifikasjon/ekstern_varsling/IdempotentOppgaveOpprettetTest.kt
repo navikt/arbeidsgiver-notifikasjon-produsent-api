@@ -60,6 +60,7 @@ class IdempotentOppgaveOpprettetTest {
 
 suspend fun Database.antallVarsler(varselId: UUID): Int =
     this.nonTransactionalExecuteQuery(
+        name = "IdempotentOppgaveOpprettetTest.antallVarsler",
         """
         select count(*) as antall 
         from ekstern_varsel_kontaktinfo 

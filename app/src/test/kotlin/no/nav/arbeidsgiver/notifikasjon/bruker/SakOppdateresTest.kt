@@ -13,6 +13,7 @@ class SakOppdateresTest {
 
 
     private suspend fun Database.hentSakSisteEndretTidspunktById(sakId: UUID) = nonTransactionalExecuteQuery(
+        name = "SakOppdateresTest.hentSakSisteEndretTidspunktById",
         """
             select sist_endret_tidspunkt
             from sak

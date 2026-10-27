@@ -156,6 +156,7 @@ class DataproduktIdempotensTest {
         )
 
         val notifikasjoner = database.nonTransactionalExecuteQuery(
+            name = "DataproduktIdempotensTest.Atomisk hard delete av Sak sletter kun tilhørende notifikasjoner",
             """
                 select notifikasjon_id from notifikasjon
             """.trimIndent(),
@@ -194,6 +195,7 @@ class DataproduktIdempotensTest {
         )
 
         val notifikasjoner = database.nonTransactionalExecuteQuery(
+            name = "DataproduktIdempotensTest.Atomisk soft delete av Sak sletter kun tilhørende notifikasjoner",
             """
                 select notifikasjon_id from notifikasjon
                 where soft_deleted_tidspunkt is null
@@ -301,7 +303,7 @@ private suspend fun assertDeleted(
 
 private suspend fun Database.assertNoRows(@Language("PostgreSQL") sql: String) {
     with(
-        nonTransactionalExecuteQuery(sql) { asMap() }
+        nonTransactionalExecuteQuery(name = "DataproduktIdempotensTest.assertNoRows", sql) { asMap() }
     ) {
         assertEquals(0, size)
     }

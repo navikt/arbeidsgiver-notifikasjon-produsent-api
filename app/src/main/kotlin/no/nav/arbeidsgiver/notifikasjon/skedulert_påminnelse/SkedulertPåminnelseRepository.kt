@@ -39,6 +39,7 @@ class SkedulertPåminnelseRepository(
     suspend fun hentOgFjernAlleAktuellePåminnelser(now: Instant): Collection<SkedulertPåminnelse> {
         return database.transaction {
             val bestillinger = executeQuery(
+                name = "SkedulertPåminnelseRepository.hentOgFjernAlleAktuellePåminnelser.delete_bestillinger",
                 """
                     delete from bestillinger
                     where 
@@ -73,6 +74,7 @@ class SkedulertPåminnelseRepository(
             )
 
             executeBatch(
+                name = "SkedulertPåminnelseRepository.hentOgFjernAlleAktuellePåminnelser.insert_utforte_bestillinger",
                 """
                     insert into utforte_bestillinger(bestilling_id) values (?) on conflict do nothing
                 """.trimIndent(),
@@ -89,6 +91,7 @@ class SkedulertPåminnelseRepository(
         when (hendelse) {
             is HendelseModel.OppgaveOpprettet -> database.transaction {
                 executeUpdate(
+                    name = "SkedulertPåminnelseRepository.processHendelse.OppgaveOpprettet.insert_notifikasjoner",
                     """
                 insert into notifikasjoner (notifikasjon_id, merkelapp, tilstand, grupperingsid)
                 values (?, ?, ?, ?)
@@ -162,6 +165,7 @@ class SkedulertPåminnelseRepository(
 
             is HendelseModel.KalenderavtaleOpprettet -> database.transaction {
                 executeUpdate(
+                    name = "SkedulertPåminnelseRepository.processHendelse.KalenderavtaleOpprettet.insert_notifikasjoner",
                     """
                 insert into notifikasjoner (notifikasjon_id, merkelapp, tilstand, grupperingsid)
                 values (?, ?, ?, ?)
@@ -265,6 +269,7 @@ class SkedulertPåminnelseRepository(
 
     private fun Transaction.markerPåminnelserLukket(notifikasjonId: UUID) {
         val slettedeBestillingsIder = executeQuery(
+            name = "SkedulertPåminnelseRepository.markerPåminnelserLukket.delete_bestillinger",
             """
                 delete from bestillinger
                 where notifikasjon_id = ?
@@ -279,6 +284,7 @@ class SkedulertPåminnelseRepository(
         )
 
         executeBatch(
+            name = "SkedulertPåminnelseRepository.markerPåminnelserLukket.insert_utforte_bestillinger",
             """
                 insert into utforte_bestillinger(bestilling_id) values (?) on conflict do nothing
             """.trimIndent(),
@@ -290,6 +296,7 @@ class SkedulertPåminnelseRepository(
 
     private fun Transaction.markerBestillingLukket(bestillingId: UUID) {
         executeUpdate(
+            name = "SkedulertPåminnelseRepository.markerBestillingLukket.delete_bestillinger",
             """
                 delete from bestillinger
                 where bestilling_id = ?
@@ -299,6 +306,7 @@ class SkedulertPåminnelseRepository(
         }
 
         executeUpdate(
+            name = "SkedulertPåminnelseRepository.markerBestillingLukket.insert_utforte_bestillinger",
             """
                 insert into utforte_bestillinger(bestilling_id) values (?) on conflict do nothing
             """.trimIndent(),
@@ -309,6 +317,7 @@ class SkedulertPåminnelseRepository(
 
     private fun Transaction.processSakSlettet(merkelapp: String, grupperingsid: String) {
         executeUpdate(
+            name = "SkedulertPåminnelseRepository.processSakSlettet.update_notifikasjoner",
             """
                 update notifikasjoner
                 set tilstand = ?
@@ -321,6 +330,7 @@ class SkedulertPåminnelseRepository(
         }
 
         executeUpdate(
+            name = "SkedulertPåminnelseRepository.processSakSlettet.insert_slettede_saker",
             """
                 insert into slettede_saker(merkelapp, grupperingsid)
                 values (?, ?)
@@ -334,6 +344,7 @@ class SkedulertPåminnelseRepository(
 
     private fun Transaction.settNotifikasjontilstand(notifikasjonId: NotifikasjonId, tilstand: Notifikasjontilstand) {
         executeUpdate(
+            name = "SkedulertPåminnelseRepository.settNotifikasjontilstand",
             """
                 update notifikasjoner
                 set tilstand = case when tilstand = ? then tilstand else ? end
@@ -348,6 +359,7 @@ class SkedulertPåminnelseRepository(
 
     private fun Transaction.hentOppgavetilstand(oppgaveId: UUID): Notifikasjontilstand? {
         return executeQuery(
+            name = "SkedulertPåminnelseRepository.hentOppgavetilstand",
             """
             select tilstand from notifikasjoner where notifikasjon_id = ?
             """.trimIndent(),
@@ -372,6 +384,7 @@ class SkedulertPåminnelseRepository(
         }
 
         executeUpdate(
+            name = "SkedulertPåminnelseRepository.bestillPåminnelse",
             """
             insert into bestillinger (
                 notifikasjon_id,

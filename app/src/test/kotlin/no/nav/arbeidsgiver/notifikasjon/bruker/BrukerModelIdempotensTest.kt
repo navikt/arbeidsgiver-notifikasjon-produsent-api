@@ -30,6 +30,7 @@ class BrukerModelIdempotensTest {
         brukerRepository.oppdaterModellEtterHendelse(EksempelHendelse.BeskjedOpprettet)
 
         val antallMottakere = database.nonTransactionalExecuteQuery(
+            name = "BrukerModelIdempotensTest.NyBeskjed to ganger",
             """
             select * from mottaker_altinn_tilgang
             where notifikasjon_id = '${EksempelHendelse.BeskjedOpprettet.notifikasjonId}'
@@ -166,18 +167,21 @@ private suspend fun assertDeleted(
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "BrukerModelIdempotensTest.assertDeleted.select_sak",
             "select * from sak where id = '${sakId}'"
         ) { asMap() }.size
     )
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "BrukerModelIdempotensTest.assertDeleted.select_notifikasjon",
             "select * from notifikasjon where grupperingsid = '${grupperingsid}' and merkelapp = '${merkelapp}'"
         ) { asMap() }.size
     )
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "BrukerModelIdempotensTest.assertDeleted.select_mottaker_altinn_tilgang",
             "select * from mottaker_altinn_tilgang where sak_id = '${sakId}'"
         ) { asMap() }.size
     )
@@ -185,12 +189,14 @@ private suspend fun assertDeleted(
         0,
 
         database.nonTransactionalExecuteQuery(
+            name = "BrukerModelIdempotensTest.assertDeleted.select_mottaker_altinn_tilgang_2",
             "select * from mottaker_altinn_tilgang where notifikasjon_id = '${notifikasjonId}'"
         ) { asMap() }.size
     )
     assertEquals(
         0,
         database.nonTransactionalExecuteQuery(
+            name = "BrukerModelIdempotensTest.assertDeleted.select_sak_status",
             "select * from sak_status where sak_id = '${notifikasjonId}'"
         ) { asMap() }.size
     )

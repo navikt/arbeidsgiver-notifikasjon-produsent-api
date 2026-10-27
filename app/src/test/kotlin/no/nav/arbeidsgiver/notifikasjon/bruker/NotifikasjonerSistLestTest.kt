@@ -43,6 +43,7 @@ class NotifikasjonerSistLestTest {
                 assert(tidspunktEtterOppdatering == initieltTidspunkt.plusDays(4))
 
                 val rowCount = database.nonTransactionalExecuteQuery(
+                    name = "NotifikasjonerSistLestTest.Oppdaterer eksisterende notifikasjoner sist lest for bruker",
                     """
                     select count(*) from notifikasjoner_sist_lest                    
                 """.trimIndent(), {}, {
