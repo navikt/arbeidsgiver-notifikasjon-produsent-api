@@ -395,9 +395,6 @@ fun <T> measureSql(
     name: String,
     action: () -> T
 ): T {
-    if (!Metrics.SQL_METRICS_ENABLED) {
-        return action()
-    }
     val timer = getTimer(
         name = "database.execution",
         tags = setOf("query" to name),

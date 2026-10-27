@@ -13,12 +13,6 @@ object Metrics {
     val clock: Clock = Clock.SYSTEM
 
     val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-
-    /** database_execution_seconds per sql-spørring. Avslått for å måle CPU-kostnaden; sett til true ved behov. */
-    const val SQL_METRICS_ENABLED = false
-
-    /** graphql-micrometer-instrumentering per felt. Avslått for å måle CPU-kostnaden; sett til true ved behov. */
-    const val GRAPHQL_FIELD_METRICS_ENABLED = false
 }
 
 suspend fun <T> Timer.coRecord(body: suspend () -> T): T {

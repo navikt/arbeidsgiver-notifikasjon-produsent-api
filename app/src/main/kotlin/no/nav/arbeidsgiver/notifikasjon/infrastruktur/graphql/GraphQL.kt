@@ -19,7 +19,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.slf4j.MDCContext
-import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics.meterRegistry
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.findCause
@@ -177,11 +176,10 @@ fun createGraphQL(
     val schema = SchemaGenerator()
         .makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
     return newGraphQL(schema)
-        .apply {
-            if (Metrics.GRAPHQL_FIELD_METRICS_ENABLED) {
-                instrumentation(MicrometerInstrumentation(meterRegistry))
-            }
-        }
+        // Avslått: graphql-micrometer måler hvert felt i hver respons. Det gir en timer per
+        // felt med klientside-persentiler, og vi mistenker at det står for en stor del av
+        // CPU-bruken per pod. graphql.timer og graphql.datafetcher dekker behovet inntil videre.
+        // .instrumentation(MicrometerInstrumentation(meterRegistry))
         .build()
 }
 
