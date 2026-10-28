@@ -26,10 +26,10 @@ jobs:
             build-mode: none
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # manual build needed for codeql to scan kotlin code, needs class files for semantic scan
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: 'temurin'
           java-version: 21
@@ -37,7 +37,7 @@ jobs:
           cache-dependency-path: app/pom.xml
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -48,6 +48,6 @@ jobs:
         working-directory: app
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
           category: "/language:${{matrix.language}}"
