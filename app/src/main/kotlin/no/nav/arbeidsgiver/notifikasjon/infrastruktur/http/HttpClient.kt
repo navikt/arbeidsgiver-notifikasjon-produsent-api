@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.HttpClientMetricsFeature
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.PropagateFromMDCPlugin
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.coRecord
 import java.io.EOFException
 import java.net.SocketException
 import java.util.concurrent.ConcurrentHashMap
@@ -86,14 +87,15 @@ fun defaultHttpClient(
 
 val httpClientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
 
-fun withTimer(
+suspend fun <T> withTimer(
     name: String,
-    additionalTags: Tags = Tags.empty()
-): Timer =
+    additionalTags: Tags = Tags.empty(),
+    body: suspend () -> T,
+): T =
     httpClientTaggedTimerTimer.computeIfAbsent(name) {
         Timer.builder("http_client")
             .tag("name", it)
             .tags(additionalTags)
             .publishPercentileHistogram()
             .register(Metrics.meterRegistry)
-    }
+    }.coRecord(publishPercentileHistogram = true, body)
