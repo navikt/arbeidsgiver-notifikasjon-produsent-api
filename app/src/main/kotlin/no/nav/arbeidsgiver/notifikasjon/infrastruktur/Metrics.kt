@@ -15,7 +15,18 @@ object Metrics {
     val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 }
 
-suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
+/**
+ * Måler [body] med denne timeren. Feiler [body], registreres tiden i tillegg på en timer med samme
+ * navn og tags, pluss taggen `throwable`.
+ *
+ * Feil-timeren bygges på nytt fra navn og tags, så timerens distribusjonskonfig blir ikke med.
+ * Sett [publishPercentileHistogram] til samme verdi som timeren ble registrert med. Ellers får samme
+ * metrikknavn både histogram og summary, og Prometheus-scrape feiler med ClassCastException.
+ */
+suspend fun <T> Timer.coRecord(
+    publishPercentileHistogram: Boolean = false,
+    body: suspend () -> T,
+): T {
     val start = Metrics.clock.monotonicTime()
     try {
         return body()
@@ -23,6 +34,7 @@ suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
         Timer.builder(this.id.name)
             .tags(this.id.tags)
             .tag("throwable", t.javaClass.canonicalName)
+            .publishPercentileHistogram(publishPercentileHistogram)
             .register(Metrics.meterRegistry)
             .record(Metrics.clock.monotonicTime() - start, TimeUnit.NANOSECONDS)
         throw t
