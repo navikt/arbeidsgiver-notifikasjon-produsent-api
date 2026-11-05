@@ -39,13 +39,11 @@ C4Dynamic
     Rel(brukerApi, brukerApiDb, "read")
 
     Container_Boundary(eksternVarslingBnd, "notifikasjon-ekstern-varsling") {
-        System_Ext(altinnWs, "Altinn SOAP WS", "Tjenesteeier SOAP API i Altinn for sending av sms/epost")
-        Container_Ext(altinnVarselFirewall, "altinn-varsel-firewall", "ktor app", "Proxy tjeneste eid av team FAGER")
+        System_Ext(altinnNotifications, "Altinn 3 Notifications API", "REST API i Altinn for sending av sms/epost")
         Container(eksternVarsling, "notifikasjon-ekstern-varsling", "ktor app", "varsler bruker eksternt via sms/epost")
         ContainerDb(eksternVarslingDb, "database", "gcp sql postgres")
     }
-    Rel(eksternVarsling, altinnVarselFirewall, "sendStandaloneNotification (sms/epost/serviceCode)")
-    Rel(altinnVarselFirewall, altinnWs, "sendStandaloneNotification (sms/epost/serviceCode)")
+    Rel(eksternVarsling, altinnNotifications, "POST /future/orders, GET /future/shipment/{id}")
     BiRel(notifikasjonerTopic, eksternVarsling, "read/write")
     BiRel(eksternVarsling, eksternVarslingDb, "read/write")
 
@@ -121,11 +119,21 @@ Det blir også produsert noen hendelser baser på brukerinteraksjon, f.eks bruke
 #### notifikasjon-ekstern-varsling
 
 [notifikasjon-ekstern-varsling](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/ekstern_varsling) sender eksterne varsler
-til arbeidsgivere via Altinn sitt SOAP API (https://altinn.github.io/docs/api/tjenesteeiere/soap/endepunkt-liste/#notificationagencyexternal).
-Som et risikominimerende tiltak gjøres dette via en dedikert proxy-tjeneste [altinn-varsel-firewall](https://github.com/navikt/altinn-varsel-firewall) som er eid av team FAGER.
-notifikasjon-ekstern-varsling konsumerer hendelser fra kafka topicen og registrerer/skedulerer varsler for notifikasjoner som skal ha det.  
-Ekstern varsling har en egen database som brukes for å lagre skedulerte varsler og status på varsler. Når varsler er sendt blir det lagret en hendelse på kafka topicen med status på varslingen iht. svar fra Altinn sitt API.
-Applikasjonen har retry mekanismer som håndterer ustabilitet i Altinn sitt API.
+(sms og e-post) til arbeidsgivere via REST API-et til [Altinn 3 Notifications](https://docs.altinn.studio/nb/notifications/).
+Klienten er implementert i [Altinn3VarselKlient.kt](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/ekstern_varsling/Altinn3VarselKlient.kt).
+notifikasjon-ekstern-varsling konsumerer hendelser fra kafka topicen og registrerer/skedulerer varsler for notifikasjoner som skal ha det.
+
+Utsending skjer i to steg:
+
+1. Bestilling med `POST /notifications/api/v1/future/orders` ([OpenAPI](https://docs.altinn.studio/nb/notifications/reference/openapi/#/Order/post_future_orders)).
+   Hver bestilling har en `idempotencyId`, slik at Altinn ikke sender samme varsel to ganger hvis bestillingen sendes på nytt. Altinn svarer med en `shipmentId`.
+2. Statusoppfølging med `GET /notifications/api/v1/future/shipment/{shipmentId}` til bestillingen har fått endelig status (levert, feilet eller kansellert).
+
+Kallene autentiseres med et Altinn plattform-token. Applikasjonen henter et Maskinporten-token med scope `altinn:serviceowner/notifications.create`
+og veksler det inn via `/authentication/api/v1/exchange/maskinporten` ([AltinnPlattformTokenClientImpl.kt](app/src/main/kotlin/no/nav/arbeidsgiver/notifikasjon/infrastruktur/altinn/AltinnPlattformTokenClientImpl.kt)).
+
+Ekstern varsling har en egen database som brukes for å lagre skedulerte varsler og status på varsler. Når en bestilling har fått endelig status, blir det lagret en hendelse på kafka topicen med status på varslingen iht. svar fra Altinn sitt API.
+Applikasjonen prøver bestillingen på nytt ved feil fra Altinn, unntatt valideringsfeil (HTTP 400 og 422).
 
 #### notifikasjon-skedulert-harddelete
 

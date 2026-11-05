@@ -30,7 +30,7 @@ The platform is owned by **team fager** in NAV (Norwegian Labour and Welfare Adm
 - **Kafka Clients 3.9** for event production/consumption
 - **PostgreSQL** with HikariCP connection pooling and **Flyway** migrations
 - **Micrometer + Prometheus** for metrics
-- **Apache CXF** for Altinn SOAP/WSDL integration
+- **Ktor client** for the Altinn 3 Notifications REST API (`/future/orders`, `/future/shipment/{id}`)
 - **Code style**: Kotlin Official (ktfmt). Use `when` expressions, sealed classes, data classes, and extension functions idiomatically.
 - **Package root**: `no.nav.arbeidsgiver.notifikasjon`
 
