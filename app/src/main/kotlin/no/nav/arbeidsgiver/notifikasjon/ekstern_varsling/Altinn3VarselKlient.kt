@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.convertValue
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.Ticker
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -15,15 +17,19 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.arbeidsgiver.notifikasjon.ekstern_varsling.Altinn3VarselKlient.*
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.Metrics
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.altinn.AltinnPlattformTokenClientImpl
+import no.nav.arbeidsgiver.notifikasjon.infrastruktur.cache.getAsync
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.http.defaultHttpClient
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.json.laxObjectMapper
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.logger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.logging.teamLogger
 import no.nav.arbeidsgiver.notifikasjon.infrastruktur.rethrowIfCancellation
 import no.nav.arbeidsgiver.notifikasjon.produsent.api.ensurePrefix
+import java.time.Duration
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -590,6 +596,35 @@ class Altinn3VarselKlientMedFilter(
             loggingKlient.shipment(shipmentId)
         }
     }
+}
+
+/**
+ * Begrenser polling mot Altinn når job_queue nesten er tom og samme shipment sjekkes i tett løkke.
+ * Altinn har meldt at for tett polling påfører dem ekstra kostnad, så status for en shipment hentes maks én gang per [ttl] per pod.
+ */
+class Altinn3VarselKlientMedCache(
+    private val delegate: Altinn3VarselKlient,
+    ttl: Duration = Duration.ofMinutes(5),
+    ticker: Ticker = Ticker.systemTicker(),
+) : Altinn3VarselKlient {
+    private val shipmentCache = Caffeine.newBuilder()
+        .recordStats()
+        .expireAfterWrite(ttl)
+        .maximumSize(10_000)
+        .ticker(ticker)
+        .buildAsync<String, ShipmentResponse>().also {
+            CaffeineCacheMetrics(
+                it.synchronous(),
+                "altinn3VarselShipment",
+                emptyList()
+            ).bindTo(Metrics.meterRegistry)
+        }
+
+    override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String): OrderResponse =
+        delegate.order(eksternVarsel, idempotencyId)
+
+    override suspend fun shipment(shipmentId: String): ShipmentResponse =
+        shipmentCache.getAsync(shipmentId) { delegate.shipment(it) }
 }
 
 class Altinn3VarselKlientLogging : Altinn3VarselKlient {
