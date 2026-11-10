@@ -58,7 +58,7 @@ jobs:
 
       - run: PGPASSWORD=postgres psql -U postgres -h localhost -p 1337 -f ./local-db-init.sql
 
-      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           java-version: '21'
           distribution: temurin
@@ -68,7 +68,7 @@ jobs:
       - run: mvn -B package
         working-directory: app
 
-      - uses: nais/docker-build-push@dd7421d5068057a020ca46ead966c26190c516b1 # v0
+      - uses: nais/docker-build-push@d3a1f7e259ecc381a50435e1d4add9059429ebd7 # v0
         id: gar-push
         with:
           team: fager
