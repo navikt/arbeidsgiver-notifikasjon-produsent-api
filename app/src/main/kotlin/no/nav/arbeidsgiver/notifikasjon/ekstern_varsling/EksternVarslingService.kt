@@ -15,6 +15,7 @@ import no.nav.arbeidsgiver.notifikasjon.tid.OsloTidImpl
 import org.slf4j.event.Level.ERROR
 import org.slf4j.event.Level.WARN
 import java.time.Duration
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
 /*
@@ -110,6 +111,11 @@ class EksternVarslingService(
     private val hendelseProdusent: HendelseProdusent,
     private val recheckEmergencyBrakeDelay: Duration = Duration.ofMinutes(1),
     private val idleSleepDelay: Duration = Duration.ofSeconds(10),
+    /**
+     * Altinn har meldt at tett polling påfører dem kostnad. Ventetiden håndheves via wait_queue,
+     * så den gjelder på tvers av pods og uavhengig av hvor stor job_queue er.
+     */
+    private val statussjekkIntervall: Duration = Duration.ofMinutes(5),
 ) {
     private val log = logger()
     private val emergencyBreakGauge = Metrics.meterRegistry.gauge("processing.emergency.break", AtomicInteger(0))!!
@@ -163,7 +169,7 @@ class EksternVarslingService(
 
             launchProcessingLoop(
                 "resume-scheduled-work",
-                pauseAfterEach = Duration.ofMinutes(5)
+                pauseAfterEach = Duration.ofMinutes(1)
             ) {
                 val rescheduledCount = eksternVarslingRepository.rescheduleWaitingJobs(osloTid.localDateTimeNow())
                 if (rescheduledCount > 0) {
@@ -294,7 +300,7 @@ class EksternVarslingService(
                             val (ordreStatus, altinnResponse) = hentShipmentStatus(shipmentId)
                             when (ordreStatus) {
                                 Altinn3VarselStatus.Prosessert,
-                                Altinn3VarselStatus.Prosesserer -> eksternVarslingRepository.returnToJobQueue(varsel.data.varselId)
+                                Altinn3VarselStatus.Prosesserer -> ventPåNyStatussjekk(varselId)
 
                                 Altinn3VarselStatus.Kansellert,
                                 Altinn3VarselStatus.Kvittert -> {
@@ -347,11 +353,24 @@ class EksternVarslingService(
     }
 
 
+    private suspend fun ventPåNyStatussjekk(varselId: UUID) {
+        if (statussjekkIntervall.isZero) {
+            eksternVarslingRepository.returnToJobQueue(varselId)
+        } else {
+            eksternVarslingRepository.scheduleJob(varselId, osloTid.localDateTimeNow() + statussjekkIntervall)
+        }
+    }
+
     private suspend fun hentShipmentStatus(shipmentId: String): Pair<Altinn3VarselStatus, JsonNode> {
         val shipment = altinn3VarselKlient.shipment(shipmentId)
         if (shipment !is Altinn3VarselKlient.ShipmentResponse.Success) {
             log.error("Feil ved henting av shipment status ${shipment.rå}")
             return Pair(Altinn3VarselStatus.Prosesserer, shipment.rå)
+        }
+
+        Metrics.meterRegistry.counter("altinn3.shipment.status", "status", shipment.status).increment()
+        shipment.recipients.forEach {
+            Metrics.meterRegistry.counter("altinn3.shipment.recipient.status", "status", it.status).increment()
         }
 
         return when {

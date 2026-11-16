@@ -63,6 +63,7 @@ class EksternVarslingServiceTest {
         database: Database,
         osloTid: OsloTid = mockOsloTid(nå),
         altinn3VarselKlient: Altinn3VarselKlient? = null,
+        statussjekkIntervall: Duration = Duration.ZERO,
     ): Services {
         val meldingSendt = AtomicReference(MeldingsType.None)
         val hendelseProdusent = FakeHendelseProdusent()
@@ -116,6 +117,7 @@ class EksternVarslingServiceTest {
             hendelseProdusent = hendelseProdusent,
             idleSleepDelay = Duration.ZERO,
             recheckEmergencyBrakeDelay = Duration.ZERO,
+            statussjekkIntervall = statussjekkIntervall,
         )
         return Services(repository, service, hendelseProdusent, meldingSendt, åpningstider)
     }
@@ -1349,6 +1351,94 @@ class EksternVarslingServiceTest {
                 assertEquals(0, hendelseProdusent.hendelserOfType<EksterntVarselFeilet>().size)
             }
             assertTrue(shipmentKall.get() > 2, "Order_Retrying skal gi ny statussjekk, ikke sluttilstand")
+            job.cancel()
+        }
+    }
+
+    @Test
+    fun `Altinn3 varsel - ny statussjekk ventes i wait_queue når ordren ikke er ferdig`() = runBlocking {
+        //language=JSON
+        val shipmentProcessing = laxObjectMapper.readValue<JsonNode>(
+            """
+            {
+              "shipmentId": "processing-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Processing",
+              "lastUpdate": "2026-11-13T13:00:00Z",
+              "recipients": []
+            }
+            """.trimIndent()
+        )
+        //language=JSON
+        val shipmentCompleted = laxObjectMapper.readValue<JsonNode>(
+            """
+            {
+              "shipmentId": "processing-123",
+              "sendersReference": null,
+              "type": "Notification",
+              "status": "Order_Completed",
+              "lastUpdate": "2026-11-13T13:05:00Z",
+              "recipients": [
+                {
+                  "status": "SMS_Delivered",
+                  "lastUpdate": "2026-11-13T13:05:00Z",
+                  "destination": "+4712345678"
+                }
+              ]
+            }
+            """.trimIndent()
+        )
+        val shipmentKall = AtomicInteger(0)
+        val altinn3VarselKlient: Altinn3VarselKlient = object : Altinn3VarselKlient {
+            override suspend fun order(eksternVarsel: EksternVarsel, idempotencyId: String) =
+                Altinn3VarselKlient.OrderResponse.Success(
+                    orderId = "processing-123",
+                    shipmentId = "shipment-processing",
+                    rå = JsonNodeFactory.instance.objectNode().apply {
+                        put("notificationOrderId", "processing-123")
+                        putObject("notification").put("shipmentId", "shipment-processing")
+                    }
+                )
+
+            override suspend fun shipment(shipmentId: String) =
+                Altinn3VarselKlient.ShipmentResponse.Success.fromJson(
+                    if (shipmentKall.getAndIncrement() == 0) shipmentProcessing else shipmentCompleted
+                )
+        }
+
+        withTestDatabase(EksternVarsling.databaseConfig) { database ->
+            val (repository, service, hendelseProdusent) = setupService(
+                database,
+                altinn3VarselKlient = altinn3VarselKlient,
+                statussjekkIntervall = Duration.ofMinutes(5),
+            )
+            repository.oppdaterModellEtterHendelse(oppgave)
+            database.nonTransactionalExecuteUpdate(
+                name = "EksternVarslingServiceTest.shipment.update_emergency_break_9",
+                "update emergency_break set stop_processing = false where id = 0"
+            )
+            val job = service.start(this)
+
+            eventually(5.seconds) {
+                assertEquals(0, repository.jobQueueCount())
+                val resumeAt = database.nonTransactionalExecuteQuery(
+                    name = "EksternVarslingServiceTest.statussjekk.select_wait_queue",
+                    "select resume_job_at from wait_queue where varsel_id = '${uuid("2")}'"
+                ) { getTimestamp("resume_job_at").toLocalDateTime() }
+                assertEquals(listOf(nå.plusMinutes(5)), resumeAt)
+            }
+            delay(200.milliseconds)
+            assertEquals(1, shipmentKall.get(), "skal ikke polle Altinn igjen før ventetiden er ute")
+            assertEquals(0, hendelseProdusent.hendelserOfType<EksterntVarselVellykket>().size)
+
+            repository.rescheduleWaitingJobs(nå.plusMinutes(5))
+            eventually(5.seconds) {
+                val vellykket = hendelseProdusent.hendelserOfType<EksterntVarselVellykket>()
+                assertEquals(1, vellykket.size)
+                assertEquals(shipmentCompleted, vellykket.first().råRespons)
+            }
+            assertEquals(2, shipmentKall.get())
             job.cancel()
         }
     }
