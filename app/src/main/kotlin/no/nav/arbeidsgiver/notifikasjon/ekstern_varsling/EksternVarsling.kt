@@ -53,13 +53,11 @@ object EksternVarsling {
                 val service = EksternVarslingService(
                     eksternVarslingRepository = eksternVarslingRepository,
                     altinn3VarselKlient = basedOnEnv(
-                        prod = { Altinn3VarselKlientMedCache(Altinn3VarselKlientImpl()) },
+                        prod = { Altinn3VarselKlientImpl() },
                         dev = {
-                            Altinn3VarselKlientMedCache(
-                                Altinn3VarselKlientMedFilter(
-                                    eksternVarslingRepository,
-                                    Altinn3VarselKlientLogging()
-                                )
+                            Altinn3VarselKlientMedFilter(
+                                eksternVarslingRepository,
+                                Altinn3VarselKlientLogging()
                             )
                         },
                         other = { Altinn3VarselKlientLogging() },
