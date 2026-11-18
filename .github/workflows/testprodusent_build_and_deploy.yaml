@@ -7,7 +7,8 @@ on:
       - test-produsent/**
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * 1'
+    - cron: '0 4 * * *' # bygg og deploy hver natt kl. 04
+      timezone: Europe/Oslo
 
 
 jobs:
