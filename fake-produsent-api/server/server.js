@@ -52,6 +52,7 @@ const serve = async () => {
         const typeDefs = gql(sdl.toString());
         const server = new ApolloServer({
             typeDefs,
+            introspection: true,
             mocks: {
                 Int: () => casual.integer(0, 1000),
                 String: () => casual.string,
