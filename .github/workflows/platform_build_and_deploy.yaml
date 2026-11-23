@@ -59,7 +59,7 @@ jobs:
 
       - run: PGPASSWORD=postgres psql -U postgres -h localhost -p 1337 -f ./local-db-init.sql
 
-      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           java-version: '21'
           distribution: temurin
@@ -69,7 +69,7 @@ jobs:
       - run: mvn -B package
         working-directory: app
 
-      - uses: nais/docker-build-push@588f76a6f45aeb1e75d5e8417ec6ef6d79b2b39f # v0
+      - uses: nais/docker-build-push@6394144a53cad0332745f24a8302f5efaf81719a # v1.0.0
         id: gar-push
         with:
           team: fager
@@ -113,7 +113,7 @@ jobs:
         with:
           team: fager
 
-      - uses: nais/deploy/actions/deploy@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # v3
+      - uses: nais/deploy/actions/deploy@427e29c94d911626a023a76f402f6dcae1f840b7 # v3
         name: "${{ matrix.cluster }}: deploy ${{ matrix.app }}"
         env:
           VAR: image=${{ steps.login.outputs.registry }}/arbeidsgiver-notifikasjon-produsent-api:${{ github.sha }}
