@@ -8,7 +8,10 @@ import httpProxyMiddleware, {
 import {createLogger, format, transports} from 'winston';
 import {fetchAccessToken} from "./accessToken.js";
 import fs from "fs";
-import {ApolloServer, gql} from 'apollo-server-express';
+import {buildSchema} from 'graphql';
+import {ApolloServer} from '@apollo/server';
+import {expressMiddleware} from '@as-integrations/express4';
+import {addMocksToSchema} from '@graphql-tools/mock';
 
 const {createProxyMiddleware} = httpProxyMiddleware;
 
@@ -101,16 +104,16 @@ const main = async () => {
 
     if (NAIS_CLUSTER_NAME === 'local') {
         const sdl = fs.readFileSync('../../app/src/main/resources/produsent.graphql');
-        const typeDefs = gql(sdl.toString());
-        const server = new ApolloServer({
-            typeDefs,
+        const schema = addMocksToSchema({
+            schema: buildSchema(sdl.toString()),
             mocks: {
                 ISO8601DateTime: () => new Date().toISOString(),
             },
         });
+        const server = new ApolloServer({schema});
         await server.start();
         log.info("🤖🤖 Started local mock ApolloServer, all responses are fake 🤖🤖");
-        server.applyMiddleware({app, path: '/notifikasjon-produsent-api'});
+        app.use('/notifikasjon-produsent-api', express.json(), expressMiddleware(server));
     } else {
         app.use(
             '/notifikasjon-produsent-api',

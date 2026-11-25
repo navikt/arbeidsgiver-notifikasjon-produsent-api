@@ -1,9 +1,13 @@
 import fs from 'fs'
 import express from 'express';
+import cors from 'cors';
 import casual from 'casual';
+import {buildSchema} from 'graphql';
 import {createLogger, transports, format} from 'winston';
-import {ApolloServerPluginLandingPageGraphQLPlayground} from "apollo-server-core";
-import {ApolloServer, gql} from 'apollo-server-express';
+import {ApolloServer} from '@apollo/server';
+import {ApolloServerPluginLandingPageLocalDefault} from '@apollo/server/plugin/landingPage/default';
+import {expressMiddleware} from '@as-integrations/express4';
+import {addMocksToSchema} from '@graphql-tools/mock';
 
 const {
     PORT = 8080,
@@ -49,30 +53,27 @@ const serve = async () => {
         app.get('/started', (req, res) => res.sendStatus(200));
 
         const sdl = fs.readFileSync('./produsent.graphql');
-        const typeDefs = gql(sdl.toString());
-        const server = new ApolloServer({
-            typeDefs,
-            introspection: true,
+        const schema = addMocksToSchema({
+            schema: buildSchema(sdl.toString()),
             mocks: {
                 Int: () => casual.integer(0, 1000),
                 String: () => casual.string,
                 ISO8601DateTime: () => new Date().toISOString(),
                 ...(ALWAYS_SUCCESSFUL_RESPONSE === 'true' ? successfulMocks : {})
             },
+        });
+        const server = new ApolloServer({
+            schema,
+            introspection: true,
             plugins: [
-                ApolloServerPluginLandingPageGraphQLPlayground(),
+                // NODE_ENV=production would otherwise hide the interactive IDE
+                ApolloServerPluginLandingPageLocalDefault({embed: true}),
             ],
-            playground: {
-                endpoint: '/',
-                settings: {
-                    "editor.theme": "dark"
-                }
-            }
         });
         await server.start();
-        server.applyMiddleware({app, path: '/'});
+        app.use('/', cors(), express.json(), expressMiddleware(server));
         app.listen(PORT, () => {
-            log.info(`🚀 Server ready at :${PORT}${server.graphqlPath} ${ALWAYS_SUCCESSFUL_RESPONSE === 'true' ? 'with always successful mocks' : ''}`);
+            log.info(`🚀 Server ready at :${PORT}/ ${ALWAYS_SUCCESSFUL_RESPONSE === 'true' ? 'with always successful mocks' : ''}`);
         });
     } catch (error) {
         log.error(`Server failed to start ${error}`);

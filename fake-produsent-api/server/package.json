@@ -6,8 +6,11 @@
   "main": "server/server.js",
   "packageManager": "pnpm@12.11.2",
   "dependencies": {
-    "apollo-server-express": "^3.13.0",
+    "@apollo/server": "^5.5.2",
+    "@as-integrations/express4": "^1.1.2",
+    "@graphql-tools/mock": "^10.1.4",
     "casual": "^1.6.2",
+    "cors": "^2.8.6",
     "express": "^4.22.3",
     "graphql": "^16.14.2",
     "nodemon": "^3.1.14",
