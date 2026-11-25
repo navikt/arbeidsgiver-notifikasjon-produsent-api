@@ -1,7 +1,10 @@
 name: "CodeQL Advanced"
 
 on:
+  # Bare main ved push. PR-er dekkes av pull_request. Push på feature-brancher feiler
+  # ved opplasting når branchen slettes etter merge før java-kotlin er ferdig.
   push:
+    branches: [main]
   pull_request:
   schedule:
     - cron: '41 8 * * 3'
