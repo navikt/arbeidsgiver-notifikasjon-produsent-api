@@ -5,7 +5,9 @@
     "type": "module",
     "main": "server.js",
     "dependencies": {
-        "apollo-server-express": "^3.13.0",
+        "@apollo/server": "^5.5.2",
+        "@as-integrations/express4": "^1.1.2",
+        "@graphql-tools/mock": "^10.1.4",
         "express": "^4.22.3",
         "graphql": "^16.14.2",
         "http-proxy-middleware": "3.0.7",

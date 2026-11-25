@@ -23,6 +23,9 @@ updates:
       pnpm:
         patterns: ["*"]
         update-types: [minor, patch]
+      pnpm-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   # Backend (app/). Kun minor- og patch-oppdateringer.
   - package-ecosystem: maven
@@ -41,6 +44,9 @@ updates:
       maven:
         patterns: ["*"]
         update-types: [minor, patch]
+      maven-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -53,4 +59,7 @@ updates:
       default-days: 3
     groups:
       github-actions:
+        patterns: ["*"]
+      github-actions-security:
+        applies-to: security-updates
         patterns: ["*"]
