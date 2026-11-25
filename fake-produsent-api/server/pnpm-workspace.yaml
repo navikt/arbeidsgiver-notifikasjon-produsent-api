@@ -2,3 +2,7 @@ nodeLinker: hoisted
 
 allowBuilds:
   '@apollo/protobufjs': false
+
+overrides:
+  # @apollo/server pins <12.0.2 only to keep Node 20 support; we run Node 22.
+  '@graphql-tools/utils@>=12.0.0 <12.0.2': ^12.0.2
